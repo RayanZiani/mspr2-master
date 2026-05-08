@@ -77,6 +77,18 @@ futurekawa/
 ├── .gitignore
 ├── docker-compose.yml                 # compose RACINE : lance TOUT pour la démo jury
 │
+├── database/                          # schéma BDD + CA SSL + données démo
+│   ├── schema_mysql.sql               # DDL MySQL (tables + vues)
+│   ├── seed_mysql.sql                 # seed minimal (BR/EC/CO + exemple)
+│   ├── ca.pem                         # certificat CA (Aiven) pour TLS
+│   └── demo_data.xlsx                 # jeu de données démo (relevés 5 min)
+│
+├── scripts/                           # scripts utilitaires (Windows friendly)
+│   ├── push_mysql_schema.py           # applique database/schema_mysql.sql sur la BDD distante
+│   ├── push_mysql_seed.py             # applique database/seed_mysql.sql sur la BDD distante
+│   ├── generate_demo_excel.py         # génère database/demo_data.xlsx
+│   └── import_demo_excel_to_mysql.py  # importe demo_data.xlsx dans MySQL (batch)
+│
 ├── Documents/                         # CDC, grille éval, règles validation, techno sheet
 │   ├── 25_26_I1_EISI_DEV_Sujet_MSPR_TPRE814.pdf
 │   ├── 25_26_I1_EISI_DEV_Grille_évaluation_MSPR_TPRE814.pdf
