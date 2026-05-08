@@ -1,0 +1,38 @@
+version: "3.9"
+
+services:
+  api-siege:
+    build: ./api
+    container_name: api-siege
+    env_file: .env
+    networks:
+      - siege-net
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis-siege
+    networks:
+      - siege-net
+
+  frontend:
+    build: ./frontend
+    container_name: frontend-siege
+    networks:
+      - siege-net
+
+  nginx:
+    image: nginx:alpine
+    container_name: nginx-siege
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "80:80"
+    depends_on:
+      - api-siege
+      - frontend
+    networks:
+      - siege-net
+
+networks:
+  siege-net:
+    driver: bridge

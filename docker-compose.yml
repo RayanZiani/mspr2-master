@@ -1,0 +1,10 @@
+version: "3.9"
+
+# Compose RACINE — lance TOUT pour la démo jury
+# Usage : docker compose up --build
+
+include:
+  - pays/bresil/docker-compose.yml
+  - pays/equateur/docker-compose.yml
+  - pays/colombie/docker-compose.yml
+  - siege/docker-compose.yml

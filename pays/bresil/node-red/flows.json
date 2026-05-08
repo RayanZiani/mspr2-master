@@ -1,0 +1,22 @@
+[
+  {
+    "id": "mqtt-in-bresil",
+    "type": "mqtt in",
+    "topic": "futurekawa/bresil/+/sensors",
+    "broker": "mosquitto-bresil",
+    "name": "MQTT Brésil"
+  },
+  {
+    "id": "check-seuils-bresil",
+    "type": "function",
+    "name": "Vérif seuils Brésil",
+    "func": "var temp = msg.payload.temp;\nvar humidity = msg.payload.humidity;\nif (Math.abs(temp - 29) > 3 || Math.abs(humidity - 55) > 2) {\n  msg.subject = 'ALERTE FutureKawa Brésil';\n  msg.to = 'responsable@futurekawa.com';\n  return msg;\n}\nreturn null;"
+  },
+  {
+    "id": "email-bresil",
+    "type": "e-mail",
+    "name": "Email alerte",
+    "server": "${SMTP_HOST}",
+    "port": "${SMTP_PORT}"
+  }
+]

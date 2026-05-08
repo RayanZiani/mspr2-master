@@ -1,0 +1,36 @@
+{
+  "info": {
+    "name": "FutureKawa API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Health Check Brésil",
+      "request": {
+        "method": "GET",
+        "url": "{{API_BRESIL_URL}}/health"
+      }
+    },
+    {
+      "name": "Liste des lots Brésil",
+      "request": {
+        "method": "GET",
+        "url": "{{API_BRESIL_URL}}/lots/"
+      }
+    },
+    {
+      "name": "Health Check Siège",
+      "request": {
+        "method": "GET",
+        "url": "{{API_SIEGE_URL}}/health"
+      }
+    },
+    {
+      "name": "Stocks agrégés",
+      "request": {
+        "method": "GET",
+        "url": "{{API_SIEGE_URL}}/stocks/"
+      }
+    }
+  ]
+}

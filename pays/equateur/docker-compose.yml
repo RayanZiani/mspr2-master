@@ -1,0 +1,56 @@
+version: "3.9"
+
+services:
+  mosquitto-equateur:
+    image: eclipse-mosquitto:2
+    container_name: mosquitto-equateur
+    volumes:
+      - ./broker/mosquitto.conf:/mosquitto/config/mosquitto.conf
+    ports:
+      - "1884:1883"
+    networks:
+      - equateur-net
+
+  mysql-equateur:
+    image: mysql:8.0
+    container_name: mysql-equateur
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - mysql-equateur-data:/var/lib/mysql
+    networks:
+      - equateur-net
+
+  api-equateur:
+    build: ./api
+    container_name: api-equateur
+    env_file: .env
+    ports:
+      - "8002:8000"
+    depends_on:
+      - mysql-equateur
+      - mosquitto-equateur
+    networks:
+      - equateur-net
+
+  node-red-equateur:
+    image: nodered/node-red:latest
+    container_name: node-red-equateur
+    volumes:
+      - ./node-red/flows.json:/data/flows.json
+    ports:
+      - "1881:1880"
+    depends_on:
+      - mosquitto-equateur
+    networks:
+      - equateur-net
+
+volumes:
+  mysql-equateur-data:
+
+networks:
+  equateur-net:
+    driver: bridge

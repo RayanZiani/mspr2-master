@@ -1,0 +1,47 @@
+pipeline {
+    agent any
+
+    environment {
+        DOCKER_HUB_CREDENTIALS = credentials('dockerhub-credentials')
+    }
+
+    stages {
+        stage('Build') {
+            steps {
+                sh 'docker compose build'
+            }
+        }
+
+        stage('Tests unitaires') {
+            steps {
+                sh 'bash ci-cd/scripts/run_tests.sh'
+            }
+        }
+
+        stage('Tests API (Newman)') {
+            steps {
+                sh 'newman run tests/api/FutureKawa.postman_collection.json --environment tests/api/FutureKawa.postman_environment.json'
+            }
+        }
+
+        stage('SonarQube') {
+            steps {
+                withSonarQubeEnv('SonarQube') {
+                    sh 'sonar-scanner'
+                }
+            }
+        }
+
+        stage('Docker Push') {
+            steps {
+                sh 'bash ci-cd/scripts/build_images.sh'
+            }
+        }
+    }
+
+    post {
+        always {
+            junit 'tests/reports/*.xml'
+        }
+    }
+}

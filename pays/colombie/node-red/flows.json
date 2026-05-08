@@ -1,0 +1,22 @@
+[
+  {
+    "id": "mqtt-in-colombie",
+    "type": "mqtt in",
+    "topic": "futurekawa/colombie/+/sensors",
+    "broker": "mosquitto-colombie",
+    "name": "MQTT Colombie"
+  },
+  {
+    "id": "check-seuils-colombie",
+    "type": "function",
+    "name": "Vérif seuils Colombie",
+    "func": "var temp = msg.payload.temp;\nvar humidity = msg.payload.humidity;\nif (Math.abs(temp - 26) > 3 || Math.abs(humidity - 80) > 2) {\n  msg.subject = 'ALERTE FutureKawa Colombie';\n  msg.to = 'responsable@futurekawa.com';\n  return msg;\n}\nreturn null;"
+  },
+  {
+    "id": "email-colombie",
+    "type": "e-mail",
+    "name": "Email alerte",
+    "server": "${SMTP_HOST}",
+    "port": "${SMTP_PORT}"
+  }
+]

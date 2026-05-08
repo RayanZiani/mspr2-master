@@ -1,0 +1,22 @@
+[
+  {
+    "id": "mqtt-in-equateur",
+    "type": "mqtt in",
+    "topic": "futurekawa/equateur/+/sensors",
+    "broker": "mosquitto-equateur",
+    "name": "MQTT Équateur"
+  },
+  {
+    "id": "check-seuils-equateur",
+    "type": "function",
+    "name": "Vérif seuils Équateur",
+    "func": "var temp = msg.payload.temp;\nvar humidity = msg.payload.humidity;\nif (Math.abs(temp - 31) > 3 || Math.abs(humidity - 60) > 2) {\n  msg.subject = 'ALERTE FutureKawa Équateur';\n  msg.to = 'responsable@futurekawa.com';\n  return msg;\n}\nreturn null;"
+  },
+  {
+    "id": "email-equateur",
+    "type": "e-mail",
+    "name": "Email alerte",
+    "server": "${SMTP_HOST}",
+    "port": "${SMTP_PORT}"
+  }
+]
