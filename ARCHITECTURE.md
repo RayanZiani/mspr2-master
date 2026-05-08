@@ -9,7 +9,7 @@
 
 **FutureKawa** est une entreprise internationale de caféiculture et logistique de café vert, opérant dans 3 pays : **Brésil, Équateur, Colombie**.
 
-Ce projet est une **MSPR académique** (Mise en Situation Professionnelle Reconstituée) dans le cadre du **Bloc 4 — RNCP 35584 Expert en Informatique et Système d'Information, Niveau 7**. L'évaluation se fait via une soutenance orale collective de 50 minutes (20 min exposé + 30 min questions jury) en **début juillet 2025**.
+Ce projet est une **MSPR académique** (Mise en Situation Professionnelle Reconstituée) dans le cadre du **Bloc 4 — RNCP 35584 Expert en Informatique et Système d'Information, Niveau 7**. L'évaluation se fait via une soutenance orale collective de 50 minutes (20 min exposé + 30 min questions jury) en **début juillet 2026**.
 
 ### Problème métier
 
@@ -240,6 +240,43 @@ futurekawa/
 | Alertes email | **Node-RED** | ✅ Validé | Flux MQTT → règles seuils → SMTP |
 | Documentation API | **Swagger UI / OpenAPI** | ✅ Validé | Généré automatiquement par FastAPI |
 
+---
+
+## 4.1 Base de données (MySQL) — Schéma, connexion SSL, données de démo
+
+### Schéma (DDL)
+- `database/schema_mysql.sql` : création des tables **pays / exploitation / entrepot / lot / capteur / releve_capteur / alerte** + vues de démo.
+- `database/seed_mysql.sql` : seed minimal (BR/EC/CO + 1 exemple).
+
+### Connexion (Aiven / SSL)
+- **URL de connexion** : stockée dans `.env` via `MYSQL_URL=...`
+- **Certificat CA** : `database/ca.pem`
+- **TLS requis** : `ssl-mode=REQUIRED` (minimum). Pour un client SQL, préférer `VERIFY_CA` + CA.
+
+⚠️ **Sécurité** : ne jamais commiter `.env` (contient un mot de passe).
+
+### Scripts “push” (Windows friendly, sans client mysql)
+Dans ce repo, on utilise un venv Python et des scripts pour appliquer le schéma/données sans installer `mysql.exe` :
+- `scripts/push_mysql_schema.py` : applique `database/schema_mysql.sql`
+- `scripts/push_mysql_seed.py` : applique `database/seed_mysql.sql`
+
+Commandes :
+```powershell
+.\.venv\Scripts\python .\scripts\push_mysql_schema.py
+.\.venv\Scripts\python .\scripts\push_mysql_seed.py
+```
+
+### Données de démonstration (Excel → MySQL)
+- Génération : `scripts/generate_demo_excel.py` produit `database/demo_data.xlsx`
+  - Relevés toutes les **5 minutes** du **08/05/2026** au **31/07/2026** (pour alimenter les courbes).
+- Import : `scripts/import_demo_excel_to_mysql.py` charge l’Excel dans MySQL (ordre FK + insert par batch).
+
+Commandes :
+```powershell
+.\.venv\Scripts\python .\scripts\generate_demo_excel.py
+.\.venv\Scripts\python .\scripts\import_demo_excel_to_mysql.py
+```
+
 ### Frontend
 | Composant | Technologie | Statut CDC | Notes |
 |---|---|---|---|
@@ -322,12 +359,18 @@ Lot {
   statut      : conforme | alerte | perime
 }
 
-Mesure {
+Capteur {
   id          : UUID
-  lot_id      : FK → Lot
+  entrepot_id : FK → Entrepot
+  numero_serie: string
+}
+
+ReleveCapteur {
+  id          : int (auto)
+  capteur_id  : FK → Capteur
   timestamp   : datetime
   temperature : float (°C)
-  humidity    : float (%)
+  humidite    : float (%)
 }
 ```
 
