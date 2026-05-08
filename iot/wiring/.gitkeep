@@ -1,0 +1,3 @@
+3V3 ─────────── VCC du DHT22
+G4  ─────────── DATA du DHT22
+GND ─────────── GND du DHT22
