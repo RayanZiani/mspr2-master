@@ -11,7 +11,7 @@ def on_message(client, userdata, msg):
 
 
 def start_mqtt():
-    client = mqtt.Client()
+    client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION1)
     client.on_message = on_message
     client.connect(MQTT_BROKER_HOST, MQTT_BROKER_PORT)
     client.subscribe(MQTT_TOPIC)
