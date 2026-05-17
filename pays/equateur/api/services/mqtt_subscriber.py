@@ -1,19 +1,38 @@
+"""Robust MQTT subscriber with reconnect loop (Équateur)."""
+
 import json
 import threading
+import time
+import logging
 import paho.mqtt.client as mqtt
 from api.config import MQTT_BROKER_HOST, MQTT_BROKER_PORT, MQTT_TOPIC
 from api.services.alert_service import check_alerts
 
+logger = logging.getLogger(__name__)
+
 
 def on_message(client, userdata, msg):
-    payload = json.loads(msg.payload.decode())
-    check_alerts(payload)
+    try:
+        payload = json.loads(msg.payload.decode())
+        check_alerts(payload)
+    except Exception:
+        logger.exception("Failed to process MQTT message")
+
+
+def _run_loop():
+    client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION1)
+    client.on_message = on_message
+    while True:
+        try:
+            logger.info("Connecting to MQTT %s:%s", MQTT_BROKER_HOST, MQTT_BROKER_PORT)
+            client.connect(MQTT_BROKER_HOST, MQTT_BROKER_PORT)
+            client.subscribe(MQTT_TOPIC)
+            client.loop_forever()
+        except Exception:
+            logger.exception("MQTT connection lost, retrying in 5s")
+            time.sleep(5)
 
 
 def start_mqtt():
-    client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION1)
-    client.on_message = on_message
-    client.connect(MQTT_BROKER_HOST, MQTT_BROKER_PORT)
-    client.subscribe(MQTT_TOPIC)
-    thread = threading.Thread(target=client.loop_forever, daemon=True)
+    thread = threading.Thread(target=_run_loop, daemon=True)
     thread.start()
