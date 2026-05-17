@@ -1,10 +1,14 @@
-from fastapi import APIRouter
-from api.services.aggregator import fetch_all_pays
+from fastapi import APIRouter, HTTPException
+from api.services.data_service import get_mesures_for_lot
 
 router = APIRouter()
 
 
 @router.get("/")
 async def get_all_mesures(lot_id: str | None = None):
-    params = {"lot_id": lot_id} if lot_id else None
-    return await fetch_all_pays("mesures", params=params)
+    if not lot_id:
+        raise HTTPException(
+            status_code=400,
+            detail="Paramètre lot_id requis pour récupérer les relevés",
+        )
+    return await get_mesures_for_lot(lot_id)

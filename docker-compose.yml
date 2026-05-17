@@ -1,7 +1,7 @@
 version: "3.9"
 
 # Compose RACINE — lance TOUT pour la démo jury
-# Usage : docker compose up --build
+# Usage : npm start   (ou : .\start.ps1   ou : docker compose up --build)
 
 include:
   - pays/bresil/docker-compose.yml

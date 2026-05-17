@@ -10,5 +10,5 @@ async def get_cache(key: str):
     return json.loads(value) if value else None
 
 
-async def set_cache(key: str, data) -> None:
-    await _redis.setex(key, REDIS_CACHE_TTL, json.dumps(data))
+async def set_cache(key: str, data, ttl: int | None = None) -> None:
+    await _redis.setex(key, ttl if ttl is not None else REDIS_CACHE_TTL, json.dumps(data))

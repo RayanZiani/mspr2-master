@@ -5,6 +5,8 @@ services:
     build: ./api
     container_name: api-siege
     env_file: .env
+    volumes:
+      - ../database/ca.pem:/app/database/ca.pem:ro
     networks:
       - siege-net
 

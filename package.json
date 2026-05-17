@@ -1,0 +1,12 @@
+{
+  "name": "futurekawa",
+  "private": true,
+  "description": "FutureKawa — plateforme IoT multi-pays",
+  "scripts": {
+    "prestart": "node scripts/ensure-env.mjs",
+    "start": "docker compose up --build",
+    "start:detached": "docker compose up --build -d",
+    "stop": "docker compose down",
+    "logs": "docker compose logs -f"
+  }
+}
