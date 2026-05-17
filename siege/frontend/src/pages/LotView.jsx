@@ -1,21 +1,43 @@
-import { useParams } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
-import { api } from '../services/api'
-import Charts from '../components/Charts'
+import { useParams, useLocation, Link } from 'react-router-dom'
+import { ArrowLeft } from 'lucide-react'
+import { useStocks } from '../hooks/useStocks'
+import { useMesures } from '../hooks/useMesures'
 import LotDetail from '../components/LotDetail'
+import Charts from '../components/Charts'
 
 export default function LotView() {
   const { lotId } = useParams()
-  const { data: mesures } = useQuery({
-    queryKey: ['mesures', lotId],
-    queryFn: () => api.getMesures(lotId),
-    refetchInterval: 30_000,
-  })
+  const { state } = useLocation()
+  const { data: stocksData } = useStocks()
+
+  const lot = state?.lot ?? (stocksData || [])
+    .flatMap(p => (p.data || []).map(l => ({ ...l, pays: l.pays || p.pays })))
+    .find(l => l.id === lotId)
+
+  const { data: mesuresData, isLoading: mesuresLoading } = useMesures(lotId)
 
   return (
     <div>
-      <LotDetail lotId={lotId} />
-      <Charts data={mesures} />
+      <Link to="/" className="back-link">
+        <ArrowLeft size={14} />
+        Retour aux stocks
+      </Link>
+
+      <div className="page-header">
+        <h1 className="page-title">Détail du lot</h1>
+        <p className="page-sub">Historique des relevés IoT depuis la mise en stockage</p>
+      </div>
+
+      <LotDetail lot={lot} />
+
+      {mesuresLoading ? (
+        <div className="loading">
+          <div className="spinner" />
+          <span>Chargement des mesures…</span>
+        </div>
+      ) : (
+        <Charts data={mesuresData} pays={lot?.pays} />
+      )}
     </div>
   )
 }

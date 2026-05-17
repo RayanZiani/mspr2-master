@@ -1,14 +1,39 @@
-const colors = {
-  conforme: '#2ecc71',
-  alerte: '#e67e22',
-  perime: '#e74c3c',
+import { AlertTriangle, XCircle } from 'lucide-react'
+
+const PAYS_LABEL = {
+  bresil:   'Brésil',
+  equateur: 'Équateur',
+  colombie: 'Colombie',
 }
 
-export default function AlertBadge({ alerte }) {
-  const statut = alerte?.statut ?? 'conforme'
+const DESC = {
+  perime: 'Plus de 365 jours en stockage — expédition prioritaire requise.',
+  alerte: 'Conditions hors plage — température ou humidité déviante.',
+}
+
+export default function AlertBadge({ lot, onClick }) {
+  if (!lot?.statut || lot.statut === 'conforme') return null
+
+  const statut   = lot.statut
+  const isPerime = statut === 'perime'
+  const Icon     = isPerime ? XCircle : AlertTriangle
+
   return (
-    <span style={{ background: colors[statut], color: '#fff', padding: '2px 8px', borderRadius: 4 }}>
-      {statut}
-    </span>
+    <div className={`alert-card ${statut}`} onClick={onClick}>
+      <div className={`alert-icon ${statut}`}>
+        <Icon size={16} />
+      </div>
+      <div className="alert-info">
+        <div className="alert-lot-id">{lot.id}</div>
+        <div className="alert-lot-title">
+          {PAYS_LABEL[lot.pays] || lot.pays} — {lot.exploitation} / {lot.entrepot}
+        </div>
+        <div className="alert-lot-desc">{DESC[statut]}</div>
+      </div>
+      <span className={`badge badge-${statut}`}>
+        <Icon size={10} />
+        {isPerime ? 'Périmé' : 'Alerte'}
+      </span>
+    </div>
   )
 }

@@ -1,10 +1,25 @@
-export default function CountrySelector({ onChange }) {
+import { Globe } from 'lucide-react'
+
+const COUNTRIES = [
+  { value: '', label: 'Tous les pays' },
+  { value: 'bresil', label: 'Brésil' },
+  { value: 'equateur', label: 'Équateur' },
+  { value: 'colombie', label: 'Colombie' },
+]
+
+export default function CountrySelector({ value, onChange }) {
   return (
-    <select onChange={(e) => onChange?.(e.target.value)}>
-      <option value="">Tous les pays</option>
-      <option value="bresil">Brésil</option>
-      <option value="equateur">Équateur</option>
-      <option value="colombie">Colombie</option>
-    </select>
+    <div className="tabs">
+      {COUNTRIES.map(c => (
+        <button
+          key={c.value}
+          className={`tab${value === c.value ? ' active' : ''}`}
+          onClick={() => onChange(c.value)}
+        >
+          {c.value === '' && <Globe size={12} />}
+          {c.label}
+        </button>
+      ))}
+    </div>
   )
 }

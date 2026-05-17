@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
 from api.db.database import init_db
-from api.routes import lots, mesures
+from api.routes import lots, mesures, alertes
 from api.services.mqtt_subscriber import start_mqtt
 
 
@@ -20,6 +20,7 @@ app = FastAPI(
 
 app.include_router(lots.router, prefix="/lots", tags=["Lots"])
 app.include_router(mesures.router, prefix="/mesures", tags=["Mesures"])
+app.include_router(alertes.router, prefix="/alertes", tags=["Alertes"])
 
 
 @app.get("/health")
