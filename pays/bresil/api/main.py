@@ -1,3 +1,10 @@
+"""FastAPI app for FutureKawa — Brésil
+
+Light refactor: add basic logging and tolerate MQTT startup errors so
+the API can start even if the broker is temporarily unreachable.
+"""
+
+import logging
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
 from api.db.database import init_db
@@ -5,10 +12,18 @@ from api.routes import lots, mesures, alertes
 from api.services.mqtt_subscriber import start_mqtt
 
 
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await init_db()
-    start_mqtt()
+    try:
+        start_mqtt()
+    except Exception:
+        # Don't crash the whole API if MQTT broker is down at startup.
+        logger.exception("Failed to start MQTT subscriber; continuing without it")
     yield
 
 
