@@ -15,4 +15,12 @@ export const api = {
   getStocks: () => get('/stocks/'),
   getMesures: (lotId) => get('/mesures/', { lot_id: lotId }),
   getAlertes: () => get('/alertes/'),
+  getDbHealth: async () => {
+    // Compat: certains environnements n'ont que /health.
+    try {
+      return await get('/health/db')
+    } catch {
+      return await get('/health')
+    }
+  },
 }

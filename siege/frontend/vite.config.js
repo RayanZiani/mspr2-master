@@ -10,6 +10,12 @@ export default defineConfig({
   server: {
     host: '0.0.0.0',
     port: 5173,
+    // Quand le front est servi via Nginx (port 80) mais que Vite tourne
+    // derrière le proxy, il faut forcer le client HMR à se connecter sur le port public.
+    hmr: {
+      protocol: 'ws',
+      clientPort: 80,
+    },
     proxy: {
       '/api': {
         target: API_TARGET,
