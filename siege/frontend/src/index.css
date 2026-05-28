@@ -144,6 +144,34 @@ body {
   border: 1px solid rgba(255,255,255,0.1);
 }
 
+/* ── DB status (Navbar) ─────────────────────── */
+.nav-status {
+  cursor: default;
+  user-select: none;
+}
+
+.nav-status .db-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 99px;
+  margin-left: 2px;
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.18);
+}
+
+.nav-status.db-loading .db-dot { background: rgba(255,255,255,0.45); }
+.nav-status.db-ok .db-dot { background: var(--color-success-mid); }
+.nav-status.db-bad .db-dot { background: var(--color-danger-mid); }
+
+@keyframes db-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.35); }
+}
+
+.nav-status.db-loading .db-dot {
+  opacity: 0.65;
+  animation: db-pulse 0.9s ease-in-out infinite;
+}
+
 /* ── Layout ──────────────────────────────────── */
 .main-content {
   margin-top: var(--navbar-height);

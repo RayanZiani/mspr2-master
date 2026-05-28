@@ -4,7 +4,8 @@ services:
   api-siege:
     build: ./api
     container_name: api-siege
-    env_file: .env
+    env_file:
+      - ../.env
     volumes:
       - ../database/ca.pem:/app/database/ca.pem:ro
     networks:
