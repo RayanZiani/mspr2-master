@@ -33,4 +33,7 @@ mpremote cp firmware/main.py :main.py
 
 ```bash
 python iot/simulator/simulate_sensor.py --pays bresil --entrepot entrepot_A
+
+# Publier des données factices sur les trois brokers
+python iot/simulator/simulate_sensor.py --pays bresil --entrepot entrepot_A --all --count 3
 ```
