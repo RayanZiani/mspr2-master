@@ -1,11 +1,12 @@
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 
+from api.auth import require_role, require_user
 from api.db.database import engine
-from api.routes import stocks, mesures, alertes
+from api.routes import alertes, auth, mesures, stocks, users
 
 
 @asynccontextmanager
@@ -28,9 +29,31 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(stocks.router, prefix="/stocks", tags=["Stocks"])
-app.include_router(mesures.router, prefix="/mesures", tags=["Mesures"])
-app.include_router(alertes.router, prefix="/alertes", tags=["Alertes"])
+app.include_router(auth.router, prefix="/auth", tags=["Auth"])
+app.include_router(
+    users.router,
+    prefix="/users",
+    tags=["Users"],
+    dependencies=[Depends(require_role("ADMIN"))],
+)
+app.include_router(
+    stocks.router,
+    prefix="/stocks",
+    tags=["Stocks"],
+    dependencies=[Depends(require_user)],
+)
+app.include_router(
+    mesures.router,
+    prefix="/mesures",
+    tags=["Mesures"],
+    dependencies=[Depends(require_user)],
+)
+app.include_router(
+    alertes.router,
+    prefix="/alertes",
+    tags=["Alertes"],
+    dependencies=[Depends(require_role("ADMIN"))],
+)
 
 
 @app.get("/health")

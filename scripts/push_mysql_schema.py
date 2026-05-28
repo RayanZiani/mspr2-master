@@ -138,8 +138,15 @@ def main() -> int:
     cfg = _parse_mysql_url(mysql_url)
 
     ca_path = repo_root / "database" / "ca.pem"
-    if not ca_path.exists():
-        raise SystemExit("Certificat manquant: database/ca.pem")
+    # Sur Windows, `ca.pem` peut être absent (ou corrompu) ; on utilise alors le bundle certifi.
+    if not ca_path.exists() or not ca_path.is_file() or ca_path.stat().st_size == 0:
+        try:
+            import certifi
+
+            ca_path = Path(certifi.where())
+            print(f"[warn] database/ca.pem manquant/corrompu -> utilisation certifi: {ca_path}")
+        except Exception:
+            raise SystemExit("Certificat manquant: database/ca.pem (et certifi indisponible)")
 
     sql_path = repo_root / "database" / "schema_mysql.sql"
     sql = _read_sql(sql_path)

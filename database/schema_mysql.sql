@@ -9,6 +9,24 @@
 SET NAMES utf8mb4;
 SET time_zone = '+00:00';
 
+-- Auth (siège) — comptes applicatifs (login)
+CREATE TABLE IF NOT EXISTS user_account (
+  id BIGINT NOT NULL AUTO_INCREMENT,
+  username VARCHAR(100) NOT NULL,
+  password_hash VARCHAR(255) NOT NULL,
+  role ENUM('ADMIN','USER') NOT NULL DEFAULT 'ADMIN',
+  active TINYINT(1) NOT NULL DEFAULT 1,
+  pays_code ENUM('SIEGE','BRESIL','EQUATEUR','COLOMBIE') NULL,
+  email VARCHAR(255) NULL,
+  last_login_at DATETIME(3) NULL,
+  last_login_ip VARCHAR(45) NULL,
+  created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  PRIMARY KEY (id),
+  UNIQUE KEY uk_user_account_username (username),
+  KEY idx_user_account_active (active),
+  KEY idx_user_account_pays (pays_code)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
 -- Drop (optionnel pour repartir propre)
 -- DROP VIEW IF EXISTS v_releves_entrepot;
 -- DROP VIEW IF EXISTS v_lots_trop_anciens;
