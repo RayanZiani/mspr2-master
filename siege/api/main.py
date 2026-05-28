@@ -52,7 +52,7 @@ app.include_router(
     alertes.router,
     prefix="/alertes",
     tags=["Alertes"],
-    dependencies=[Depends(require_role("ADMIN"))],
+    dependencies=[Depends(require_user)],
 )
 
 

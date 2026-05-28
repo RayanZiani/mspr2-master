@@ -41,6 +41,28 @@ SET @entrepot_id := (
 INSERT INTO lot (pays_id, exploitation_id, entrepot_id, entre_le, statut)
 VALUES (@pays_br, @exploitation_id, @entrepot_id, (UTC_TIMESTAMP(3) - INTERVAL 10 DAY), 'CONFORME');
 
+-- Comptes applicatifs (siège) — users de développement
+INSERT INTO user_account (username, password_hash, role, pays_code, email, active)
+VALUES
+  ('admin_siege',        '$2b$12$hrcCoLHsdEnHTSB/pucd9.KWhPkmFOqB9f7R0vjHBiO0qq32eOp3a', 'ADMIN', 'SIEGE',    'admin@futurekawa.com',        1),
+  ('direction_siege',    '$2b$12$7mgmZCs28/vPLx3ej4UADOPw1G999syXUrK5AGOLLb3l6k91/loq6', 'USER',  'SIEGE',    'direction@futurekawa.com',    1),
+  ('supply_siege',       '$2b$12$BWhEsz0ydjK.CA0hT46XEeCGVXjenfbsIM9.Dn592b7KReCzY3K6W', 'USER',  'SIEGE',    'supply@futurekawa.com',       1),
+  ('resp_bresil',        '$2b$12$IGTl7YjBnncax91d.acQZ.Iyqi/JpkLt16P4Z6k/NEvk17F4rdIam', 'USER',  'BRESIL',   'resp.br@futurekawa.com',      1),
+  ('entrepot_bresil',    '$2b$12$PGlRENFr38MKcIECa7548uQlPGbLGiZgPhTf9/CwQ09pefz0Yt7YS', 'USER',  'BRESIL',   'entrepot.br@futurekawa.com',  1),
+  ('qualite_bresil',     '$2b$12$TcOzYhijBVlMluyAwV6oquUyns2o6ESYJF7qkYsbt6u/cHBM5dF1O', 'USER',  'BRESIL',   'qualite.br@futurekawa.com',   1),
+  ('resp_equateur',      '$2b$12$Vrm6idcHqozQL0nI0OboZOUnhpXIHnjr7IIDUOxdU2l81uVTi.S6C', 'USER',  'EQUATEUR', 'resp.eq@futurekawa.com',      1),
+  ('entrepot_equateur',  '$2b$12$gzBY3dCauFY0KDlxwjd3kOAUL.Mj8wjP96al4KEYEePcDYJfc7pG2', 'USER',  'EQUATEUR', 'entrepot.eq@futurekawa.com',  1),
+  ('qualite_equateur',   '$2b$12$/72FWHyqMjpoiJs2vT0OgOZNeDlLNMF/2rH/CUconi9vPId/MKDkK', 'USER',  'EQUATEUR', 'qualite.eq@futurekawa.com',   1),
+  ('resp_colombie',      '$2b$12$xB0X6kZT3nUUMfJfsK9VY.tJWxKys//bb95GcaEOSCNAdv1T8Cory', 'USER',  'COLOMBIE', 'resp.co@futurekawa.com',      1),
+  ('entrepot_colombie',  '$2b$12$Ogi4xC3XnoEgGzxwxAw2BuZ116YZpg0wsDDNfegc5rdg9Zu73Xuea', 'USER',  'COLOMBIE', 'entrepot.co@futurekawa.com',  1),
+  ('qualite_colombie',   '$2b$12$bw8YIDoKsDdP1oLSGwfn/e1M6/4rNYhsggONEtkMF6sEqU/DpCLy6', 'USER',  'COLOMBIE', 'qualite.co@futurekawa.com',   1)
+ON DUPLICATE KEY UPDATE
+  password_hash = VALUES(password_hash),
+  role = VALUES(role),
+  pays_code = VALUES(pays_code),
+  email = VALUES(email),
+  active = VALUES(active);
+
 SET NAMES utf8mb4;
 SET time_zone = '+00:00';
 

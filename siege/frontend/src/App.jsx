@@ -14,7 +14,8 @@ import {
 } from 'lucide-react'
 import { ToastProvider } from './components/Toast'
 import { useDbHealth } from './hooks/useDbHealth'
-import { clearSession, getRole, getSession, isAuthed } from './auth/session'
+import { clearSession, getSession, isAuthed } from './auth/session'
+import { UserPermissions } from './auth/permissions'
 import Dashboard from './pages/Dashboard'
 import LotView from './pages/LotView'
 import AlertsPage from './pages/AlertsPage'
@@ -28,16 +29,16 @@ function RequireAuth({ children }) {
   return children
 }
 
-function RequireRole({ roles, children }) {
+function RequirePerm({ can, children }) {
   if (!isAuthed()) return <Navigate to="/login" replace />
-  const role = getRole()
-  if (!roles.includes(role)) return <Navigate to="/" replace />
+  const perms = UserPermissions()
+  if (!can(perms)) return <Navigate to="/" replace />
   return children
 }
 
 function AccountMenu() {
   const { username } = getSession()
-  const role = getRole()
+  const role = UserPermissions().role
   const [open, setOpen] = useState(false)
   const ref = useRef(null)
 
@@ -83,7 +84,7 @@ function Navbar() {
   const loc = useLocation()
   const authed = isAuthed()
   const onLogin = loc.pathname === '/login'
-  const role = getRole()
+  const perms = UserPermissions()
 
   const { data, isFetching, isError } = useDbHealth()
   const isOk = data?.ok === true || data?.status === 'ok'
@@ -130,7 +131,7 @@ function Navbar() {
               <ShieldCheck size={14} />
               Santé
             </NavLink>
-            {role === 'ADMIN' && (
+            {(perms.isAdmin || perms.isSiegeUser) && (
               <NavLink
                 to="/alertes"
                 className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}
@@ -139,7 +140,7 @@ function Navbar() {
                 Alertes
               </NavLink>
             )}
-            {role === 'ADMIN' && (
+            {perms.isAdmin && (
               <NavLink
                 to="/users"
                 className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}
@@ -179,7 +180,7 @@ export default function App() {
             />
             <Route
               path="/alertes"
-              element={<RequireRole roles={['ADMIN']}><AlertsPage /></RequireRole>}
+              element={<RequirePerm can={p => p.isAdmin || p.isSiegeUser}><AlertsPage /></RequirePerm>}
             />
             <Route
               path="/mesures"
@@ -191,7 +192,7 @@ export default function App() {
             />
             <Route
               path="/users"
-              element={<RequireRole roles={['ADMIN']}><UsersPage /></RequireRole>}
+              element={<RequirePerm can={p => p.canManageUsers()}><UsersPage /></RequirePerm>}
             />
           </Routes>
         </main>
