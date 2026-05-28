@@ -8,7 +8,9 @@ engine = create_async_engine(
     _database_url,
     echo=False,
     connect_args=_connect_args,
-    pool_pre_ping=True,
+    # aiomysql/SQLAlchemy: pool_pre_ping déclenche un ping() incompatible (reconnect arg),
+    # ce qui casse notamment /auth/login via une connexion poolée.
+    pool_pre_ping=False,
     pool_recycle=3600,
 )
 
