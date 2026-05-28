@@ -14,7 +14,13 @@ export default function LotView() {
     .flatMap(p => (p.data || []).map(l => ({ ...l, pays: l.pays || p.pays })))
     .find(l => l.id === lotId)
 
-  const { data: mesuresData, isLoading: mesuresLoading } = useMesures(lotId)
+  const {
+    data: mesuresData,
+    isLoading: mesuresLoading,
+    isError: mesuresError,
+    error,
+    refetch,
+  } = useMesures(lotId)
 
   return (
     <div>
@@ -34,6 +40,14 @@ export default function LotView() {
         <div className="loading">
           <div className="spinner" />
           <span>Chargement des mesures…</span>
+        </div>
+      ) : mesuresError ? (
+        <div className="card empty-state error-state">
+          <p style={{ fontWeight: 700 }}>Erreur de chargement des mesures</p>
+          <p style={{ fontSize: '0.8rem' }}>{error?.message || 'API indisponible'}</p>
+          <button className="btn" onClick={() => refetch()}>
+            Reessayer
+          </button>
         </div>
       ) : (
         <Charts data={mesuresData} pays={lot?.pays} />
