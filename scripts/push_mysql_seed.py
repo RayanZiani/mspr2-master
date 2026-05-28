@@ -137,8 +137,11 @@ def main() -> int:
     cfg = _parse_mysql_url(mysql_url)
 
     ca_path = repo_root / "database" / "ca.pem"
-    if not ca_path.exists():
-        raise SystemExit("Certificat manquant: database/ca.pem")
+    # Dans ce repo, le certificat est stocké sous database/ca.pem/ca.pem (dossier + fichier).
+    if ca_path.exists() and ca_path.is_dir():
+        ca_path = ca_path / "ca.pem"
+    if not ca_path.exists() or not ca_path.is_file():
+        raise SystemExit("Certificat manquant: database/ca.pem/ca.pem")
 
     sql_path = repo_root / "database" / "seed_mysql.sql"
     sql = _read_sql(sql_path)

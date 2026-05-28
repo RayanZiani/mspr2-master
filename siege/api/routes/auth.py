@@ -42,7 +42,7 @@ async def login(body: LoginRequest, request: Request):
         # Ne bloque pas la connexion si la mise à jour d'audit échoue
         pass
     return {
-        "access_token": create_access_token(body.username, role),
+        "access_token": create_access_token(body.username, role, user.get("pays_code")),
         "token_type": "bearer",
         "role": role,
         "username": body.username,

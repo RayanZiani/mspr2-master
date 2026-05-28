@@ -7,7 +7,12 @@ from jose import JWTError, jwt
 from passlib.context import CryptContext
 
 _oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
-_pwd = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
+_pwd = CryptContext(
+    # Compat: on garde pbkdf2_sha256 pour les anciens comptes,
+    # mais on privilégie bcrypt (coût ~12) pour les nouveaux.
+    schemes=["bcrypt", "pbkdf2_sha256"],
+    deprecated="auto",
+)
 
 
 def _require_env(name: str) -> str:
@@ -36,13 +41,21 @@ def verify_password(password: str, password_hash: str) -> bool:
 
 
 def hash_password(password: str) -> str:
-    return _pwd.hash(password)
+    # Passlib choisit le premier schéma (bcrypt) par défaut.
+    # On fixe explicitement le coût pour correspondre aux seeds.
+    return _pwd.hash(password, rounds=12)
 
 
-def create_access_token(sub: str, role: str) -> str:
+def create_access_token(sub: str, role: str, pays_code: str | None) -> str:
     now = datetime.now(timezone.utc)
     exp = now + timedelta(minutes=_access_ttl_minutes())
-    payload = {"sub": sub, "role": role, "iat": int(now.timestamp()), "exp": int(exp.timestamp())}
+    payload = {
+        "sub": sub,
+        "role": role,
+        "pays_code": pays_code,
+        "iat": int(now.timestamp()),
+        "exp": int(exp.timestamp()),
+    }
     return jwt.encode(payload, _secret(), algorithm=_algo())
 
 
@@ -51,11 +64,12 @@ def require_user(token: str = Depends(_oauth2_scheme)) -> dict:
         payload = jwt.decode(token, _secret(), algorithms=[_algo()])
         sub = payload.get("sub")
         role = payload.get("role")
+        pays_code = payload.get("pays_code")
         if not sub:
             raise HTTPException(status_code=401, detail="Token invalide")
         if not role:
             raise HTTPException(status_code=401, detail="Token invalide")
-        return {"sub": sub, "role": role}
+        return {"sub": sub, "role": role, "pays_code": pays_code}
     except JWTError:
         raise HTTPException(status_code=401, detail="Token invalide ou expiré")
 

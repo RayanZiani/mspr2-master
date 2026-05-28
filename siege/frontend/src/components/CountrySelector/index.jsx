@@ -1,4 +1,5 @@
 import { Globe } from 'lucide-react'
+import { UserPermissions } from '../../auth/permissions'
 
 const COUNTRIES = [
   { value: '', label: 'Tous les pays' },
@@ -8,9 +9,13 @@ const COUNTRIES = [
 ]
 
 export default function CountrySelector({ value, onChange }) {
+  const perms = UserPermissions()
+  const allowed = perms.allowedPaysSlugs()
+  const countries = allowed == null ? COUNTRIES : COUNTRIES.filter(c => c.value && allowed.has(c.value))
+
   return (
     <div className="tabs">
-      {COUNTRIES.map(c => (
+      {countries.map(c => (
         <button
           key={c.value}
           className={`tab${value === c.value ? ' active' : ''}`}

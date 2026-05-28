@@ -115,6 +115,25 @@ async def get_mesures_for_lot(lot_id: str) -> list[dict]:
     return mesures
 
 
+async def get_lot_pays_slug(lot_id: str) -> str | None:
+    sql = text(
+        """
+        SELECT p.code AS pays_code
+        FROM lot l
+        INNER JOIN pays p ON p.id = l.pays_id
+        WHERE l.id = :lot_id
+        LIMIT 1
+        """
+    )
+    async with SessionLocal() as session:
+        res = await session.execute(sql, {"lot_id": lot_id})
+        row = res.mappings().first()
+        if not row:
+            return None
+        pays_code = (row.get("pays_code") or "").upper()
+        return PAYS_SLUG.get(pays_code, pays_code.lower() if pays_code else None)
+
+
 async def get_alertes_grouped() -> list[dict]:
     grouped = await get_stocks_grouped()
     return [
