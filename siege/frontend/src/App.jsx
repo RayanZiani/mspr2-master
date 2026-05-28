@@ -1,6 +1,17 @@
 import { useEffect, useRef, useState } from 'react'
 import { BrowserRouter, Routes, Route, NavLink, Navigate, useLocation } from 'react-router-dom'
-import { Coffee, LayoutDashboard, Bell, Database, LogOut, UserCircle2, ChevronDown, Users } from 'lucide-react'
+import {
+  Coffee,
+  LayoutDashboard,
+  Bell,
+  Activity,
+  ShieldCheck,
+  Database,
+  LogOut,
+  UserCircle2,
+  ChevronDown,
+  Users,
+} from 'lucide-react'
 import { ToastProvider } from './components/Toast'
 import { useDbHealth } from './hooks/useDbHealth'
 import { clearSession, getRole, getSession, isAuthed } from './auth/session'
@@ -9,6 +20,8 @@ import LotView from './pages/LotView'
 import AlertsPage from './pages/AlertsPage'
 import Login from './pages/Login'
 import UsersPage from './pages/UsersPage'
+import MesuresPage from './pages/MesuresPage'
+import HealthPage from './pages/HealthPage'
 
 function RequireAuth({ children }) {
   if (!isAuthed()) return <Navigate to="/login" replace />
@@ -103,6 +116,20 @@ function Navbar() {
               <LayoutDashboard size={14} />
               Dashboard
             </NavLink>
+            <NavLink
+              to="/mesures"
+              className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}
+            >
+              <Activity size={14} />
+              Mesures
+            </NavLink>
+            <NavLink
+              to="/sante"
+              className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}
+            >
+              <ShieldCheck size={14} />
+              Santé
+            </NavLink>
             {role === 'ADMIN' && (
               <NavLink
                 to="/alertes"
@@ -153,6 +180,14 @@ export default function App() {
             <Route
               path="/alertes"
               element={<RequireRole roles={['ADMIN']}><AlertsPage /></RequireRole>}
+            />
+            <Route
+              path="/mesures"
+              element={<RequireAuth><MesuresPage /></RequireAuth>}
+            />
+            <Route
+              path="/sante"
+              element={<RequireAuth><HealthPage /></RequireAuth>}
             />
             <Route
               path="/users"

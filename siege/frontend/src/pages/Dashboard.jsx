@@ -5,10 +5,23 @@ import { useStocks } from '../hooks/useStocks'
 import { useToast } from '../components/Toast'
 import CountrySelector from '../components/CountrySelector'
 import LotList from '../components/LotList'
+import { exportLotsCsv } from '../utils/exportCsv'
+import { formatTimeAgo } from '../utils/time'
 
 export default function Dashboard() {
-  const { data: stocksData, isLoading, isError } = useStocks()
+  const {
+    data: stocksData,
+    isLoading,
+    isError,
+    error,
+    refetch,
+    isFetching,
+    dataUpdatedAt,
+  } = useStocks()
   const [selectedPays, setSelectedPays] = useState('')
+  const [search, setSearch] = useState('')
+  const [statusFilters, setStatusFilters] = useState([])
+  const [now, setNow] = useState(Date.now())
   const navigate = useNavigate()
   const toast = useToast()
 
@@ -23,10 +36,48 @@ export default function Dashboard() {
     )
   }, [stocksData])
 
-  const filteredLots = useMemo(() =>
+  const lotsByCountry = useMemo(() =>
     selectedPays ? allLots.filter(l => l.pays === selectedPays) : allLots,
     [allLots, selectedPays]
   )
+
+  const filteredLots = useMemo(() => {
+    const q = search.trim().toLowerCase()
+    return lotsByCountry.filter((lot) => {
+      const matchesSearch = q.length === 0
+        || (lot.id || '').toLowerCase().includes(q)
+        || (lot.exploitation || '').toLowerCase().includes(q)
+        || (lot.entrepot || '').toLowerCase().includes(q)
+
+      const matchesStatus = statusFilters.length === 0 || statusFilters.includes(lot.statut)
+
+      return matchesSearch && matchesStatus
+    })
+  }, [lotsByCountry, search, statusFilters])
+
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 10_000)
+    return () => clearInterval(timer)
+  }, [])
+
+  const lastSync = dataUpdatedAt ? formatTimeAgo(dataUpdatedAt, now) : 'jamais'
+
+  function toggleStatus(status) {
+    setStatusFilters((prev) => (
+      prev.includes(status)
+        ? prev.filter((s) => s !== status)
+        : [...prev, status]
+    ))
+  }
+
+  function onExport() {
+    if (!filteredLots.length) {
+      toast('Aucune ligne a exporter', 'info')
+      return
+    }
+    exportLotsCsv(filteredLots, 'stocks')
+    toast('Export CSV termine', 'success')
+  }
 
   const stats = useMemo(() => ({
     total:     allLots.length,
@@ -44,10 +95,33 @@ export default function Dashboard() {
     )
   }
 
+  if (isError) {
+    return (
+      <div className="card empty-state error-state">
+        <p style={{ fontWeight: 700 }}>Erreur de chargement des stocks</p>
+        <p style={{ fontSize: '0.8rem' }}>{error?.message || 'API indisponible'}</p>
+        <button className="btn" onClick={() => refetch()}>
+          Reessayer
+        </button>
+      </div>
+    )
+  }
+
   return (
     <div>
       <div className="page-header">
-        <h1 className="page-title">Stocks</h1>
+        <div className="page-title-row">
+          <h1 className="page-title">Stocks</h1>
+          <div className="page-actions">
+            <span className="sync-info" title="Derniere mise a jour des donnees">
+              Derniere synchro: {lastSync}
+            </span>
+            <button className="btn btn-light" onClick={() => refetch()} disabled={isFetching}>
+              {isFetching ? 'Rafraichissement…' : 'Rafraichir'}
+            </button>
+            <button className="btn" onClick={onExport}>Exporter CSV</button>
+          </div>
+        </div>
         <p className="page-sub">Vue consolidée multi-pays · Actualisation toutes les 30 s</p>
       </div>
 
@@ -83,6 +157,40 @@ export default function Dashboard() {
       </div>
 
       <CountrySelector value={selectedPays} onChange={setSelectedPays} />
+
+      <div className="toolbar mb-2">
+        <input
+          className="input"
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Rechercher lot, exploitation ou entrepot"
+        />
+        <label className="filter-item">
+          <input
+            type="checkbox"
+            checked={statusFilters.includes('conforme')}
+            onChange={() => toggleStatus('conforme')}
+          />
+          Conforme
+        </label>
+        <label className="filter-item">
+          <input
+            type="checkbox"
+            checked={statusFilters.includes('alerte')}
+            onChange={() => toggleStatus('alerte')}
+          />
+          Alerte
+        </label>
+        <label className="filter-item">
+          <input
+            type="checkbox"
+            checked={statusFilters.includes('perime')}
+            onChange={() => toggleStatus('perime')}
+          />
+          Perime
+        </label>
+      </div>
 
       <div className="grid-wrapper">
         <LotList
