@@ -1,159 +1,258 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { Thermometer, Droplets, BarChart2 } from 'lucide-react'
 import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
-  Legend, ResponsiveContainer, ReferenceLine,
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
+  ResponsiveContainer, ReferenceLine, ReferenceArea,
 } from 'recharts'
 
+// Conditions idéales et tolérances par pays (cf. cahier des charges).
 const SEUILS = {
   bresil:   { temp: 29, humidity: 55 },
   equateur: { temp: 31, humidity: 60 },
   colombie: { temp: 26, humidity: 80 },
 }
+const TOL = { temp: 3, humidity: 2 }
 
-function formatTime(ts) {
+// Nombre max de points tracés : au-delà, on agrège (sinon le hover rame
+// avec des centaines de points, à la manière des graphes Google Finance).
+const MAX_POINTS = 140
+
+const DAY = 86_400_000
+const RANGES = [
+  { id: '24h', label: '24 h', ms: DAY },
+  { id: '7d',  label: '7 j',  ms: 7 * DAY },
+  { id: '30d', label: '30 j', ms: 30 * DAY },
+  { id: 'all', label: 'Tout', ms: Infinity },
+]
+
+const SERIES = {
+  temp: {
+    key: 'temperature', label: 'Température', unit: '°C',
+    rawColor: '#FB923C', Icon: Thermometer, iconCls: 'temp', tol: TOL.temp,
+  },
+  humidity: {
+    key: 'humidity', label: 'Humidité', unit: '%',
+    rawColor: '#38BDF8', Icon: Droplets, iconCls: 'humidity', tol: TOL.humidity,
+  },
+}
+
+function formatTime(ts, withYear) {
   if (!ts) return ''
-  const d = new Date(ts)
-  return d.toLocaleString('fr-FR', {
-    month: '2-digit', day: '2-digit',
-    hour: '2-digit', minute: '2-digit',
+  return new Date(ts).toLocaleString('fr-FR', {
+    day: '2-digit', month: '2-digit',
+    ...(withYear ? {} : { hour: '2-digit', minute: '2-digit' }),
   })
 }
 
-const CustomTooltip = ({ active, payload, label }) => {
+// Agrégation par buckets temporels : moyenne sur chaque tranche.
+function downsample(rows, maxPoints) {
+  if (rows.length <= maxPoints) return rows
+  const size = Math.ceil(rows.length / maxPoints)
+  const out = []
+  for (let i = 0; i < rows.length; i += size) {
+    const slice = rows.slice(i, i + size)
+    const avg = (k) => {
+      const v = slice.map((r) => r[k]).filter((x) => x != null && !Number.isNaN(x))
+      return v.length ? v.reduce((a, b) => a + b, 0) / v.length : null
+    }
+    const mid = slice[Math.floor(slice.length / 2)]
+    out.push({ ...mid, temperature: avg('temperature'), humidity: avg('humidity') })
+  }
+  return out
+}
+
+function statsFor(rows, key) {
+  const v = rows.map((r) => r[key]).filter((x) => x != null && !Number.isNaN(x))
+  if (!v.length) return null
+  return { latest: v[v.length - 1], min: Math.min(...v), max: Math.max(...v) }
+}
+
+function CustomTooltip({ active, payload, label }) {
   if (!active || !payload?.length) return null
   return (
-    <div style={{
-      background: '#fff',
-      border: '1px solid var(--color-border)',
-      borderRadius: 6,
-      padding: '8px 12px',
-      fontSize: 12,
-      boxShadow: 'var(--shadow)',
-    }}>
-      <p style={{ color: 'var(--color-text-muted)', marginBottom: 4, fontSize: 11 }}>{label}</p>
-      {payload.map(p => (
-        <p key={p.name} style={{ color: p.color, fontWeight: 600 }}>
-          {p.name} : {p.value?.toFixed(1)}{p.unit}
-        </p>
+    <div className="chart-tooltip">
+      <div className="chart-tooltip-label">{label}</div>
+      {payload.map((p) => (
+        <div key={p.name} className="chart-tooltip-row" style={{ color: p.stroke }}>
+          <span className="chart-tooltip-dot" style={{ background: p.stroke }} />
+          {p.name} : {Number(p.value).toFixed(1)}{p.unit}
+        </div>
       ))}
     </div>
   )
 }
 
+function MetricChart({ cfg, rows, ideal, stats, animate }) {
+  const gid = `grad-${cfg.key}`
+  const lo = ideal != null ? Math.min(stats?.min ?? ideal, ideal - cfg.tol) : stats?.min
+  const hi = ideal != null ? Math.max(stats?.max ?? ideal, ideal + cfg.tol) : stats?.max
+  const pad = Math.max(1, ((hi ?? 0) - (lo ?? 0)) * 0.15)
+
+  return (
+    <div className="chart-card">
+      <div className="chart-head">
+        <div className="chart-title">
+          <span className={`chart-title-icon ${cfg.iconCls}`}><cfg.Icon size={15} /></span>
+          {cfg.label} ({cfg.unit})
+        </div>
+        {stats && (
+          <div className="chart-stat">
+            <span className="chart-stat-value">{stats.latest.toFixed(1)}</span>
+            <span className="chart-stat-unit">{cfg.unit}</span>
+            <span className="chart-stat-range">min {stats.min.toFixed(1)} · max {stats.max.toFixed(1)}</span>
+          </div>
+        )}
+      </div>
+
+      <ResponsiveContainer width="100%" height={236}>
+        <AreaChart data={rows} margin={{ top: 6, right: 18, left: -8, bottom: 4 }}>
+          <defs>
+            <linearGradient id={gid} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={cfg.rawColor} stopOpacity={0.3} />
+              <stop offset="100%" stopColor={cfg.rawColor} stopOpacity={0} />
+            </linearGradient>
+          </defs>
+
+          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" vertical={false} />
+          <XAxis
+            dataKey="time"
+            tick={{ fontSize: 10, fill: 'var(--text-muted)' }}
+            tickLine={false}
+            axisLine={{ stroke: 'var(--border)' }}
+            interval="preserveStartEnd"
+            minTickGap={48}
+          />
+          <YAxis
+            tick={{ fontSize: 10, fill: 'var(--text-muted)' }}
+            tickLine={false}
+            axisLine={false}
+            domain={[Math.floor((lo ?? 0) - pad), Math.ceil((hi ?? 0) + pad)]}
+            width={42}
+            allowDecimals={false}
+          />
+
+          {ideal != null && (
+            <>
+              <ReferenceArea
+                y1={ideal - cfg.tol}
+                y2={ideal + cfg.tol}
+                fill="var(--accent)"
+                fillOpacity={0.07}
+                stroke="var(--accent-border)"
+                strokeOpacity={0.22}
+                strokeDasharray="4 4"
+              />
+              <ReferenceLine
+                y={ideal}
+                stroke="var(--accent)"
+                strokeDasharray="6 4"
+                strokeOpacity={0.65}
+                label={{
+                  value: `Idéal ${ideal}${cfg.unit}`,
+                  fill: 'var(--accent)', fontSize: 10, position: 'insideTopRight',
+                }}
+              />
+            </>
+          )}
+
+          <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'var(--border-strong)', strokeWidth: 1 }} />
+          <Area
+            type="monotone"
+            dataKey={cfg.key}
+            name={cfg.label}
+            unit={cfg.unit}
+            stroke={cfg.rawColor}
+            strokeWidth={2}
+            fill={`url(#${gid})`}
+            dot={false}
+            activeDot={{ r: 4, strokeWidth: 0 }}
+            connectNulls
+            isAnimationActive={animate}
+            animationDuration={500}
+          />
+        </AreaChart>
+      </ResponsiveContainer>
+    </div>
+  )
+}
+
 export default function Charts({ data, pays }) {
-  const chartData = useMemo(() => {
+  const [range, setRange] = useState('all')
+
+  const allRows = useMemo(() => {
     if (!data) return []
     const flat = Array.isArray(data) && data.length > 0 && data[0]?.data
-      ? data.flatMap(p => p.data || [])
+      ? data.flatMap((p) => p.data || [])
       : (Array.isArray(data) ? data : [])
     return flat
-      .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
-      .map(m => ({ ...m, time: formatTime(m.timestamp) }))
+      .map((m) => ({
+        temperature: m.temperature != null ? Number(m.temperature) : null,
+        humidity: m.humidity != null ? Number(m.humidity) : null,
+        _t: new Date(m.timestamp).getTime(),
+      }))
+      .filter((m) => !Number.isNaN(m._t))
+      .sort((a, b) => a._t - b._t)
   }, [data])
 
-  if (!chartData.length) {
+  // Filtre par période, relatif au dernier relevé.
+  const filtered = useMemo(() => {
+    if (!allRows.length) return []
+    const r = RANGES.find((x) => x.id === range) || RANGES[3]
+    if (!Number.isFinite(r.ms)) return allRows
+    const lastT = allRows[allRows.length - 1]._t
+    return allRows.filter((m) => m._t >= lastT - r.ms)
+  }, [allRows, range])
+
+  const view = useMemo(() => {
+    const reduced = downsample(filtered, MAX_POINTS)
+    const span = filtered.length ? filtered[filtered.length - 1]._t - filtered[0]._t : 0
+    const withYear = span > 3 * DAY
+    return reduced.map((m) => ({ ...m, time: formatTime(m._t, withYear) }))
+  }, [filtered])
+
+  const tempStats = useMemo(() => statsFor(filtered, 'temperature'), [filtered])
+  const humStats = useMemo(() => statsFor(filtered, 'humidity'), [filtered])
+
+  if (!allRows.length) {
     return (
       <div className="card empty-state">
         <BarChart2 size={36} className="empty-icon" />
-        <p style={{ fontWeight: 500 }}>Aucune mesure disponible</p>
-        <p style={{ fontSize: '0.8rem' }}>Les données apparaîtront dès que des relevés IoT seront reçus.</p>
+        <p style={{ fontWeight: 600 }}>Aucune mesure disponible</p>
+        <p style={{ fontSize: '0.82rem' }}>
+          Les données apparaîtront dès réception des premiers relevés IoT.
+        </p>
       </div>
     )
   }
 
   const seuil = SEUILS[pays]
+  const animate = view.length <= 60
 
   return (
     <div>
-      <div className="chart-card">
-        <div className="chart-title">
-          <Thermometer size={14} />
-          Température (°C)
+      <div className="chart-toolbar">
+        <span className="chart-toolbar-info">
+          {filtered.length} relevé{filtered.length > 1 ? 's' : ''}
+          {filtered.length !== view.length && ` · ${view.length} points affichés`}
+        </span>
+        <div className="range-switch" role="tablist" aria-label="Période">
+          {RANGES.map((r) => (
+            <button
+              key={r.id}
+              role="tab"
+              aria-selected={range === r.id}
+              className={`range-btn${range === r.id ? ' active' : ''}`}
+              onClick={() => setRange(r.id)}
+            >
+              {r.label}
+            </button>
+          ))}
         </div>
-        <ResponsiveContainer width="100%" height={240}>
-          <LineChart data={chartData} margin={{ top: 4, right: 16, left: -12, bottom: 4 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
-            <XAxis
-              dataKey="time"
-              tick={{ fontSize: 10, fill: 'var(--color-text-muted)' }}
-              interval="preserveStartEnd"
-            />
-            <YAxis
-              tick={{ fontSize: 10, fill: 'var(--color-text-muted)' }}
-              domain={['auto', 'auto']}
-            />
-            <Tooltip content={<CustomTooltip />} />
-            <Legend wrapperStyle={{ fontSize: 11 }} />
-            {seuil && (
-              <>
-                <ReferenceLine
-                  y={seuil.temp}
-                  stroke="var(--color-accent)"
-                  strokeDasharray="5 3"
-                  label={{ value: `Seuil ${seuil.temp}°C`, fill: 'var(--color-accent)', fontSize: 10, position: 'insideTopRight' }}
-                />
-                <ReferenceLine y={seuil.temp + 3} stroke="var(--color-danger-mid)" strokeDasharray="2 5" strokeOpacity={0.5} />
-                <ReferenceLine y={seuil.temp - 3} stroke="var(--color-danger-mid)" strokeDasharray="2 5" strokeOpacity={0.5} />
-              </>
-            )}
-            <Line
-              type="monotone"
-              dataKey="temperature"
-              stroke="#DC2626"
-              name="Température"
-              unit="°C"
-              dot={false}
-              strokeWidth={2}
-              activeDot={{ r: 4 }}
-            />
-          </LineChart>
-        </ResponsiveContainer>
       </div>
 
-      <div className="chart-card">
-        <div className="chart-title">
-          <Droplets size={14} />
-          Humidité (%)
-        </div>
-        <ResponsiveContainer width="100%" height={240}>
-          <LineChart data={chartData} margin={{ top: 4, right: 16, left: -12, bottom: 4 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
-            <XAxis
-              dataKey="time"
-              tick={{ fontSize: 10, fill: 'var(--color-text-muted)' }}
-              interval="preserveStartEnd"
-            />
-            <YAxis
-              tick={{ fontSize: 10, fill: 'var(--color-text-muted)' }}
-              domain={['auto', 'auto']}
-            />
-            <Tooltip content={<CustomTooltip />} />
-            <Legend wrapperStyle={{ fontSize: 11 }} />
-            {seuil && (
-              <>
-                <ReferenceLine
-                  y={seuil.humidity}
-                  stroke="#2563EB"
-                  strokeDasharray="5 3"
-                  label={{ value: `Seuil ${seuil.humidity}%`, fill: '#2563EB', fontSize: 10, position: 'insideTopRight' }}
-                />
-                <ReferenceLine y={seuil.humidity + 2} stroke="#1D4ED8" strokeDasharray="2 5" strokeOpacity={0.5} />
-                <ReferenceLine y={seuil.humidity - 2} stroke="#1D4ED8" strokeDasharray="2 5" strokeOpacity={0.5} />
-              </>
-            )}
-            <Line
-              type="monotone"
-              dataKey="humidity"
-              stroke="#2563EB"
-              name="Humidité"
-              unit="%"
-              dot={false}
-              strokeWidth={2}
-              activeDot={{ r: 4 }}
-            />
-          </LineChart>
-        </ResponsiveContainer>
+      <div className="chart-grid-2">
+        <MetricChart cfg={SERIES.temp} rows={view} ideal={seuil?.temp} stats={tempStats} animate={animate} />
+        <MetricChart cfg={SERIES.humidity} rows={view} ideal={seuil?.humidity} stats={humStats} animate={animate} />
       </div>
     </div>
   )

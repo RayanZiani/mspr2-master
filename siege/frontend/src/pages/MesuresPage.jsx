@@ -133,7 +133,7 @@ export default function MesuresPage() {
       ) : (
         <>
           <div className="card mb-2">
-            <p style={{ fontSize: '0.82rem', color: 'var(--color-text-muted)' }}>
+            <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
               Lot courant: <strong>{currentLot?.id || '-'}</strong>
             </p>
           </div>
@@ -145,7 +145,7 @@ export default function MesuresPage() {
               Derniers releves
             </div>
             {!rows.length ? (
-              <p style={{ color: 'var(--color-text-muted)', fontSize: '0.82rem' }}>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>
                 Aucune mesure disponible pour ce lot.
               </p>
             ) : (

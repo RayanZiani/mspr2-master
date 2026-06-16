@@ -1,13 +1,16 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowRight } from 'lucide-react'
+import { ArrowRight, Coffee, User, Lock, Eye, EyeOff, ShieldCheck } from 'lucide-react'
 import { api } from '../services/api'
 import { setProfile, setSession } from '../auth/session'
+
+const COUNTRIES = ['Brésil', 'Équateur', 'Colombie']
 
 export default function Login() {
   const nav = useNavigate()
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -21,7 +24,7 @@ export default function Login() {
       setProfile({ pays_code: res.pays_code, email: res.email })
       nav('/', { replace: true })
     } catch (err) {
-      setError("Identifiants invalides ou API indisponible.")
+      setError('Identifiants invalides ou service indisponible.')
     } finally {
       setLoading(false)
     }
@@ -29,52 +32,118 @@ export default function Login() {
 
   return (
     <div className="login-screen">
-      <div className="login-stage">
-        <div className="login-card">
-          <div className="login-eyebrow">
-            <span className="login-eyebrow-line" aria-hidden="true" />
-            Accès siège
-          </div>
+      {/* Panneau de marque */}
+      <aside className="login-brand">
+        <div className="login-brand-top">
+          <span className="login-logo"><Coffee size={20} /></span>
+          <span className="login-logo-text">FutureKawa</span>
+        </div>
 
-          <h1 className="login-title">Connexion</h1>
-          <p className="login-subtitle">Tableau de bord de supervision des plantations</p>
+        <div className="login-brand-body">
+          <span className="login-kicker">Supervision logistique</span>
+          <h1 className="login-headline">
+            Du grain de café à l'expédition, sous contrôle.
+          </h1>
+          <p className="login-lede">
+            Suivi des stocks, traçabilité des lots et conditions de conservation
+            consolidés en temps réel pour l'ensemble des exploitations.
+          </p>
+
+          <div className="login-countries">
+            {COUNTRIES.map((c) => (
+              <span key={c} className="login-chip">
+                <span className="login-chip-dot" />
+                {c}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        <div className="login-brand-foot">
+          <div className="login-feature">
+            <span className="login-feature-k">3</span>
+            <span className="login-feature-v">Pays supervisés</span>
+          </div>
+          <div className="login-feature">
+            <span className="login-feature-k">IoT</span>
+            <span className="login-feature-v">Relevés automatisés</span>
+          </div>
+          <div className="login-feature">
+            <span className="login-feature-k">24/7</span>
+            <span className="login-feature-v">Surveillance continue</span>
+          </div>
+        </div>
+      </aside>
+
+      {/* Panneau formulaire */}
+      <main className="login-panel">
+        <div className="login-form-wrap">
+          <div className="login-form-head">
+            <h2 className="login-form-title">Connexion au siège</h2>
+            <p className="login-form-sub">Accès réservé au personnel autorisé.</p>
+          </div>
 
           <form onSubmit={onSubmit} className="login-form">
             <label className="login-label">
-              Utilisateur
-              <input
-                className="login-input"
-                value={username}
-                onChange={e => setUsername(e.target.value)}
-                autoComplete="username"
-                required
-              />
+              Identifiant
+              <div className="login-field">
+                <User size={16} className="login-field-icon" />
+                <input
+                  className="login-input"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  autoComplete="username"
+                  placeholder="prenom.nom"
+                  required
+                  autoFocus
+                />
+              </div>
             </label>
 
             <label className="login-label">
               Mot de passe
-              <input
-                className="login-input"
-                type="password"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                autoComplete="current-password"
-                required
-              />
+              <div className="login-field">
+                <Lock size={16} className="login-field-icon" />
+                <input
+                  className="login-input"
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  autoComplete="current-password"
+                  placeholder="Votre mot de passe"
+                  required
+                />
+                <button
+                  type="button"
+                  className="login-reveal"
+                  onClick={() => setShowPassword((v) => !v)}
+                  aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+                  tabIndex={-1}
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
             </label>
 
-            {error && <div className="login-error">{error}</div>}
+            {error && (
+              <div className="login-error" role="alert">
+                <ShieldCheck size={15} />
+                {error}
+              </div>
+            )}
 
             <button className="login-btn" disabled={loading}>
-              <span>{loading ? 'Connexion…' : 'Se connecter'}</span>
-              <ArrowRight size={16} />
+              <span>{loading ? 'Connexion en cours' : 'Se connecter'}</span>
+              {!loading && <ArrowRight size={16} className="btn-arrow" />}
             </button>
           </form>
 
-          <div className="login-footer-note">Accès restreint — personnel autorisé uniquement</div>
+          <p className="login-foot-note">
+            <ShieldCheck size={14} />
+            Connexion sécurisée, sessions tracées.
+          </p>
         </div>
-      </div>
+      </main>
     </div>
   )
 }
-
