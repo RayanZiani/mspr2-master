@@ -35,7 +35,7 @@ export default function LotDetail({ lot }) {
   if (!lot) {
     return (
       <div className="card mb-2">
-        <p style={{ color: 'var(--color-text-muted)' }}>Informations du lot indisponibles.</p>
+        <p style={{ color: 'var(--text-muted)' }}>Informations du lot indisponibles.</p>
       </div>
     )
   }
@@ -50,7 +50,7 @@ export default function LotDetail({ lot }) {
       <div className="lot-detail-header">
         <span className="lot-detail-id">
           Lot{' '}
-          <code style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', fontFamily: 'Consolas, monospace' }}>
+          <code style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontFamily: 'Consolas, monospace' }}>
             {lot.id}
           </code>
         </span>
@@ -81,8 +81,8 @@ export default function LotDetail({ lot }) {
           <span className="lot-field-label"><Clock size={10} /> Durée en stock</span>
           <span className={`lot-field-value ${daysClass}`}>
             {days != null ? `${days} jours` : '-'}
-            {days > 365 && ' — périmé'}
-            {days > 300 && days <= 365 && ' — proche péremption'}
+            {days > 365 && ' (périmé)'}
+            {days > 300 && days <= 365 && ' (proche péremption)'}
           </span>
         </div>
         {seuil && (
