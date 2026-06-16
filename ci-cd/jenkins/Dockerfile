@@ -2,17 +2,24 @@ FROM jenkins/jenkins:lts-jdk17
 
 USER root
 
+# Ajouter le dépôt pour Python 3.11
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    python3 \
+    software-properties-common \
+    gnupg \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3.11 \
+    python3.11-venv \
+    python3.11-distutils \
     python3-pip \
-    python3-venv \
-    python-is-python3 \
     curl \
     unzip \
     nodejs \
     npm \
     ca-certificates \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 1
 
 # Docker CLI (binaire statique — docker.io Debian ne fournit pas toujours le client)
 ARG DOCKER_VERSION=26.1.4
