@@ -19,7 +19,12 @@ pipeline {
         stage('Install') {
             steps {
                 sh '''
+                    # Installer les dépendances Python pour les tests
                     python3 -m pip install -r tests/requirements.txt --break-system-packages
+                    python3 -m pip install -r pays/bresil/api/requirements.txt --break-system-packages
+                    python3 -m pip install -r siege/api/requirements.txt --break-system-packages
+                    
+                    # Installer les dépendances Node.js
                     npm ci || npm install
                     npx playwright install chromium || true
                 '''
