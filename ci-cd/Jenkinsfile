@@ -70,13 +70,14 @@ EOF
         stage('Démarrage stack') {
             steps {
                 sh '''
-                    # Nettoyer TOUS les conteneurs et réseaux existants
-                    docker ps -aq | xargs -r docker rm -f || true
-                    docker network ls -q | xargs -r docker network rm 2>/dev/null || true
-                    docker-compose down -v --remove-orphans || true
+                    # Nettoyage rapide et ciblé des conteneurs FutureKawa
+                    docker-compose down -v --remove-orphans 2>/dev/null || true
+                    
+                    # Supprimer uniquement les conteneurs qui commencent par futurekawa, mosquitto, mysql, redis, node-red, api-, frontend-
+                    docker ps -aq --filter "name=futurekawa" --filter "name=mosquitto" --filter "name=mysql-" --filter "name=redis-" --filter "name=node-red" --filter "name=api-" --filter "name=frontend-" | xargs -r docker rm -f 2>/dev/null || true
                     
                     # Démarrer la stack proprement
-                    docker-compose up -d
+                    docker-compose up -d --force-recreate
                 '''
                 catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
                     sh 'bash ci-cd/scripts/wait_for_stack.sh'
