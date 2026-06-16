@@ -69,7 +69,12 @@ EOF
 
         stage('Démarrage stack') {
             steps {
-                sh 'docker-compose up -d'
+                sh '''
+                    # Nettoyer les conteneurs précédents
+                    docker-compose down -v --remove-orphans || true
+                    # Démarrer la stack
+                    docker-compose up -d
+                '''
                 catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
                     sh 'bash ci-cd/scripts/wait_for_stack.sh'
                 }
