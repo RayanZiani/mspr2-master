@@ -34,6 +34,21 @@ pipeline {
             }
         }
 
+        stage('Préparation environnement') {
+            steps {
+                sh '''
+                    # Créer le fichier .env pour les variables MySQL requises par docker-compose
+                    cat > .env << 'EOF'
+MYSQL_ROOT_PASSWORD=rootpassword
+MYSQL_DATABASE=futurekawa
+MYSQL_USER=kawa_user
+MYSQL_PASSWORD=kawapassword
+MYSQL_URL=mysql://kawa_user:kawapassword@localhost:3306/futurekawa
+EOF
+                '''
+            }
+        }
+
         stage('Build') {
             steps {
                 sh 'docker-compose build'
