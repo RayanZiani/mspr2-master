@@ -5,6 +5,9 @@ services:
   jenkins:
     build: ./ci-cd/jenkins
     container_name: futurekawa-jenkins
+    # Docker Desktop (Windows) monte souvent docker.sock en root:root.
+    # Pour la démo locale, on exécute Jenkins en root afin d'accéder au daemon Docker.
+    user: "0:0"
     ports:
       - "8080:8080"
       - "50000:50000"
