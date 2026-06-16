@@ -2,11 +2,13 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-COPY requirements.txt api/
-RUN pip install --no-cache-dir -r api/requirements.txt
+# Copie requirements.txt depuis le contexte Docker
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
-COPY . api/
+# Copie tout le code de l'API
+COPY . .
 
 ENV PYTHONPATH=/app
 
-CMD ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
