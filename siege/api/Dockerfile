@@ -6,9 +6,9 @@ WORKDIR /app
 COPY siege/api/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copie tout le code de l'API depuis siege/api
-COPY siege/api/ .
+# Copie tout le code de l'API dans un sous-dossier "api" pour préserver les imports
+COPY siege/api/ ./api/
 
 ENV PYTHONPATH=/app
 
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000"]
