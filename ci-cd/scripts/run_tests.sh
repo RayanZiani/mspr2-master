@@ -14,14 +14,14 @@ install_python_deps() {
 run_unit_tests() {
   echo "=== Tests unitaires (pytest via Docker Python 3.11) ==="
   docker run --rm -v "$ROOT_DIR:/workspace" -w /workspace/tests python:3.11-slim \
-    bash -c "pip install -q -r requirements.txt -r ../pays/bresil/api/requirements.txt -r ../siege/api/requirements.txt \
+    bash -c "pip install -q -r /workspace/tests/requirements.txt -r /workspace/pays/bresil/api/requirements.txt -r /workspace/siege/api/requirements.txt \
       && python -m pytest unit/ -v -m unit \
       --junitxml=reports/unit-results.xml \
       --alluredir=reports/allure-results \
-      --cov=../pays/bresil/api/services \
-      --cov=../pays/equateur/api/services \
-      --cov=../pays/colombie/api/services \
-      --cov=../siege/api/services \
+      --cov=/workspace/pays/bresil/api/services \
+      --cov=/workspace/pays/equateur/api/services \
+      --cov=/workspace/pays/colombie/api/services \
+      --cov=/workspace/siege/api/services \
       --cov-report=xml:reports/coverage.xml \
       --cov-report=html:reports/htmlcov \
       --cov-report=term-missing"
