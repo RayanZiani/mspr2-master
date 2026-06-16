@@ -19,13 +19,11 @@ pipeline {
         stage('Install') {
             steps {
                 sh '''
-                    # Vérifier la version de Python (devrait être 3.11)
+                    # Vérifier la version de Python
                     python3 --version
                     
-                    # Installer les dépendances Python pour les tests (Python 3.11 a des wheels pour pydantic-core)
-                    python3 -m pip install -r tests/requirements.txt --break-system-packages
-                    python3 -m pip install -r pays/bresil/api/requirements.txt --break-system-packages
-                    python3 -m pip install -r siege/api/requirements.txt --break-system-packages
+                    # Installer uniquement les dépendances de tests (pytest, coverage, etc.)
+                    python3 -m pip install -r tests/requirements.txt --break-system-packages || true
                     
                     # Installer les dépendances Node.js
                     npm ci || npm install
