@@ -10,12 +10,29 @@ mkdir -p tests/reports tests/e2e/.auth
 install_python_deps() {
   python3 -m pip install --upgrade pip -q --break-system-packages
   python3 -m pip install -r tests/requirements.txt -q --break-system-packages
-  python3 -m pip install -r pays/bresil/api/requirements.txt -q --break-system-packages
-  python3 -m pip install -r siege/api/requirements.txt -q --break-system-packages
 }
 
 run_unit_tests() {
-  echo "=== Tests unitaires (pytest) ==="
+  echo "=== Tests unitaires (pytest via Docker Python 3.11) ==="
+  docker run --rm -v "$ROOT_DIR:/workspace" -w /workspace/tests python:3.11-slim \
+    bash -c "pip install -q -r requirements.txt -r ../pays/bresil/api/requirements.txt -r ../siege/api/requirements.txt \
+      && python -m pytest unit/ -v -m unit \
+      --junitxml=reports/unit-results.xml \
+      --alluredir=reports/allure-results \
+      --cov=../pays/bresil/api/services \
+      --cov=../pays/equateur/api/services \
+      --cov=../pays/colombie/api/services \
+      --cov=../siege/api/services \
+      --cov-report=xml:reports/coverage.xml \
+      --cov-report=html:reports/htmlcov \
+      --cov-report=term-missing"
+}
+
+run_unit_tests_local() {
+  echo "=== Tests unitaires (pytest local) ==="
+  install_python_deps
+  python3 -m pip install -r pays/bresil/api/requirements.txt -q --break-system-packages
+  python3 -m pip install -r siege/api/requirements.txt -q --break-system-packages
   cd tests
   python3 -m pytest unit/ -v -m unit \
     --junitxml=reports/unit-results.xml \
@@ -47,7 +64,7 @@ run_api_tests() {
 
 run_e2e_tests() {
   echo "=== Tests E2E (Playwright) ==="
-  npx playwright install chromium --with-deps
+  npx playwright install chromium || true
   cd tests/e2e
   npx playwright test
 }

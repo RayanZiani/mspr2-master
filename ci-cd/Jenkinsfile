@@ -19,10 +19,8 @@ pipeline {
                 sh '''
                     python3 -m pip install --upgrade pip --break-system-packages
                     pip3 install -r tests/requirements.txt --break-system-packages
-                    pip3 install -r pays/bresil/api/requirements.txt --break-system-packages
-                    pip3 install -r siege/api/requirements.txt --break-system-packages
                     npm ci || npm install
-                    npx playwright install chromium --with-deps || true
+                    npx playwright install chromium || true
                 '''
             }
         }
