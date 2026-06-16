@@ -22,8 +22,12 @@ pipeline {
                     # Vérifier la version de Python
                     python3 --version
                     
-                    # Installer uniquement les dépendances de tests (pytest, coverage, etc.)
+                    # Installer les dépendances de tests (pytest, coverage, etc.)
                     python3 -m pip install -r tests/requirements.txt --break-system-packages || true
+                    
+                    # Installer les dépendances des API (ignorer les erreurs de compilation pydantic-core)
+                    python3 -m pip install fastapi uvicorn python-dotenv redis httpx paho-mqtt --break-system-packages || true
+                    python3 -m pip install bcrypt passlib python-jose --break-system-packages || true
                     
                     # Installer les dépendances Node.js
                     npm ci || npm install
