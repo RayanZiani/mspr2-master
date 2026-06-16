@@ -3,34 +3,188 @@
     "name": "FutureKawa API",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{ACCESS_TOKEN}}", "type": "string" }]
+  },
   "item": [
     {
-      "name": "Health Check Brésil",
+      "name": "Auth — Login siège",
       "request": {
-        "method": "GET",
-        "url": "{{API_BRESIL_URL}}/health"
-      }
+        "auth": { "type": "noauth" },
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"username\": \"{{E2E_USER}}\",\n  \"password\": \"{{E2E_PASSWORD}}\"\n}"
+        },
+        "url": "{{API_SIEGE_URL}}/auth/login"
+      },
+      "event": [{
+        "listen": "test",
+        "script": {
+          "exec": [
+            "pm.test('status 200', () => pm.response.to.have.status(200));",
+            "const body = pm.response.json();",
+            "pm.test('token bearer', () => pm.expect(body.token_type).to.eql('bearer'));",
+            "pm.test('role admin', () => pm.expect(body.role).to.eql('ADMIN'));",
+            "pm.collectionVariables.set('ACCESS_TOKEN', body.access_token);"
+          ]
+        }
+      }]
+    },
+    {
+      "name": "Auth — Login invalide",
+      "request": {
+        "auth": { "type": "noauth" },
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"username\": \"admin_siege\",\n  \"password\": \"wrong-password\"\n}"
+        },
+        "url": "{{API_SIEGE_URL}}/auth/login"
+      },
+      "event": [{
+        "listen": "test",
+        "script": { "exec": ["pm.test('status 401', () => pm.response.to.have.status(401));"] }
+      }]
+    },
+    {
+      "name": "Health Check Brésil",
+      "request": { "auth": { "type": "noauth" }, "method": "GET", "url": "{{API_BRESIL_URL}}/health" },
+      "event": [{ "listen": "test", "script": { "exec": [
+        "pm.test('status 200', () => pm.response.to.have.status(200));",
+        "pm.test('pays bresil', () => pm.expect(pm.response.json().pays).to.eql('bresil'));",
+        "pm.test('status ok', () => pm.expect(pm.response.json().status).to.eql('ok'));"
+      ] } }]
+    },
+    {
+      "name": "Health Check Équateur",
+      "request": { "auth": { "type": "noauth" }, "method": "GET", "url": "{{API_EQUATEUR_URL}}/health" },
+      "event": [{ "listen": "test", "script": { "exec": [
+        "pm.test('status 200', () => pm.response.to.have.status(200));",
+        "pm.test('pays equateur', () => pm.expect(pm.response.json().pays).to.eql('equateur'));"
+      ] } }]
+    },
+    {
+      "name": "Health Check Colombie",
+      "request": { "auth": { "type": "noauth" }, "method": "GET", "url": "{{API_COLOMBIE_URL}}/health" },
+      "event": [{ "listen": "test", "script": { "exec": [
+        "pm.test('status 200', () => pm.response.to.have.status(200));",
+        "pm.test('pays colombie', () => pm.expect(pm.response.json().pays).to.eql('colombie'));"
+      ] } }]
     },
     {
       "name": "Liste des lots Brésil",
-      "request": {
-        "method": "GET",
-        "url": "{{API_BRESIL_URL}}/lots/"
-      }
+      "request": { "auth": { "type": "noauth" }, "method": "GET", "url": "{{API_BRESIL_URL}}/lots/" },
+      "event": [{ "listen": "test", "script": { "exec": [
+        "pm.test('status 200', () => pm.response.to.have.status(200));",
+        "pm.test('liste JSON', () => pm.expect(pm.response.json()).to.be.an('array'));",
+        "const lots = pm.response.json();",
+        "if (lots.length) {",
+        "  pm.collectionVariables.set('BRESIL_LOT_ID', lots[0].id);",
+        "}"
+      ] } }]
+    },
+    {
+      "name": "Liste des lots Équateur",
+      "request": { "auth": { "type": "noauth" }, "method": "GET", "url": "{{API_EQUATEUR_URL}}/lots/" },
+      "event": [{ "listen": "test", "script": { "exec": [
+        "pm.test('status 200', () => pm.response.to.have.status(200));",
+        "pm.test('liste JSON', () => pm.expect(pm.response.json()).to.be.an('array'));"
+      ] } }]
+    },
+    {
+      "name": "Alertes Brésil",
+      "request": { "auth": { "type": "noauth" }, "method": "GET", "url": "{{API_BRESIL_URL}}/alertes/" },
+      "event": [{ "listen": "test", "script": { "exec": [
+        "pm.test('status 200', () => pm.response.to.have.status(200));",
+        "pm.test('liste JSON', () => pm.expect(pm.response.json()).to.be.an('array'));"
+      ] } }]
+    },
+    {
+      "name": "Mesures Brésil filtrées",
+      "request": { "auth": { "type": "noauth" }, "method": "GET", "url": "{{API_BRESIL_URL}}/mesures/?lot_id={{BRESIL_LOT_ID}}" },
+      "event": [{ "listen": "test", "script": { "exec": [
+        "pm.test('status 200', () => pm.response.to.have.status(200));",
+        "pm.test('liste mesures', () => pm.expect(pm.response.json()).to.be.an('array'));"
+      ] } }]
     },
     {
       "name": "Health Check Siège",
-      "request": {
-        "method": "GET",
-        "url": "{{API_SIEGE_URL}}/health"
-      }
+      "request": { "auth": { "type": "noauth" }, "method": "GET", "url": "{{API_SIEGE_URL}}/health" },
+      "event": [{ "listen": "test", "script": { "exec": [
+        "pm.test('status 200', () => pm.response.to.have.status(200));",
+        "pm.test('status ok', () => pm.expect(pm.response.json().status).to.eql('ok'));"
+      ] } }]
+    },
+    {
+      "name": "Profil utilisateur",
+      "request": { "method": "GET", "url": "{{API_SIEGE_URL}}/auth/me" },
+      "event": [{ "listen": "test", "script": { "exec": [
+        "pm.test('status 200', () => pm.response.to.have.status(200));",
+        "pm.test('role admin', () => pm.expect(pm.response.json().role).to.eql('ADMIN'));",
+        "pm.test('username', () => pm.expect(pm.response.json().username).to.eql('admin_siege'));"
+      ] } }]
+    },
+    {
+      "name": "Stocks sans auth — 401",
+      "request": { "auth": { "type": "noauth" }, "method": "GET", "url": "{{API_SIEGE_URL}}/stocks/" },
+      "event": [{ "listen": "test", "script": { "exec": [
+        "pm.test('status 401', () => pm.response.to.have.status(401));"
+      ] } }]
     },
     {
       "name": "Stocks agrégés",
-      "request": {
-        "method": "GET",
-        "url": "{{API_SIEGE_URL}}/stocks/"
-      }
+      "request": { "method": "GET", "url": "{{API_SIEGE_URL}}/stocks/" },
+      "event": [{ "listen": "test", "script": { "exec": [
+        "pm.test('status 200', () => pm.response.to.have.status(200));",
+        "pm.test('liste pays', () => pm.expect(pm.response.json()).to.be.an('array'));",
+        "const stocks = pm.response.json();",
+        "pm.test('3 pays', () => pm.expect(stocks.length).to.be.at.least(3));",
+        "for (const p of stocks) {",
+        "  if (p.data && p.data.length) {",
+        "    pm.collectionVariables.set('LOT_ID', p.data[0].id);",
+        "    break;",
+        "  }",
+        "}"
+      ] } }]
+    },
+    {
+      "name": "Alertes consolidées",
+      "request": { "method": "GET", "url": "{{API_SIEGE_URL}}/alertes/" },
+      "event": [{ "listen": "test", "script": { "exec": [
+        "pm.test('status 200', () => pm.response.to.have.status(200));",
+        "pm.test('liste JSON', () => pm.expect(pm.response.json()).to.be.an('array'));"
+      ] } }]
+    },
+    {
+      "name": "Mesures sans lot_id — 400",
+      "request": { "method": "GET", "url": "{{API_SIEGE_URL}}/mesures/" },
+      "event": [{ "listen": "test", "script": { "exec": [
+        "pm.test('status 400', () => pm.response.to.have.status(400));"
+      ] } }]
+    },
+    {
+      "name": "Mesures consolidées",
+      "request": { "method": "GET", "url": "{{API_SIEGE_URL}}/mesures/?lot_id={{LOT_ID}}" },
+      "event": [{ "listen": "test", "script": { "exec": [
+        "pm.test('status 200', () => pm.response.to.have.status(200));",
+        "pm.test('liste mesures', () => pm.expect(pm.response.json()).to.be.an('array'));"
+      ] } }]
+    },
+    {
+      "name": "Liste utilisateurs (admin)",
+      "request": { "method": "GET", "url": "{{API_SIEGE_URL}}/users/" },
+      "event": [{ "listen": "test", "script": { "exec": [
+        "pm.test('status 200', () => pm.response.to.have.status(200));",
+        "pm.test('liste users', () => pm.expect(pm.response.json()).to.be.an('array'));",
+        "pm.test('contient admin', () => {",
+        "  const users = pm.response.json();",
+        "  pm.expect(users.some(u => u.username === 'admin_siege')).to.be.true;",
+        "});"
+      ] } }]
     }
   ]
 }

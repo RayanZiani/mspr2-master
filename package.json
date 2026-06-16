@@ -7,6 +7,26 @@
     "start": "docker compose up --build",
     "start:detached": "docker compose up --build -d",
     "stop": "docker compose down",
-    "logs": "docker compose logs -f"
+    "logs": "docker compose logs -f",
+    "test:unit": "powershell -ExecutionPolicy Bypass -File ci-cd/scripts/run_tests.ps1 -Mode unit",
+    "test:integration": "powershell -ExecutionPolicy Bypass -File ci-cd/scripts/run_tests.ps1 -Mode integration",
+    "test:api": "powershell -ExecutionPolicy Bypass -File ci-cd/scripts/run_tests.ps1 -Mode api",
+    "test:e2e": "powershell -ExecutionPolicy Bypass -File ci-cd/scripts/run_tests.ps1 -Mode e2e",
+    "test": "powershell -ExecutionPolicy Bypass -File ci-cd/scripts/run_tests.ps1 -Mode all",
+    "test:all": "powershell -ExecutionPolicy Bypass -File ci-cd/scripts/run_all_tests.ps1",
+    "test:unit:bash": "bash ci-cd/scripts/run_tests.sh unit",
+    "test:bash": "bash ci-cd/scripts/run_tests.sh all",
+    "lint": "flake8 pays/bresil/api/services pays/equateur/api/services pays/colombie/api/services siege/api/services --config=.flake8",
+    "static": "bash ci-cd/scripts/run_static_analysis.sh",
+    "wait:stack": "powershell -ExecutionPolicy Bypass -File ci-cd/scripts/wait_for_stack.ps1",
+    "allure:report": "allure generate tests/reports/allure-results -o tests/reports/allure-report --clean",
+    "ci:up": "docker compose -f docker-compose.ci.yml up -d --build",
+    "ci:down": "docker compose -f docker-compose.ci.yml down"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.49.1",
+    "allure-commandline": "2.32.0",
+    "allure-playwright": "3.0.6",
+    "newman": "6.2.1"
   }
 }

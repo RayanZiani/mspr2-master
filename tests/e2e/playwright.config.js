@@ -1,9 +1,42 @@
-import { defineConfig } from '@playwright/test'
+import { defineConfig, devices } from '@playwright/test'
 
 export default defineConfig({
-  testDir: './specs',
+  fullyParallel: false,
+  retries: 1,
+  workers: 1,
+  timeout: 60_000,
   use: {
-    baseURL: 'http://localhost:80',
+    baseURL: process.env.E2E_BASE_URL || 'http://localhost:80',
+    trace: 'on-first-retry',
+    screenshot: 'only-on-failure',
   },
-  reporter: [['junit', { outputFile: '../reports/e2e-results.xml' }]],
+  projects: [
+    {
+      name: 'setup',
+      testMatch: /auth\.setup\.js/,
+    },
+    {
+      name: 'chromium',
+      testDir: './specs',
+      testIgnore: /guest\.spec\.js/,
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: '.auth/user.json',
+      },
+      dependencies: ['setup'],
+    },
+    {
+      name: 'guest',
+      testMatch: /guest\.spec\.js/,
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: { cookies: [], origins: [] },
+      },
+    },
+  ],
+  reporter: [
+    ['list'],
+    ['junit', { outputFile: '../reports/e2e-results.xml' }],
+    ['allure-playwright', { outputFolder: '../reports/allure-results' }],
+  ],
 })

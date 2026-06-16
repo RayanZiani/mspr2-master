@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 from api.config import (
     SEUIL_TEMP, SEUIL_HUMIDITY,
     TOLERANCE_TEMP, TOLERANCE_HUMIDITY,

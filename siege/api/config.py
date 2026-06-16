@@ -23,6 +23,12 @@ REDIS_CACHE_TTL = int(os.getenv("REDIS_CACHE_TTL", 60))
 MESURES_DAYS = int(os.getenv("MESURES_DAYS", 30))
 MESURES_LIMIT = int(os.getenv("MESURES_LIMIT", 5000))
 
+API_URLS = {
+    "bresil": os.getenv("API_BRESIL_URL", "http://api-bresil:8000"),
+    "equateur": os.getenv("API_EQUATEUR_URL", "http://api-equateur:8000"),
+    "colombie": os.getenv("API_COLOMBIE_URL", "http://api-colombie:8000"),
+}
+
 MYSQL_SSL_CA = os.getenv("MYSQL_SSL_CA", "/app/database/ca.pem")
 
 

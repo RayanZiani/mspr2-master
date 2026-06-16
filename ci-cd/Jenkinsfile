@@ -1,47 +1,138 @@
 pipeline {
     agent any
 
-    environment {
-        DOCKER_HUB_CREDENTIALS = credentials('dockerhub-credentials')
+    options {
+        timestamps()
+        buildDiscarder(logRotator(numToKeepStr: '20'))
+        timeout(time: 90, unit: 'MINUTES')
     }
 
     stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Install') {
+            steps {
+                sh '''
+                    python -m pip install --upgrade pip
+                    pip install -r tests/requirements.txt
+                    pip install -r pays/bresil/api/requirements.txt
+                    pip install -r siege/api/requirements.txt
+                    npm ci || npm install
+                    npx playwright install chromium --with-deps || true
+                '''
+            }
+        }
+
+        stage('Lint') {
+            steps {
+                sh '''
+                    flake8 pays/bresil/api/services pays/equateur/api/services pays/colombie/api/services siege/api/services --config=.flake8
+                '''
+            }
+        }
+
         stage('Build') {
             steps {
                 sh 'docker compose build'
             }
         }
 
+        stage('Démarrage stack') {
+            steps {
+                sh '''
+                    docker compose up -d
+                    bash ci-cd/scripts/wait_for_stack.sh
+                '''
+            }
+        }
+
         stage('Tests unitaires') {
             steps {
-                sh 'bash ci-cd/scripts/run_tests.sh'
+                sh 'bash ci-cd/scripts/run_tests.sh unit'
+            }
+        }
+
+        stage('Analyse statique') {
+            steps {
+                sh 'bash ci-cd/scripts/run_static_analysis.sh'
+            }
+        }
+
+        stage('Tests intégration') {
+            steps {
+                sh 'bash ci-cd/scripts/run_tests.sh integration'
             }
         }
 
         stage('Tests API (Newman)') {
             steps {
-                sh 'newman run tests/api/FutureKawa.postman_collection.json --environment tests/api/FutureKawa.postman_environment.json'
+                sh 'bash ci-cd/scripts/run_tests.sh api'
+            }
+        }
+
+        stage('Tests E2E (Playwright)') {
+            steps {
+                sh 'bash ci-cd/scripts/run_tests.sh e2e'
             }
         }
 
         stage('SonarQube') {
             steps {
                 withSonarQubeEnv('SonarQube') {
-                    sh 'sonar-scanner'
+                    sh 'sonar-scanner -Dproject.settings=ci-cd/sonar-project.properties'
+                }
+            }
+        }
+
+        stage('Quality Gate') {
+            steps {
+                timeout(time: 5, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
                 }
             }
         }
 
         stage('Docker Push') {
+            when {
+                anyOf {
+                    branch 'main'
+                    branch 'develop'
+                }
+            }
             steps {
-                sh 'bash ci-cd/scripts/build_images.sh'
+                script {
+                    env.IMAGE_TAG = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
+                }
+                withCredentials([string(credentialsId: 'dockerhub-credentials', variable: 'DOCKER_HUB_CREDENTIALS')]) {
+                    sh 'bash ci-cd/scripts/build_images.sh'
+                }
             }
         }
     }
 
     post {
         always {
-            junit 'tests/reports/*.xml'
+            junit allowEmptyResults: true, testResults: 'tests/reports/*.xml'
+            publishHTML(target: [
+                allowMissing: true,
+                alwaysLinkToLastBuild: true,
+                keepAll: true,
+                reportDir: 'tests/reports/htmlcov',
+                reportFiles: 'index.html',
+                reportName: 'Coverage HTML'
+            ])
+            archiveArtifacts artifacts: 'tests/reports/**', allowEmptyArchive: true
+            sh 'docker compose down || true'
+        }
+        success {
+            echo 'Pipeline FutureKawa réussi.'
+        }
+        failure {
+            echo 'Pipeline FutureKawa échoué — consulter JUnit, Allure et SonarQube.'
         }
     }
 }

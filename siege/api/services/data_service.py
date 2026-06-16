@@ -24,6 +24,7 @@ LOTS_SQL = text("""
     ORDER BY p.code, l.entre_le ASC
 """)
 
+
 def _mesures_sql() -> text:
     days = max(1, min(MESURES_DAYS, 365))
     limit = max(100, min(MESURES_LIMIT, 20000))

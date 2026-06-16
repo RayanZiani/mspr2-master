@@ -1,0 +1,13 @@
+# Plugins racine — les dépendances sont résolues automatiquement par jenkins-plugin-cli
+workflow-aggregator
+git
+github
+credentials-binding
+pipeline-stage-view
+timestamper
+ws-cleanup
+junit
+htmlpublisher
+docker-workflow
+sonar
+configuration-as-code

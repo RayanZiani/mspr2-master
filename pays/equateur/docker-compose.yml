@@ -21,6 +21,12 @@ services:
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     volumes:
       - mysql-equateur-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
     networks:
       - equateur-net
 
@@ -31,8 +37,11 @@ services:
     ports:
       - "8002:8000"
     depends_on:
-      - mysql-equateur
-      - mosquitto-equateur
+      mysql-equateur:
+        condition: service_healthy
+      mosquitto-equateur:
+        condition: service_started
+    restart: unless-stopped
     networks:
       - equateur-net
 
