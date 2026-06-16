@@ -1,10 +1,30 @@
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+# Copie les fichiers de dépendances
+COPY package.json package-lock.json ./
+RUN npm ci
+
+# Copie le code source
+COPY . .
+
+# Build l'application pour la production
+RUN npm run build
+
+# Stage 2 : Serveur de production léger
 FROM node:20-alpine
 
 WORKDIR /app
 
-COPY package.json package-lock.json ./
-RUN npm ci
+# Installe 'serve' pour servir les fichiers statiques
+RUN npm install -g serve
 
-COPY . .
+# Copie les fichiers buildés depuis le stage builder
+COPY --from=builder /app/dist ./dist
 
-CMD ["npm", "run", "dev"]
+# Expose le port 5173 (ou autre selon Render)
+EXPOSE 5173
+
+# Sert les fichiers statiques
+CMD ["serve", "-s", "dist", "-l", "5173"]
