@@ -54,9 +54,14 @@ def _parse_mysql_url(mysql_url: str) -> tuple[str, dict]:
     if ssl_mode not in {"DISABLED", "DISABLE"}:
         import ssl
 
+        # Utilise le certificat personnalisé s'il existe, sinon utilise les certificats système par défaut
         if os.path.isfile(MYSQL_SSL_CA):
             ctx = ssl.create_default_context(cafile=MYSQL_SSL_CA)
-            connect_args["ssl"] = ctx
+        else:
+            # Certificats système par défaut (pour Aiven, Render, etc.)
+            ctx = ssl.create_default_context()
+        
+        connect_args["ssl"] = ctx
 
     return async_url, connect_args
 
