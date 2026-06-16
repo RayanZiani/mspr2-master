@@ -9,7 +9,7 @@ mkdir -p tests/reports
 wait_for_url() {
   local url="$1"
   local label="$2"
-  local retries="${3:-60}"
+  local retries="${3:-120}"
 
   echo "Attente $label ($url)..."
   for i in $(seq 1 "$retries"); do

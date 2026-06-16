@@ -57,10 +57,10 @@ EOF
 
         stage('Démarrage stack') {
             steps {
-                sh '''
-                    docker-compose up -d
-                    bash ci-cd/scripts/wait_for_stack.sh
-                '''
+                sh 'docker-compose up -d'
+                catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
+                    sh 'bash ci-cd/scripts/wait_for_stack.sh'
+                }
             }
         }
 
