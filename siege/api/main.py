@@ -21,12 +21,18 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# Configuration CORS pour permettre les requêtes du frontend
+# En production, on doit spécifier les origines exactes au lieu de "*" quand allow_credentials=True
+import os
+allowed_origins = os.getenv("CORS_ALLOWED_ORIGINS", "https://mspr2-master-front.onrender.com,http://localhost:5173").split(",")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
 
 app.include_router(auth.router, prefix="/auth", tags=["Auth"])
