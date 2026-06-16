@@ -60,11 +60,13 @@ app.include_router(
 
 
 @app.get("/health")
+@app.head("/health")  # Support pour HEAD (monitoring)
 async def health():
     return {"status": "ok", "service": "siege", "source": "mysql"}
 
 
 @app.get("/health/db")
+@app.head("/health/db")  # Support pour HEAD (monitoring)
 async def health_db():
     try:
         async with engine.connect() as conn:
