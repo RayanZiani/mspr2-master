@@ -19,8 +19,7 @@ pipeline {
         stage('Install') {
             steps {
                 sh '''
-                    python3 -m pip install --upgrade pip --break-system-packages
-                    pip3 install -r tests/requirements.txt --break-system-packages
+                    python3 -m pip install -r tests/requirements.txt --break-system-packages
                     npm ci || npm install
                     npx playwright install chromium || true
                 '''
