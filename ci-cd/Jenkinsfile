@@ -19,10 +19,15 @@ pipeline {
         stage('Install') {
             steps {
                 sh '''
-                    # Installer les dépendances Python pour les tests
-                    python3 -m pip install -r tests/requirements.txt --break-system-packages
-                    python3 -m pip install -r pays/bresil/api/requirements.txt --break-system-packages
-                    python3 -m pip install -r siege/api/requirements.txt --break-system-packages
+                    # Installer les dépendances Python pour les tests (avec wheels précompilés uniquement)
+                    python3 -m pip install --only-binary=:all: -r tests/requirements.txt --break-system-packages || \
+                    python3 -m pip install --prefer-binary -r tests/requirements.txt --break-system-packages
+                    
+                    python3 -m pip install --only-binary=:all: -r pays/bresil/api/requirements.txt --break-system-packages || \
+                    python3 -m pip install --prefer-binary -r pays/bresil/api/requirements.txt --break-system-packages
+                    
+                    python3 -m pip install --only-binary=:all: -r siege/api/requirements.txt --break-system-packages || \
+                    python3 -m pip install --prefer-binary -r siege/api/requirements.txt --break-system-packages
                     
                     # Installer les dépendances Node.js
                     npm ci || npm install
