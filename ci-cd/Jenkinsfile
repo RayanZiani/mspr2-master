@@ -70,13 +70,11 @@ EOF
         stage('Démarrage stack') {
             steps {
                 sh '''
-                    # Suppression forcée de tous les conteneurs existants (rapide avec docker rm -f)
-                    docker rm -f $(docker ps -aq) 2>/dev/null || true
+                    # Nettoyage rapide avec timeout de 30 secondes (abandonner si trop long)
+                    timeout 30 docker rm -f $(docker ps -aq) 2>/dev/null || echo "Timeout nettoyage, on continue"
+                    timeout 30 docker-compose down --remove-orphans 2>/dev/null || echo "Timeout down, on continue"
                     
-                    # Nettoyage docker-compose
-                    docker-compose down --remove-orphans 2>/dev/null || true
-                    
-                    # Démarrer la stack proprement
+                    # Démarrer la stack (force-recreate gère les conflits même sans nettoyage)
                     docker-compose up -d --force-recreate --renew-anon-volumes
                 '''
                 catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
