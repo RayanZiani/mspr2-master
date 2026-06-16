@@ -80,16 +80,21 @@ EOF
         stage('Démarrage stack') {
             steps {
                 sh '''
-                    # Démarrage direct sans nettoyage ni attente (ultra-rapide)
+                    # Démarrage direct sans nettoyage (ultra-rapide)
                     # --force-recreate et --remove-orphans gèrent automatiquement les conflits
                     docker-compose up -d --force-recreate --remove-orphans || true
                     
-                    # Attente minimale de 10 secondes pour que les conteneurs démarrent
-                    sleep 10
+                    # Attente minimale de 15 secondes pour que les conteneurs démarrent
+                    sleep 15
                     
                     # Afficher l'état des conteneurs
                     docker-compose ps
                 '''
+                
+                // Vérifier que les services sont accessibles avant les tests
+                catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
+                    sh 'bash ci-cd/scripts/wait_for_stack.sh'
+                }
             }
         }
 
