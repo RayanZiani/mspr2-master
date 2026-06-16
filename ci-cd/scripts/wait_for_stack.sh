@@ -24,10 +24,10 @@ wait_for_url() {
   return 1
 }
 
-wait_for_url "http://localhost:8001/health" "API Brésil"
-wait_for_url "http://localhost:8002/health" "API Équateur"
-wait_for_url "http://localhost:8003/health" "API Colombie"
-wait_for_url "http://localhost/api/health" "API Siège"
-wait_for_url "http://localhost/" "Frontend Siège"
+wait_for_url "http://127.0.0.1:8001/health" "API Brésil"
+wait_for_url "http://127.0.0.1:8002/health" "API Équateur"
+wait_for_url "http://127.0.0.1:8003/health" "API Colombie"
+wait_for_url "http://127.0.0.1/api/health" "API Siège"
+wait_for_url "http://127.0.0.1/" "Frontend Siège"
 
 echo "Stack FutureKawa prête pour les tests d'intégration."
