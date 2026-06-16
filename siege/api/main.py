@@ -21,14 +21,11 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# Configuration CORS pour permettre les requêtes du frontend
-# En production, on doit spécifier les origines exactes au lieu de "*" quand allow_credentials=True
-import os
-allowed_origins = os.getenv("CORS_ALLOWED_ORIGINS", "https://mspr2-master-front.onrender.com,http://localhost:5173").split(",")
-
+# Configuration CORS permissive pour le développement et la production
+# Autorise toutes les origines onrender.com et localhost
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=allowed_origins,
+    allow_origin_regex=r"https://.*\.onrender\.com|http://localhost:\d+",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
