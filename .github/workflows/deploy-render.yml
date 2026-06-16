@@ -1,0 +1,71 @@
+name: Deploy to Render
+
+on:
+  push:
+    branches:
+      - feature/ci-cd-jenkins
+      - main
+  workflow_dispatch: # Permet de lancer manuellement
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            backend:
+              - 'siege/api/**'
+              - 'database/**'
+              - '.github/workflows/deploy-render.yml'
+            frontend:
+              - 'siege/frontend/**'
+              - '.github/workflows/deploy-render.yml'
+
+  deploy-backend:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.backend == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🚀 Déployer Backend sur Render
+        run: |
+          curl -X POST "${{ secrets.RENDER_BACKEND_DEPLOY_HOOK }}"
+          echo "✅ Backend déployé avec succès"
+
+  deploy-frontend:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.frontend == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🎨 Déployer Frontend sur Render
+        run: |
+          curl -X POST "${{ secrets.RENDER_FRONTEND_DEPLOY_HOOK }}"
+          echo "✅ Frontend déployé avec succès"
+
+  summary:
+    needs: [detect-changes, deploy-backend, deploy-frontend]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📊 Résumé du déploiement
+        run: |
+          echo "## 📦 Résumé du déploiement" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ needs.detect-changes.outputs.backend }}" == "true" ]; then
+            echo "✅ Backend : Déployé" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⏭️ Backend : Aucun changement" >> $GITHUB_STEP_SUMMARY
+          fi
+          if [ "${{ needs.detect-changes.outputs.frontend }}" == "true" ]; then
+            echo "✅ Frontend : Déployé" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⏭️ Frontend : Aucun changement" >> $GITHUB_STEP_SUMMARY
+          fi
