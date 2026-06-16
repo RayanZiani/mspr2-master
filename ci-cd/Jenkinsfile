@@ -28,7 +28,7 @@ pipeline {
         stage('Lint') {
             steps {
                 sh '''
-                    flake8 pays/bresil/api/services pays/equateur/api/services pays/colombie/api/services siege/api/services --config=.flake8
+                    python3 -m flake8 pays/bresil/api/services pays/equateur/api/services pays/colombie/api/services siege/api/services --config=.flake8
                 '''
             }
         }
@@ -119,14 +119,21 @@ pipeline {
     post {
         always {
             junit allowEmptyResults: true, testResults: 'tests/reports/*.xml'
-            publishHTML(target: [
-                allowMissing: true,
-                alwaysLinkToLastBuild: true,
-                keepAll: true,
-                reportDir: 'tests/reports/htmlcov',
-                reportFiles: 'index.html',
-                reportName: 'Coverage HTML'
-            ])
+            script {
+                def coverageIndex = 'tests/reports/htmlcov/index.html'
+                if (fileExists(coverageIndex)) {
+                    publishHTML(target: [
+                        allowMissing: false,
+                        alwaysLinkToLastBuild: true,
+                        keepAll: true,
+                        reportDir: 'tests/reports/htmlcov',
+                        reportFiles: 'index.html',
+                        reportName: 'Coverage HTML'
+                    ])
+                } else {
+                    echo "Coverage HTML indisponible: ${coverageIndex} (génération non atteinte ou dossier absent)."
+                }
+            }
             archiveArtifacts artifacts: 'tests/reports/**', allowEmptyArchive: true
             sh 'docker-compose down || true'
         }
