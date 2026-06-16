@@ -70,12 +70,9 @@ EOF
         stage('Démarrage stack') {
             steps {
                 sh '''
-                    # Nettoyage rapide avec timeout de 30 secondes (abandonner si trop long)
-                    timeout 30 docker rm -f $(docker ps -aq) 2>/dev/null || echo "Timeout nettoyage, on continue"
-                    timeout 30 docker-compose down --remove-orphans 2>/dev/null || echo "Timeout down, on continue"
-                    
-                    # Démarrer la stack (force-recreate gère les conflits même sans nettoyage)
-                    docker-compose up -d --force-recreate --renew-anon-volumes
+                    # Démarrage direct sans nettoyage (ultra-rapide)
+                    # --force-recreate et --remove-orphans gèrent automatiquement les conflits
+                    docker-compose up -d --force-recreate --remove-orphans || true
                 '''
                 catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
                     sh 'bash ci-cd/scripts/wait_for_stack.sh'
