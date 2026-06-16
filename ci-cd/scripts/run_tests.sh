@@ -8,7 +8,6 @@ MODE="${1:-all}"
 mkdir -p tests/reports tests/e2e/.auth
 
 install_python_deps() {
-  python3 -m pip install --upgrade pip -q --break-system-packages
   python3 -m pip install -r tests/requirements.txt -q --break-system-packages
 }
 
