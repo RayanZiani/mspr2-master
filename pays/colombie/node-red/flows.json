@@ -1,22 +1,52 @@
 [
   {
+    "id": "tab-colombie",
+    "type": "tab",
+    "label": "FutureKawa Colombie",
+    "disabled": false
+  },
+  {
+    "id": "broker-colombie",
+    "type": "mqtt-broker",
+    "name": "Mosquitto Colombie",
+    "broker": "mosquitto-colombie",
+    "port": "1883",
+    "clientid": "nodered-colombie",
+    "autoConnect": true,
+    "usetls": false,
+    "protocolVersion": "4",
+    "keepalive": "60",
+    "cleansession": true
+  },
+  {
     "id": "mqtt-in-colombie",
     "type": "mqtt in",
+    "z": "tab-colombie",
+    "name": "MQTT Colombie",
     "topic": "futurekawa/colombie/+/sensors",
-    "broker": "mosquitto-colombie",
-    "name": "MQTT Colombie"
+    "qos": "0",
+    "datatype": "json",
+    "broker": "broker-colombie",
+    "wires": [["check-seuils-colombie"]]
   },
   {
     "id": "check-seuils-colombie",
     "type": "function",
-    "name": "Vérif seuils Colombie",
-    "func": "var temp = msg.payload.temp;\nvar humidity = msg.payload.humidity;\nif (Math.abs(temp - 26) > 3 || Math.abs(humidity - 80) > 2) {\n  msg.subject = 'ALERTE FutureKawa Colombie';\n  msg.to = 'responsable@futurekawa.com';\n  return msg;\n}\nreturn null;"
+    "z": "tab-colombie",
+    "name": "Verif seuils Colombie",
+    "func": "var data = (typeof msg.payload === 'string') ? JSON.parse(msg.payload) : msg.payload;\nvar temp = data.temp;\nvar humidity = data.humidity;\nif (Math.abs(temp - 26) > 3 || Math.abs(humidity - 80) > 2) {\n  msg.subject = 'ALERTE FutureKawa Colombie';\n  msg.to = 'resp.co@futurekawa.com';\n  msg.payload = 'Temperature: ' + temp + 'deg C | Humidite: ' + humidity + '% | ' + (data.timestamp || '');\n  return msg;\n}\nreturn null;",
+    "outputs": 1,
+    "wires": [["email-colombie"]]
   },
   {
     "id": "email-colombie",
     "type": "e-mail",
-    "name": "Email alerte",
+    "z": "tab-colombie",
+    "name": "Email alerte Colombie",
     "server": "${SMTP_HOST}",
-    "port": "${SMTP_PORT}"
+    "port": "${SMTP_PORT}",
+    "secure": false,
+    "tls": true,
+    "wires": []
   }
 ]

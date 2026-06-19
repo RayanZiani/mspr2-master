@@ -1,22 +1,52 @@
 [
   {
+    "id": "tab-bresil",
+    "type": "tab",
+    "label": "FutureKawa Bresil",
+    "disabled": false
+  },
+  {
+    "id": "broker-bresil",
+    "type": "mqtt-broker",
+    "name": "Mosquitto Bresil",
+    "broker": "mosquitto-bresil",
+    "port": "1883",
+    "clientid": "nodered-bresil",
+    "autoConnect": true,
+    "usetls": false,
+    "protocolVersion": "4",
+    "keepalive": "60",
+    "cleansession": true
+  },
+  {
     "id": "mqtt-in-bresil",
     "type": "mqtt in",
+    "z": "tab-bresil",
+    "name": "MQTT Bresil",
     "topic": "futurekawa/bresil/+/sensors",
-    "broker": "mosquitto-bresil",
-    "name": "MQTT Brésil"
+    "qos": "0",
+    "datatype": "json",
+    "broker": "broker-bresil",
+    "wires": [["check-seuils-bresil"]]
   },
   {
     "id": "check-seuils-bresil",
     "type": "function",
-    "name": "Vérif seuils Brésil",
-    "func": "var temp = msg.payload.temp;\nvar humidity = msg.payload.humidity;\nif (Math.abs(temp - 29) > 3 || Math.abs(humidity - 55) > 2) {\n  msg.subject = 'ALERTE FutureKawa Brésil';\n  msg.to = 'responsable@futurekawa.com';\n  return msg;\n}\nreturn null;"
+    "z": "tab-bresil",
+    "name": "Verif seuils Bresil",
+    "func": "var data = (typeof msg.payload === 'string') ? JSON.parse(msg.payload) : msg.payload;\nvar temp = data.temp;\nvar humidity = data.humidity;\nif (Math.abs(temp - 29) > 3 || Math.abs(humidity - 55) > 2) {\n  msg.subject = 'ALERTE FutureKawa Bresil';\n  msg.to = 'resp.br@futurekawa.com';\n  msg.payload = 'Temperature: ' + temp + 'deg C | Humidite: ' + humidity + '% | ' + (data.timestamp || '');\n  return msg;\n}\nreturn null;",
+    "outputs": 1,
+    "wires": [["email-bresil"]]
   },
   {
     "id": "email-bresil",
     "type": "e-mail",
-    "name": "Email alerte",
+    "z": "tab-bresil",
+    "name": "Email alerte Bresil",
     "server": "${SMTP_HOST}",
-    "port": "${SMTP_PORT}"
+    "port": "${SMTP_PORT}",
+    "secure": false,
+    "tls": true,
+    "wires": []
   }
 ]

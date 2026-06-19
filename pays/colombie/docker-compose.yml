@@ -55,6 +55,20 @@ services:
     networks:
       - colombie-net
 
+  simulator-colombie:
+    build: ../../iot/simulator
+    container_name: simulator-colombie
+    environment:
+      PAYS: colombie
+      MQTT_BROKER_HOST: mosquitto-colombie
+      MQTT_BROKER_PORT: "1883"
+      SIMULATE_INTERVAL: "30"
+    depends_on:
+      - mosquitto-colombie
+    networks:
+      - colombie-net
+    restart: unless-stopped
+
 volumes:
   mysql-colombie-data:
 

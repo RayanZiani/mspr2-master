@@ -55,6 +55,20 @@ services:
     networks:
       - equateur-net
 
+  simulator-equateur:
+    build: ../../iot/simulator
+    container_name: simulator-equateur
+    environment:
+      PAYS: equateur
+      MQTT_BROKER_HOST: mosquitto-equateur
+      MQTT_BROKER_PORT: "1883"
+      SIMULATE_INTERVAL: "30"
+    depends_on:
+      - mosquitto-equateur
+    networks:
+      - equateur-net
+    restart: unless-stopped
+
 volumes:
   mysql-equateur-data:
 

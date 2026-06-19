@@ -1,22 +1,52 @@
 [
   {
+    "id": "tab-equateur",
+    "type": "tab",
+    "label": "FutureKawa Equateur",
+    "disabled": false
+  },
+  {
+    "id": "broker-equateur",
+    "type": "mqtt-broker",
+    "name": "Mosquitto Equateur",
+    "broker": "mosquitto-equateur",
+    "port": "1883",
+    "clientid": "nodered-equateur",
+    "autoConnect": true,
+    "usetls": false,
+    "protocolVersion": "4",
+    "keepalive": "60",
+    "cleansession": true
+  },
+  {
     "id": "mqtt-in-equateur",
     "type": "mqtt in",
+    "z": "tab-equateur",
+    "name": "MQTT Equateur",
     "topic": "futurekawa/equateur/+/sensors",
-    "broker": "mosquitto-equateur",
-    "name": "MQTT Équateur"
+    "qos": "0",
+    "datatype": "json",
+    "broker": "broker-equateur",
+    "wires": [["check-seuils-equateur"]]
   },
   {
     "id": "check-seuils-equateur",
     "type": "function",
-    "name": "Vérif seuils Équateur",
-    "func": "var temp = msg.payload.temp;\nvar humidity = msg.payload.humidity;\nif (Math.abs(temp - 31) > 3 || Math.abs(humidity - 60) > 2) {\n  msg.subject = 'ALERTE FutureKawa Équateur';\n  msg.to = 'responsable@futurekawa.com';\n  return msg;\n}\nreturn null;"
+    "z": "tab-equateur",
+    "name": "Verif seuils Equateur",
+    "func": "var data = (typeof msg.payload === 'string') ? JSON.parse(msg.payload) : msg.payload;\nvar temp = data.temp;\nvar humidity = data.humidity;\nif (Math.abs(temp - 31) > 3 || Math.abs(humidity - 60) > 2) {\n  msg.subject = 'ALERTE FutureKawa Equateur';\n  msg.to = 'resp.eq@futurekawa.com';\n  msg.payload = 'Temperature: ' + temp + 'deg C | Humidite: ' + humidity + '% | ' + (data.timestamp || '');\n  return msg;\n}\nreturn null;",
+    "outputs": 1,
+    "wires": [["email-equateur"]]
   },
   {
     "id": "email-equateur",
     "type": "e-mail",
-    "name": "Email alerte",
+    "z": "tab-equateur",
+    "name": "Email alerte Equateur",
     "server": "${SMTP_HOST}",
-    "port": "${SMTP_PORT}"
+    "port": "${SMTP_PORT}",
+    "secure": false,
+    "tls": true,
+    "wires": []
   }
 ]

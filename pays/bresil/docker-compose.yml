@@ -55,6 +55,21 @@ services:
     networks:
       - bresil-net
 
+  # Simulateur IoT — desactiver ce service quand l'ESP32 est branche sur le port COM
+  simulator-bresil:
+    build: ../../iot/simulator
+    container_name: simulator-bresil
+    environment:
+      PAYS: bresil
+      MQTT_BROKER_HOST: mosquitto-bresil
+      MQTT_BROKER_PORT: "1883"
+      SIMULATE_INTERVAL: "30"
+    depends_on:
+      - mosquitto-bresil
+    networks:
+      - bresil-net
+    restart: unless-stopped
+
 volumes:
   mysql-bresil-data:
 
