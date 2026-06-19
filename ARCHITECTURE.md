@@ -210,7 +210,7 @@ futurekawa/
 └── docs/                              # Mohammed (responsable documentation)
     ├── architecture/
     │   ├── schema_global.drawio        # reprend Fig.1 du sujet + complète
-    │   └── schema_phase2.drawio        # capteurs → décision → actionneurs (livrable 9)
+    │   └── schema_phase2.md            # capteurs → décision → actionneurs (livrable 9)
     ├── technique/
     │   ├── README_lancement.md
     │   ├── mqtt_topics.md              # topics, formats payload, fréquence
