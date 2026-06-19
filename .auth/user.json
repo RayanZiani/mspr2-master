@@ -1,0 +1,30 @@
+{
+  "cookies": [],
+  "origins": [
+    {
+      "origin": "https://mspr2-master-front.onrender.com",
+      "localStorage": [
+        {
+          "name": "fk_role",
+          "value": "ADMIN"
+        },
+        {
+          "name": "fk_username",
+          "value": "admin_siege"
+        },
+        {
+          "name": "fk_token",
+          "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbl9zaWVnZSIsInJvbGUiOiJBRE1JTiIsInBheXNfY29kZSI6IlNJRUdFIiwiaWF0IjoxNzgxODYwMTQ1LCJleHAiOjE3ODE4ODg5NDV9.wYmXGoaH-IHPYVmalSgsDIl94jeXIm4_yCzU9Av6sTc"
+        },
+        {
+          "name": "fk_email",
+          "value": "admin@futurekawa.com"
+        },
+        {
+          "name": "fk_pays_code",
+          "value": "SIEGE"
+        }
+      ]
+    }
+  ]
+}
