@@ -72,10 +72,15 @@ run_api_tests() {
 }
 
 run_e2e_tests() {
+  if [ "${SKIP_E2E:-false}" = "true" ]; then
+    echo "ERREUR: SKIP_E2E=true — les tests E2E sont obligatoires dans le pipeline CI"
+    exit 1
+  fi
   echo "=== Tests E2E (Playwright) ==="
   export E2E_BASE_URL="${E2E_BASE_URL:-${FRONTEND_URL:-http://localhost:80}}"
   echo "E2E base URL: ${E2E_BASE_URL}"
   npx playwright install chromium || true
+  npx playwright install-deps chromium 2>/dev/null || true
   cd tests/e2e
   npx playwright test
 }
