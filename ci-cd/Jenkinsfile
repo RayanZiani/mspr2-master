@@ -178,60 +178,6 @@ EOF
                 }
             }
         }
-
-        stage('Docker Push') {
-            when {
-                anyOf {
-                    branch 'main'
-                    branch 'develop'
-                    branch 'feature/ci-cd-jenkins'
-                }
-            }
-            steps {
-                script {
-                    env.IMAGE_TAG = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
-                }
-                withCredentials([string(credentialsId: 'dockerhub-credentials', variable: 'DOCKER_HUB_CREDENTIALS')]) {
-                    sh 'bash ci-cd/scripts/build_images.sh'
-                }
-            }
-        }
-
-        stage('Déploiement Render') {
-            when {
-                anyOf {
-                    branch 'main'
-                    branch 'feature/ci-cd-jenkins'
-                }
-            }
-            steps {
-                script {
-                    echo '🚀 Déclenchement du déploiement sur Render...'
-                    
-                    // Déploiement Backend
-                    withCredentials([string(credentialsId: 'render-backend-deploy-hook', variable: 'BACKEND_HOOK')]) {
-                        sh '''
-                            echo "Déploiement Backend..."
-                            curl -X POST "$BACKEND_HOOK"
-                            echo "✅ Backend: déploiement déclenché"
-                        '''
-                    }
-                    
-                    // Déploiement Frontend
-                    withCredentials([string(credentialsId: 'render-frontend-deploy-hook', variable: 'FRONTEND_HOOK')]) {
-                        sh '''
-                            echo "Déploiement Frontend..."
-                            curl -X POST "$FRONTEND_HOOK"
-                            echo "✅ Frontend: déploiement déclenché"
-                        '''
-                    }
-                    
-                    echo '🎉 Déploiements Render déclenchés avec succès!'
-                    echo "Backend: https://mspr2-master.onrender.com"
-                    echo "Frontend: https://mspr2-master-front.onrender.com"
-                }
-            }
-        }
     }
 
     post {
