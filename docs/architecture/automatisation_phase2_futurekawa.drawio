@@ -1,0 +1,122 @@
+<mxfile host="app.diagrams.net">
+  <diagram id="g88GCShE3GpCVdzy8w_f" name="Page-1">
+    <mxGraphModel dx="1585" dy="811" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="zone_capteurs" parent="1" style="points=[[0,0],[0.25,0],[0.5,0],[0.75,0],[1,0],[1,0.25],[1,0.5],[1,0.75],[1,1],[0.75,1],[0.5,1],[0.25,1],[0,1],[0,0.75],[0,0.5],[0,0.25]];shape=mxgraph.lean_mapping.electronic_info_flow_edge;strokeColor=#1E7B5C;fillColor=#E1F5EE;dashed=1;dashPattern=8 4;fontSize=11;fontColor=#0F6E56;fontStyle=1;verticalAlign=top;align=left;spacingLeft=8;spacingTop=4;" value="Capteurs IoT existants (ESP32 + DHT22)" vertex="1">
+          <mxGeometry height="110" width="780" x="60" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="cap_temp" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1F5EE;strokeColor=#1D9E75;fontColor=#085041;fontStyle=1;fontSize=12;arcSize=12;" value="Capteur température" vertex="1">
+          <mxGeometry height="50" width="180" x="90" y="75" as="geometry" />
+        </mxCell>
+        <mxCell id="cap_temp_sub" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1F5EE;strokeColor=#1D9E75;fontColor=#0F6E56;fontSize=10;arcSize=12;" value="°C – relevés automatiques" vertex="1">
+          <mxGeometry height="50" width="180" x="90" y="75" as="geometry" />
+        </mxCell>
+        <mxCell id="cap_hum" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1F5EE;strokeColor=#1D9E75;fontColor=#085041;fontStyle=1;fontSize=12;arcSize=12;" value="Capteur humidité" vertex="1">
+          <mxGeometry height="50" width="180" x="330" y="75" as="geometry" />
+        </mxCell>
+        <mxCell id="cap_secu" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FAECE7;strokeColor=#D85A30;fontColor=#4A1B0C;fontStyle=1;fontSize=12;arcSize=12;" value="Capteur sécurité" vertex="1">
+          <mxGeometry height="35" width="180" x="570" y="68" as="geometry" />
+        </mxCell>
+        <mxCell id="cap_secu_sub" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FAECE7;strokeColor=#D85A30;fontColor=#993C1D;fontSize=10;arcSize=12;" value="Fumée / porte ouverte" vertex="1">
+          <mxGeometry height="28" width="180" x="570" y="103" as="geometry" />
+        </mxCell>
+        <mxCell id="mqtt" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EEEDFE;strokeColor=#534AB7;fontColor=#26215C;fontStyle=1;fontSize=13;arcSize=10;" value="Broker MQTT local" vertex="1">
+          <mxGeometry height="45" width="420" x="90" y="220" as="geometry" />
+        </mxCell>
+        <mxCell id="mqtt_sub" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EEEDFE;strokeColor=#534AB7;fontColor=#3C3489;fontSize=10;arcSize=10;" value="Point d&#39;intégration avec la solution IoT existante" vertex="1">
+          <mxGeometry height="20" width="420" x="90" y="250" as="geometry" />
+        </mxCell>
+        <mxCell id="regul" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E6F1FB;strokeColor=#185FA5;fontColor=#042C53;fontStyle=1;fontSize=13;arcSize=10;" value="Régulation automatique" vertex="1">
+          <mxGeometry height="45" width="420" x="90" y="340" as="geometry" />
+        </mxCell>
+        <mxCell id="regul_sub" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E6F1FB;strokeColor=#185FA5;fontColor=#0C447C;fontSize=10;arcSize=10;" value="Comparaison aux seuils (T°/Hum) selon le pays concerné" vertex="1">
+          <mxGeometry height="20" width="420" x="90" y="370" as="geometry" />
+        </mxCell>
+        <mxCell id="mode" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F1EFE8;strokeColor=#5F5E5A;fontColor=#2C2C2A;fontStyle=1;fontSize=12;arcSize=10;" value="Mode auto / manuel" vertex="1">
+          <mxGeometry height="45" width="240" x="90" y="460" as="geometry" />
+        </mxCell>
+        <mxCell id="mode_sub" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F1EFE8;strokeColor=#5F5E5A;fontColor=#444441;fontSize=10;arcSize=10;" value="Choix opérateur (maintenance / auto)" vertex="1">
+          <mxGeometry height="18" width="240" x="90" y="490" as="geometry" />
+        </mxCell>
+        <mxCell id="urgence" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FCEBEB;strokeColor=#A32D2D;fontColor=#501313;fontStyle=1;fontSize=12;arcSize=10;" value="⚠ Arrêt d&#39;urgence" vertex="1">
+          <mxGeometry height="45" width="220" x="390" y="460" as="geometry" />
+        </mxCell>
+        <mxCell id="urgence_sub" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FCEBEB;strokeColor=#A32D2D;fontColor=#791F1F;fontSize=10;arcSize=10;" value="Coupure totale – priorité absolue" vertex="1">
+          <mxGeometry height="18" width="220" x="390" y="490" as="geometry" />
+        </mxCell>
+        <mxCell id="secu" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FAEEDA;strokeColor=#BA7517;fontColor=#412402;fontStyle=1;fontSize=13;arcSize=10;" value="Logique de sécurité &amp; interverrouillage" vertex="1">
+          <mxGeometry height="45" width="520" x="90" y="570" as="geometry" />
+        </mxCell>
+        <mxCell id="secu_sub" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FAEEDA;strokeColor=#BA7517;fontColor=#854F0B;fontSize=10;arcSize=10;" value="Vérifie l&#39;absence de blocage avant toute activation d&#39;équipement" vertex="1">
+          <mxGeometry height="18" width="520" x="90" y="600" as="geometry" />
+        </mxCell>
+        <mxCell id="zone_act" parent="1" style="points=[[0,0],[0.25,0],[0.5,0],[0.75,0],[1,0],[1,0.25],[1,0.5],[1,0.75],[1,1],[0.75,1],[0.5,1],[0.25,1],[0,1],[0,0.75],[0,0.5],[0,0.25]];shape=mxgraph.lean_mapping.electronic_info_flow_edge;strokeColor=#5F5E5A;fillColor=#F1EFE8;dashed=1;dashPattern=8 4;fontSize=11;fontColor=#444441;fontStyle=1;verticalAlign=top;align=left;spacingLeft=8;spacingTop=4;" value="Équipements de l&#39;entrepôt" vertex="1">
+          <mxGeometry height="110" width="780" x="60" y="680" as="geometry" />
+        </mxCell>
+        <mxCell id="chauf" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FAECE7;strokeColor=#993C1D;fontColor=#4A1B0C;fontStyle=1;fontSize=12;arcSize=12;" value="Chauffage" vertex="1">
+          <mxGeometry height="40" width="200" x="90" y="700" as="geometry" />
+        </mxCell>
+        <mxCell id="chauf_sub" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FAECE7;strokeColor=#993C1D;fontColor=#993C1D;fontSize=10;arcSize=12;" value="Activé si T° sous seuil" vertex="1">
+          <mxGeometry height="22" width="200" x="90" y="740" as="geometry" />
+        </mxCell>
+        <mxCell id="aerat" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1F5EE;strokeColor=#0F6E56;fontColor=#04342C;fontStyle=1;fontSize=12;arcSize=12;" value="Aération / ventilation" vertex="1">
+          <mxGeometry height="40" width="200" x="330" y="700" as="geometry" />
+        </mxCell>
+        <mxCell id="aerat_sub" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1F5EE;strokeColor=#0F6E56;fontColor=#0F6E56;fontSize=10;arcSize=12;" value="Activé si humidité trop élevée" vertex="1">
+          <mxGeometry height="22" width="200" x="330" y="740" as="geometry" />
+        </mxCell>
+        <mxCell id="humidif" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E6F1FB;strokeColor=#185FA5;fontColor=#042C53;fontStyle=1;fontSize=12;arcSize=12;" value="Humidification" vertex="1">
+          <mxGeometry height="40" width="200" x="570" y="700" as="geometry" />
+        </mxCell>
+        <mxCell id="humidif_sub" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E6F1FB;strokeColor=#185FA5;fontColor=#0C447C;fontSize=10;arcSize=12;" value="Activé si humidité trop faible" vertex="1">
+          <mxGeometry height="22" width="200" x="570" y="740" as="geometry" />
+        </mxCell>
+        <mxCell id="e1" edge="1" parent="1" source="cap_temp" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeColor=#1D9E75;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.25;entryY=0;entryDx=0;entryDy=0;" target="mqtt">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e2" edge="1" parent="1" source="cap_hum" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeColor=#1D9E75;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="mqtt">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e3" edge="1" parent="1" source="mqtt" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeColor=#534AB7;strokeWidth=1.5;" target="regul">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e4" edge="1" parent="1" source="regul" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeColor=#185FA5;strokeWidth=1.5;" target="mode">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e5" edge="1" parent="1" source="mode" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeColor=#5F5E5A;strokeWidth=1.5;" target="secu">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e6" edge="1" parent="1" source="urgence" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeColor=#A32D2D;strokeWidth=2;dashed=0;" target="secu">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e7" edge="1" parent="1" source="cap_secu" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeColor=#D85A30;dashed=1;dashPattern=6 3;strokeWidth=1.5;fontColor=#993C1D;fontSize=10;" target="secu" value="alerte dégradée">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="760" y="85" />
+              <mxPoint x="760" y="593" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e8" edge="1" parent="1" source="secu" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeColor=#BA7517;strokeWidth=1.5;" target="chauf">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e9" edge="1" parent="1" source="secu" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeColor=#BA7517;strokeWidth=1.5;" target="aerat">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e10" edge="1" parent="1" source="secu" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeColor=#BA7517;strokeWidth=1.5;" target="humidif">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e11" edge="1" parent="1" source="secu" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#888780;dashed=1;dashPattern=5 4;strokeWidth=1;fontColor=#5F5E5A;fontSize=10;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" target="mqtt" value="Retour statuts &amp; alertes">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="680" y="592" />
+              <mxPoint x="680" y="235" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

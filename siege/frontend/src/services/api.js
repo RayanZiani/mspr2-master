@@ -32,10 +32,11 @@ async function request(path, { method = 'GET', params, body } = {}) {
     // Token expiré / invalide (ou ancien token sans role) -> reset session et retour login.
     clearSession()
     if (window.location.pathname !== '/login') window.location.href = '/login'
-    throw new Error(`HTTP 401 — ${url.toString()}`)
+    throw new Error('Session expirée, veuillez vous reconnecter.')
   }
 
-  if (!res.ok) throw new Error(`HTTP ${res.status} — ${url.toString()}`)
+  // On ne divulgue pas l'URL interne dans le message d'erreur (sécurité).
+  if (!res.ok) throw new Error(`Erreur serveur (HTTP ${res.status}).`)
   return res.json()
 }
 

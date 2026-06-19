@@ -7,8 +7,8 @@ const PAYS_LABEL = {
 }
 
 const DESC = {
-  perime: 'Plus de 365 jours en stockage — expédition prioritaire requise.',
-  alerte: 'Conditions hors plage — température ou humidité déviante.',
+  perime: 'Plus de 365 jours en stockage, expédition prioritaire requise.',
+  alerte: 'Conditions hors plage : température ou humidité déviante.',
 }
 
 export default function AlertBadge({ lot, onClick }) {
@@ -26,7 +26,7 @@ export default function AlertBadge({ lot, onClick }) {
       <div className="alert-info">
         <div className="alert-lot-id">{lot.id}</div>
         <div className="alert-lot-title">
-          {PAYS_LABEL[lot.pays] || lot.pays} — {lot.exploitation} / {lot.entrepot}
+          {PAYS_LABEL[lot.pays] || lot.pays} · {lot.exploitation} / {lot.entrepot}
         </div>
         <div className="alert-lot-desc">{DESC[statut]}</div>
       </div>

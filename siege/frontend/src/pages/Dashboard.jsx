@@ -192,12 +192,10 @@ export default function Dashboard() {
         </label>
       </div>
 
-      <div className="grid-wrapper">
-        <LotList
-          lots={filteredLots}
-          onSelect={lot => navigate(`/lots/${lot.id}`, { state: { lot } })}
-        />
-      </div>
+      <LotList
+        lots={filteredLots}
+        onSelect={lot => navigate(`/lots/${lot.id}`, { state: { lot } })}
+      />
     </div>
   )
 }

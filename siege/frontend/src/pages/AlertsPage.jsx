@@ -86,7 +86,7 @@ export default function AlertsPage() {
         </div>
         <p className="page-sub">
           {alertes.length === 0
-            ? 'Aucune alerte — tous les lots sont conformes'
+            ? 'Aucune alerte, tous les lots sont conformes'
             : `${alertes.length} lot(s) en situation anormale`}
         </p>
       </div>

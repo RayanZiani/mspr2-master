@@ -10,13 +10,13 @@ function passwordNotice() {
 }
 
 function fmtDate(d) {
-  if (!d) return '—'
+  if (!d) return 'Jamais'
   try {
     const dt = new Date(d)
-    if (Number.isNaN(dt.getTime())) return '—'
-    return dt.toLocaleString()
+    if (Number.isNaN(dt.getTime())) return 'Jamais'
+    return dt.toLocaleString('fr-FR')
   } catch {
-    return '—'
+    return 'Jamais'
   }
 }
 
@@ -26,7 +26,7 @@ const ROLE_OPTIONS = [
 ]
 
 const PAYS_OPTIONS = [
-  { value: '', label: '—' },
+  { value: '', label: 'Aucun' },
   { value: 'SIEGE', label: 'SIEGE' },
   { value: 'BRESIL', label: 'BRESIL' },
   { value: 'EQUATEUR', label: 'EQUATEUR' },
