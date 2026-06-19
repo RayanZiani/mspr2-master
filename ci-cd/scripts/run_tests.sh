@@ -13,16 +13,15 @@ install_python_deps() {
 
 run_unit_tests() {
   echo "=== Tests unitaires (pytest directement dans Jenkins) ==="
-  cd tests
-  python3 -m pytest unit/ -v -m unit \
-    --junitxml=reports/unit-results.xml \
-    --alluredir=reports/allure-results \
-    --cov=../pays/bresil/api/services \
-    --cov=../pays/equateur/api/services \
-    --cov=../pays/colombie/api/services \
-    --cov=../siege/api/services \
-    --cov-report=xml:reports/coverage.xml \
-    --cov-report=html:reports/htmlcov \
+  python3 -m pytest tests/unit/ -v -m unit \
+    --junitxml=tests/reports/unit-results.xml \
+    --alluredir=tests/reports/allure-results \
+    --cov=pays/bresil/api/services \
+    --cov=pays/equateur/api/services \
+    --cov=pays/colombie/api/services \
+    --cov=siege/api/services \
+    --cov-report=xml:tests/reports/coverage.xml \
+    --cov-report=html:tests/reports/htmlcov \
     --cov-report=term-missing
 }
 
@@ -31,25 +30,23 @@ run_unit_tests_local() {
   install_python_deps
   python3 -m pip install -r pays/bresil/api/requirements.txt -q --break-system-packages
   python3 -m pip install -r siege/api/requirements.txt -q --break-system-packages
-  cd tests
-  python3 -m pytest unit/ -v -m unit \
-    --junitxml=reports/unit-results.xml \
-    --alluredir=reports/allure-results \
-    --cov=../pays/bresil/api/services \
-    --cov=../pays/equateur/api/services \
-    --cov=../pays/colombie/api/services \
-    --cov=../siege/api/services \
-    --cov-report=xml:reports/coverage.xml \
-    --cov-report=html:reports/htmlcov \
+  python3 -m pytest tests/unit/ -v -m unit \
+    --junitxml=tests/reports/unit-results.xml \
+    --alluredir=tests/reports/allure-results \
+    --cov=pays/bresil/api/services \
+    --cov=pays/equateur/api/services \
+    --cov=pays/colombie/api/services \
+    --cov=siege/api/services \
+    --cov-report=xml:tests/reports/coverage.xml \
+    --cov-report=html:tests/reports/htmlcov \
     --cov-report=term-missing
 }
 
 run_integration_tests() {
   echo "=== Tests d'intégration (pytest + httpx) ==="
-  cd tests
-  python3 -m pytest integration/ -v -m integration \
-    --junitxml=reports/integration-results.xml \
-    --alluredir=reports/allure-results
+  python3 -m pytest tests/integration/ -v -m integration \
+    --junitxml=tests/reports/integration-results.xml \
+    --alluredir=tests/reports/allure-results
 }
 
 run_api_tests() {

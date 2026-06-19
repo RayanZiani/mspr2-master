@@ -1,0 +1,10 @@
+[run]
+relative_files = true
+source =
+    pays/bresil/api/services
+    pays/equateur/api/services
+    pays/colombie/api/services
+    siege/api/services
+
+[report]
+precision = 2
