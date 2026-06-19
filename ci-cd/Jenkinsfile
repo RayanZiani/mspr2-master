@@ -1,6 +1,17 @@
 pipeline {
     agent any
 
+    environment {
+        // Utiliser les services Render (toujours disponibles) au lieu de Docker local
+        RENDER = 'true'
+        API_BRESIL_URL = 'https://futurekawa-api-bresil.onrender.com'
+        API_EQUATEUR_URL = 'https://futurekawa-api-equateur.onrender.com'
+        API_COLOMBIE_URL = 'https://futurekawa-api-colombie.onrender.com'
+        API_SIEGE_URL = 'https://futurekawa-api-siege.onrender.com'
+        BASE_URL = 'https://futurekawa.onrender.com'
+        FRONTEND_URL = 'https://futurekawa.onrender.com'
+    }
+
     options {
         timestamps()
         buildDiscarder(logRotator(numToKeepStr: '20'))
@@ -72,12 +83,18 @@ EOF
         }
 
         stage('Build') {
+            when {
+                expression { env.RENDER != 'true' }
+            }
             steps {
                 sh 'docker-compose build'
             }
         }
 
         stage('Démarrage stack') {
+            when {
+                expression { env.RENDER != 'true' }
+            }
             steps {
                 sh '''
                     # Démarrage direct sans nettoyage (ultra-rapide)
@@ -90,6 +107,18 @@ EOF
                     # Afficher l'état des conteneurs
                     docker-compose ps
                 '''
+            }
+        }
+
+        stage('Vérification services') {
+            steps {
+                script {
+                    if (env.RENDER == 'true') {
+                        echo '🌐 Mode Render: vérification des services en production'
+                    } else {
+                        echo '🐳 Mode Docker: vérification de la stack locale'
+                    }
+                }
                 
                 // Vérifier que les services sont accessibles avant les tests
                 catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {

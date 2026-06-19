@@ -1,7 +1,7 @@
 import httpx
 import pytest
 
-API_SIEGE = "http://localhost/api"
+from .conftest import API_SIEGE
 
 
 @pytest.mark.integration

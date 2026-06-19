@@ -3,7 +3,12 @@ import os
 import httpx
 import pytest
 
-API_SIEGE = os.getenv("API_SIEGE_URL", "http://localhost/api")
+# Utiliser les URLs Render par défaut (toujours disponibles)
+API_BRESIL = os.getenv("API_BRESIL_URL", "https://futurekawa-api-bresil.onrender.com")
+API_EQUATEUR = os.getenv("API_EQUATEUR_URL", "https://futurekawa-api-equateur.onrender.com")
+API_COLOMBIE = os.getenv("API_COLOMBIE_URL", "https://futurekawa-api-colombie.onrender.com")
+API_SIEGE = os.getenv("API_SIEGE_URL", "https://futurekawa-api-siege.onrender.com")
+
 E2E_USER = os.getenv("E2E_USER", "admin_siege")
 E2E_PASSWORD = os.getenv("E2E_PASSWORD", "Admin@2025!")
 
@@ -54,7 +59,7 @@ def first_lot_id(auth_headers):
 
 @pytest.fixture(scope="session")
 def bresil_lot_id():
-    response = httpx.get("http://localhost:8001/lots/", timeout=10.0)
+    response = httpx.get(f"{API_BRESIL}/lots/", timeout=10.0)
     assert response.status_code == 200
     lots = response.json()
     if not lots:

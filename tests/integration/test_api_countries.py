@@ -3,9 +3,7 @@ from datetime import datetime
 import httpx
 import pytest
 
-API_BRESIL = "http://localhost:8001"
-API_EQUATEUR = "http://localhost:8002"
-API_COLOMBIE = "http://localhost:8003"
+from .conftest import API_BRESIL, API_EQUATEUR, API_COLOMBIE
 
 COUNTRY_APIS = [
     (API_BRESIL, "bresil"),

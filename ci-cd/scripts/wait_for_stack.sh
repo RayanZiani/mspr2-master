@@ -10,9 +10,10 @@ mkdir -p tests/reports
 if [ -n "${RENDER:-}" ]; then
   # Production sur Render - utiliser les URLs publiques
   BASE_URL="${BASE_URL:-https://futurekawa.onrender.com}"
-  API_BRESIL="${API_BRESIL_URL:-https://api-bresil.onrender.com}"
-  API_EQUATEUR="${API_EQUATEUR_URL:-https://api-equateur.onrender.com}"
-  API_COLOMBIE="${API_COLOMBIE_URL:-https://api-colombie.onrender.com}"
+  API_BRESIL="${API_BRESIL_URL:-https://futurekawa-api-bresil.onrender.com}"
+  API_EQUATEUR="${API_EQUATEUR_URL:-https://futurekawa-api-equateur.onrender.com}"
+  API_COLOMBIE="${API_COLOMBIE_URL:-https://futurekawa-api-colombie.onrender.com}"
+  API_SIEGE="${API_SIEGE_URL:-https://futurekawa-api-siege.onrender.com}"
   CHECK_FRONTEND=true
 elif [ -n "${CI:-}" ] || docker info >/dev/null 2>&1; then
   # CI/CD ou environnement Docker - utiliser host.docker.internal
@@ -51,7 +52,13 @@ wait_for_url() {
 wait_for_url "${API_BRESIL}/health" "API Brésil"
 wait_for_url "${API_EQUATEUR}/health" "API Équateur"
 wait_for_url "${API_COLOMBIE}/health" "API Colombie"
-wait_for_url "${BASE_URL}/api/health" "API Siège"
+
+# Pour Render, utiliser API_SIEGE directement, sinon BASE_URL/api
+if [ -n "${RENDER:-}" ]; then
+  wait_for_url "${API_SIEGE}/health" "API Siège"
+else
+  wait_for_url "${BASE_URL}/api/health" "API Siège"
+fi
 
 if [ "$CHECK_FRONTEND" = true ]; then
   wait_for_url "${BASE_URL}/" "Frontend Siège"
