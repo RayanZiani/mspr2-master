@@ -21,7 +21,7 @@ echo "=== Suppression des conditions héritées (seuils nouveau code) ==="
 mapfile -t condition_ids < <(
   curl -fsS -H "$(auth_header)" \
     "${SONAR_HOST}/api/qualitygates/show?name=${GATE_NAME// /%20}" \
-    | python3 -c "import sys,xml.etree.ElementTree as ET; r=ET.parse(sys.stdin).getroot(); print('\n'.join(c.findtext('id','') for c in r.findall('.//condition') if c.findtext('id')))"
+    | python3 -c "import sys,json; d=json.load(sys.stdin); print('\n'.join(c['id'] for c in d.get('conditions',[])))"
 )
 
 for id in "${condition_ids[@]}"; do
