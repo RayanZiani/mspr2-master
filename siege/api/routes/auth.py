@@ -10,8 +10,10 @@ from api.services.auth_service import get_user_account
 
 router = APIRouter()
 
+_INVALID_CREDENTIALS = "Identifiants invalides"
+
 _LOGIN_RESPONSES = {
-    401: {"description": "Identifiants invalides"},
+    401: {"description": _INVALID_CREDENTIALS},
 }
 
 
@@ -24,10 +26,10 @@ class LoginRequest(BaseModel):
 async def login(body: LoginRequest, request: Request):
     user = await get_user_account(body.username)
     if not user or not user.get("active"):
-        raise HTTPException(status_code=401, detail="Identifiants invalides")
+        raise HTTPException(status_code=401, detail=_INVALID_CREDENTIALS)
 
     if not verify_password(body.password, user["password_hash"]):
-        raise HTTPException(status_code=401, detail="Identifiants invalides")
+        raise HTTPException(status_code=401, detail=_INVALID_CREDENTIALS)
     role = str(user.get("role") or "USER")
     ip = request.client.host if request.client else None
     try:
