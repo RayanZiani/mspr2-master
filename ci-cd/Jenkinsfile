@@ -188,54 +188,6 @@ EOF
                 }
             }
         }
-
-        stage('Docker Push') {
-            when {
-                branch 'master'
-            }
-            steps {
-                catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
-                    script {
-                        env.IMAGE_TAG = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
-                    }
-                    withCredentials([string(credentialsId: 'dockerhub-credentials', variable: 'DOCKER_HUB_CREDENTIALS')]) {
-                        sh 'bash ci-cd/scripts/build_images.sh'
-                    }
-                }
-            }
-        }
-
-        stage('Déploiement Render') {
-            when {
-                branch 'master'
-            }
-            steps {
-                catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
-                    script {
-                        echo '🚀 Déclenchement du déploiement sur Render...'
-
-                        withCredentials([string(credentialsId: 'render-backend-deploy-hook', variable: 'BACKEND_HOOK')]) {
-                            sh '''
-                                echo "Déploiement Backend..."
-                                curl -fsS -X POST "$BACKEND_HOOK"
-                                echo "✅ Backend: déploiement déclenché"
-                            '''
-                        }
-
-                        withCredentials([string(credentialsId: 'render-frontend-deploy-hook', variable: 'FRONTEND_HOOK')]) {
-                            sh '''
-                                echo "Déploiement Frontend..."
-                                curl -fsS -X POST "$FRONTEND_HOOK"
-                                echo "✅ Frontend: déploiement déclenché"
-                            '''
-                        }
-
-                        echo "Backend: ${API_SIEGE_URL}"
-                        echo "Frontend: ${FRONTEND_URL}"
-                    }
-                }
-            }
-        }
     }
 
     post {
