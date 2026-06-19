@@ -54,8 +54,22 @@ run_integration_tests() {
 
 run_api_tests() {
   echo "=== Tests API (Newman / Postman) ==="
+  local env_file="tests/api/FutureKawa.postman_environment.json"
+  local newman_args=(
+  )
+
+  if [ -n "${RENDER:-}" ]; then
+    env_file="tests/api/FutureKawa.postman_environment.render.json"
+    echo "Mode Render : API Siège sur ${API_SIEGE_URL:-https://mspr2-master.onrender.com}"
+    newman_args+=(--folder "Siège")
+  else
+    echo "Mode local Docker : toutes les APIs"
+  fi
+
   npx newman run tests/api/FutureKawa.postman_collection.json \
-    --environment tests/api/FutureKawa.postman_environment.json \
+    --environment "$env_file" \
+    "${newman_args[@]}" \
+    --env-var "API_SIEGE_URL=${API_SIEGE_URL:-}" \
     --reporters cli,junit \
     --reporter-junit-export tests/reports/newman-results.xml
 }
