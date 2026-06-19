@@ -3,11 +3,15 @@ import os
 import httpx
 import pytest
 
-# Utiliser les URLs Render par défaut (toujours disponibles)
-API_BRESIL = os.getenv("API_BRESIL_URL", "https://futurekawa-api-bresil.onrender.com")
-API_EQUATEUR = os.getenv("API_EQUATEUR_URL", "https://futurekawa-api-equateur.onrender.com")
-API_COLOMBIE = os.getenv("API_COLOMBIE_URL", "https://futurekawa-api-colombie.onrender.com")
-API_SIEGE = os.getenv("API_SIEGE_URL", "https://futurekawa-api-siege.onrender.com")
+# Utiliser les URLs Render par défaut (backend centralisé)
+# Sur Render, seul le backend Siège est déployé, pas les APIs pays séparées
+API_SIEGE = os.getenv("API_SIEGE_URL", "https://mspr2-master.onrender.com")
+
+# Les APIs pays ne sont déployées séparément qu'en local Docker
+# Sur Render, utiliser l'API Siège pour tout
+API_BRESIL = os.getenv("API_BRESIL_URL", "http://localhost:8001")
+API_EQUATEUR = os.getenv("API_EQUATEUR_URL", "http://localhost:8002")
+API_COLOMBIE = os.getenv("API_COLOMBIE_URL", "http://localhost:8003")
 
 E2E_USER = os.getenv("E2E_USER", "admin_siege")
 E2E_PASSWORD = os.getenv("E2E_PASSWORD", "Admin@2025!")

@@ -4,12 +4,11 @@ pipeline {
     environment {
         // Utiliser les services Render (toujours disponibles) au lieu de Docker local
         RENDER = 'true'
-        API_BRESIL_URL = 'https://futurekawa-api-bresil.onrender.com'
-        API_EQUATEUR_URL = 'https://futurekawa-api-equateur.onrender.com'
-        API_COLOMBIE_URL = 'https://futurekawa-api-colombie.onrender.com'
-        API_SIEGE_URL = 'https://futurekawa-api-siege.onrender.com'
-        BASE_URL = 'https://futurekawa.onrender.com'
-        FRONTEND_URL = 'https://futurekawa.onrender.com'
+        // URLs réelles des services déployés sur Render
+        API_SIEGE_URL = 'https://mspr2-master.onrender.com'
+        FRONTEND_URL = 'https://mspr2-master-front.onrender.com'
+        // Note: Les APIs pays (Brésil, Équateur, Colombie) ne sont pas déployées séparément sur Render
+        // Elles sont intégrées dans l'API Siège en mode production
     }
 
     options {
