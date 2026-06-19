@@ -1,3 +1,5 @@
+from typing import Annotated
+
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -8,7 +10,10 @@ router = APIRouter()
 
 
 @router.get("/")
-async def list_mesures(lot_id: str | None = None, session: AsyncSession = Depends(get_session)):
+async def list_mesures(
+    session: Annotated[AsyncSession, Depends(get_session)],
+    lot_id: str | None = None,
+):
     query = select(Mesure).order_by(Mesure.timestamp.desc())
     if lot_id:
         query = query.where(Mesure.lot_id == lot_id)

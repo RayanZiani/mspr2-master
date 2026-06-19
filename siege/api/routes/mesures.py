@@ -1,3 +1,5 @@
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, HTTPException
 from api.auth import require_user
 from api.permissions import UserPermissions
@@ -7,7 +9,10 @@ router = APIRouter()
 
 
 @router.get("/")
-async def get_all_mesures(lot_id: str | None = None, user: dict = Depends(require_user)):
+async def get_all_mesures(
+    user: Annotated[dict, Depends(require_user)],
+    lot_id: str | None = None,
+):
     if not lot_id:
         raise HTTPException(
             status_code=400,

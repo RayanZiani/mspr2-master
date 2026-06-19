@@ -79,6 +79,7 @@ def _parse_mysql_url(mysql_url: str) -> tuple[str, dict]:
         else:
             # Certificats système par défaut (pour Aiven, Render, etc.)
             ctx = ssl.create_default_context()
+        ctx.minimum_version = ssl.TLSVersion.TLSv1_2
         
         connect_args["ssl"] = ctx
 

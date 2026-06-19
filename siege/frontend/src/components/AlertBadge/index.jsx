@@ -19,7 +19,7 @@ export default function AlertBadge({ lot, onClick }) {
   const Icon     = isPerime ? XCircle : AlertTriangle
 
   return (
-    <div className={`alert-card ${statut}`} onClick={onClick}>
+    <button type="button" className={`alert-card ${statut}`} onClick={onClick}>
       <div className={`alert-icon ${statut}`}>
         <Icon size={16} />
       </div>
@@ -34,6 +34,6 @@ export default function AlertBadge({ lot, onClick }) {
         <Icon size={10} />
         {isPerime ? 'Périmé' : 'Alerte'}
       </span>
-    </div>
+    </button>
   )
 }
