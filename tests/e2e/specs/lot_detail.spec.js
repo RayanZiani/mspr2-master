@@ -1,10 +1,10 @@
 import { test, expect } from '@playwright/test'
-import { waitForDashboard } from '../helpers.js'
+import { waitForDashboard, lotRows } from '../helpers.js'
 
 test('page détail lot affiche les courbes', async ({ page }) => {
   await waitForDashboard(page)
 
-  const firstRow = page.locator('.ag-center-cols-container .ag-row').first()
+  const firstRow = lotRows(page).first()
   if (!(await firstRow.count())) {
     test.skip(true, 'Aucun lot en base — seed requis')
   }
@@ -17,7 +17,7 @@ test('page détail lot affiche les courbes', async ({ page }) => {
 
 test('retour dashboard depuis détail lot', async ({ page }) => {
   await waitForDashboard(page)
-  const firstRow = page.locator('.ag-center-cols-container .ag-row').first()
+  const firstRow = lotRows(page).first()
   if (!(await firstRow.count())) {
     test.skip(true, 'Aucun lot en base')
   }

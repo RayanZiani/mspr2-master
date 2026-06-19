@@ -73,6 +73,8 @@ run_api_tests() {
 
 run_e2e_tests() {
   echo "=== Tests E2E (Playwright) ==="
+  export E2E_BASE_URL="${E2E_BASE_URL:-${FRONTEND_URL:-http://localhost:80}}"
+  echo "E2E base URL: ${E2E_BASE_URL}"
   npx playwright install chromium || true
   cd tests/e2e
   npx playwright test
@@ -89,11 +91,7 @@ case "$MODE" in
     run_unit_tests
     run_integration_tests
     run_api_tests
-    if [ "${SKIP_E2E:-}" != "true" ]; then
-      run_e2e_tests
-    else
-      echo "=== Tests E2E (Playwright) — SKIP (SKIP_E2E=true) ==="
-    fi
+    run_e2e_tests
     ;;
   *)
     echo "Usage: $0 [unit|integration|api|e2e|all]"

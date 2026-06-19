@@ -53,6 +53,7 @@ async def _resolve_lot_id(session, raw_lot_id: str | None, entrepot: str) -> str
 
 
 async def _persist(payload: dict, entrepot: str) -> None:
+    """Enregistre une mesure et passe le lot en alerte si nécessaire."""
     temp = payload.get("temp")
     humidity = payload.get("humidity")
     if temp is None or humidity is None:
@@ -82,16 +83,20 @@ async def _persist(payload: dict, entrepot: str) -> None:
         await session.commit()
 
 
-def on_message(client, userdata, msg):
+def on_message(_client, _userdata, msg):
+    """Traite un message capteur : persistance en base et vérification des alertes."""
     try:
         payload = json.loads(msg.payload.decode())
         entrepot = msg.topic.split("/")[2]
         asyncio.run(_persist(payload, entrepot))
+    except (json.JSONDecodeError, UnicodeDecodeError, TypeError, ValueError, IndexError):
+        logger.exception("Invalid MQTT payload")
     except Exception:
         logger.exception("Failed to process MQTT message")
 
 
 def _run_loop():
+    """Tente de se connecter au broker et relance en cas d'échec."""
     client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION1)
     client.on_message = on_message
     while True:
@@ -100,11 +105,12 @@ def _run_loop():
             client.connect(MQTT_BROKER_HOST, MQTT_BROKER_PORT)
             client.subscribe(MQTT_TOPIC)
             client.loop_forever()
-        except Exception:
+        except OSError:
             logger.exception("MQTT connection lost, retrying in 5s")
             time.sleep(5)
 
 
 def start_mqtt():
+    """Démarre le subscriber MQTT dans un thread daemon."""
     thread = threading.Thread(target=_run_loop, daemon=True)
     thread.start()

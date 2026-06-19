@@ -29,9 +29,10 @@ test('navigation principale visible pour admin', async ({ page }) => {
   await page.goto('/')
   await expect(page.getByRole('link', { name: 'Dashboard' })).toBeVisible()
   await expect(page.getByRole('link', { name: 'Mesures' })).toBeVisible()
-  await expect(page.getByRole('link', { name: 'Santé' })).toBeVisible()
   await expect(page.getByRole('link', { name: 'Alertes' })).toBeVisible()
-  await expect(page.getByRole('link', { name: 'Utilisateurs' })).toBeVisible()
+  await page.locator('.account-btn').click()
+  await expect(page.getByRole('menuitem', { name: /Santé système/i })).toBeVisible()
+  await expect(page.getByRole('menuitem', { name: 'Utilisateurs' })).toBeVisible()
 })
 
 test('menu compte et déconnexion', async ({ page }) => {

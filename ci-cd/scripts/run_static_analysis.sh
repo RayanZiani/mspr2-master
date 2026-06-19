@@ -7,10 +7,15 @@ cd "$ROOT_DIR"
 mkdir -p tests/reports
 
 echo "=== Pylint ==="
-pylint pays/bresil/api pays/equateur/api pays/colombie/api siege/api \
-  --output-format=parseable \
-  --exit-zero \
-  > tests/reports/pylint-report.txt || true
+: > tests/reports/pylint-report.txt
+for api_path in pays/bresil/api pays/equateur/api pays/colombie/api siege/api; do
+  echo "=== ${api_path} ===" >> tests/reports/pylint-report.txt
+  pylint "$api_path" \
+    --init-hook="import sys; sys.path.insert(0, '${api_path}')" \
+    --output-format=parseable \
+    --exit-zero \
+    >> tests/reports/pylint-report.txt || true
+done
 
 echo "=== Bandit (sécurité Python) ==="
 bandit -r pays/bresil/api pays/equateur/api pays/colombie/api siege/api \

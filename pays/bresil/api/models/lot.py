@@ -1,10 +1,15 @@
+"""Modèle SQLAlchemy pour les lots — Brésil."""
+
 import uuid
 from datetime import datetime
-from sqlalchemy import Column, String, DateTime, Enum
+
+from sqlalchemy import Column, DateTime, Enum, String
+
 from api.db.database import Base
 
 
 class Lot(Base):
+    """Lot de café stocké en entrepôt."""
     __tablename__ = "lots"
 
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))

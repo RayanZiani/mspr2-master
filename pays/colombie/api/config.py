@@ -1,3 +1,5 @@
+"""Configuration métier et connexions pour l'API FutureKawa — Colombie."""
+
 import os
 
 PAYS = "colombie"
@@ -15,5 +17,5 @@ DATABASE_URL = (
 )
 
 MQTT_BROKER_HOST = os.getenv("MQTT_BROKER_HOST", "mosquitto-colombie")
-MQTT_BROKER_PORT = int(os.getenv("MQTT_BROKER_PORT", 1883))
+MQTT_BROKER_PORT = int(os.getenv("MQTT_BROKER_PORT", "1883"))
 MQTT_TOPIC = f"futurekawa/{PAYS}/+/sensors"
