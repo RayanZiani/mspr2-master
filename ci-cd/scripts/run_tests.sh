@@ -92,7 +92,11 @@ case "$MODE" in
     run_unit_tests
     run_integration_tests
     run_api_tests
-    run_e2e_tests
+    if [ "${SKIP_E2E:-}" != "true" ]; then
+      run_e2e_tests
+    else
+      echo "=== Tests E2E (Playwright) — SKIP (SKIP_E2E=true) ==="
+    fi
     ;;
   *)
     echo "Usage: $0 [unit|integration|api|e2e|all]"
