@@ -1,14 +1,15 @@
 import httpx
 import pytest
 
-from .conftest import API_SIEGE
+from .conftest import API_SIEGE, E2E_PASSWORD, E2E_USER, _request_with_retry
 
 
 @pytest.mark.integration
 def test_login_returns_bearer_token():
-    response = httpx.post(
+    response = _request_with_retry(
+        "POST",
         f"{API_SIEGE}/auth/login",
-        json={"username": "admin_siege", "password": "Admin@2025!"},
+        json={"username": E2E_USER, "password": E2E_PASSWORD},
         timeout=15.0,
     )
     assert response.status_code == 200

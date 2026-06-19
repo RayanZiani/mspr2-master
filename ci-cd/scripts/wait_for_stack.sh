@@ -62,6 +62,22 @@ if [ -n "${RENDER:-}" ]; then
   
   # Vérifier aussi que l'API docs est accessible (endpoint public)
   wait_for_url "${API_SIEGE}/docs" "API Siège (Docs)"
+
+  # Vérifier que le login fonctionne (évite les 502 transitoires au démarrage)
+  echo "Attente API Siège (Login)..."
+  for i in $(seq 1 12); do
+    if curl -fsS -X POST "${API_SIEGE}/auth/login" \
+      -H "Content-Type: application/json" \
+      -d '{"username":"admin_siege","password":"Admin@2025!"}' >/dev/null 2>&1; then
+      echo "OK: API Siège (Login)"
+      break
+    fi
+    if [ "$i" -eq 12 ]; then
+      echo "ERREUR: API Siège (Login) indisponible après 60s"
+      exit 1
+    fi
+    sleep 5
+  done
   
   # Vérifier le frontend
   if [ "$CHECK_FRONTEND" = true ]; then
