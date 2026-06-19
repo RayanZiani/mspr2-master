@@ -3,6 +3,9 @@ import os
 import httpx
 import pytest
 
+# Détection de l'environnement Render
+IS_RENDER = os.getenv("RENDER", "").lower() == "true"
+
 # Utiliser les URLs Render par défaut (backend centralisé)
 # Sur Render, seul le backend Siège est déployé, pas les APIs pays séparées
 API_SIEGE = os.getenv("API_SIEGE_URL", "https://mspr2-master.onrender.com")
@@ -15,6 +18,12 @@ API_COLOMBIE = os.getenv("API_COLOMBIE_URL", "http://localhost:8003")
 
 E2E_USER = os.getenv("E2E_USER", "admin_siege")
 E2E_PASSWORD = os.getenv("E2E_PASSWORD", "Admin@2025!")
+
+# Marker pour skip les tests qui ne fonctionnent pas sur Render
+skip_on_render = pytest.mark.skipif(
+    IS_RENDER,
+    reason="APIs pays non déployées séparément sur Render - utiliser l'API Siège"
+)
 
 USERS = {
     "admin": ("admin_siege", "Admin@2025!"),
@@ -63,6 +72,8 @@ def first_lot_id(auth_headers):
 
 @pytest.fixture(scope="session")
 def bresil_lot_id():
+    if IS_RENDER:
+        pytest.skip("API Brésil non déployée sur Render - utiliser l'API Siège")
     response = httpx.get(f"{API_BRESIL}/lots/", timeout=10.0)
     assert response.status_code == 200
     lots = response.json()

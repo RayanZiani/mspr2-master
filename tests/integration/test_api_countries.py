@@ -3,7 +3,7 @@ from datetime import datetime
 import httpx
 import pytest
 
-from .conftest import API_BRESIL, API_EQUATEUR, API_COLOMBIE
+from .conftest import API_BRESIL, API_EQUATEUR, API_COLOMBIE, skip_on_render
 
 COUNTRY_APIS = [
     (API_BRESIL, "bresil"),
@@ -13,6 +13,7 @@ COUNTRY_APIS = [
 
 
 @pytest.mark.integration
+@skip_on_render  # APIs pays non déployées sur Render
 @pytest.mark.parametrize("base_url,pays", COUNTRY_APIS)
 def test_country_lots_fifo_order(base_url, pays):
     response = httpx.get(f"{base_url}/lots/", timeout=10.0)
@@ -30,6 +31,7 @@ def test_country_lots_fifo_order(base_url, pays):
 
 
 @pytest.mark.integration
+@skip_on_render  # APIs pays non déployées sur Render
 @pytest.mark.parametrize("base_url,pays", COUNTRY_APIS)
 def test_country_lot_detail(base_url, pays):
     list_resp = httpx.get(f"{base_url}/lots/", timeout=10.0)
@@ -47,6 +49,7 @@ def test_country_lot_detail(base_url, pays):
 
 
 @pytest.mark.integration
+@skip_on_render  # APIs pays non déployées sur Render
 @pytest.mark.parametrize("base_url,pays", COUNTRY_APIS)
 def test_country_alertes_endpoint(base_url, pays):
     response = httpx.get(f"{base_url}/alertes/", timeout=10.0)
@@ -55,6 +58,7 @@ def test_country_alertes_endpoint(base_url, pays):
 
 
 @pytest.mark.integration
+@skip_on_render  # API Brésil non déployée sur Render
 def test_bresil_mesures_filter_by_lot(bresil_lot_id):
     all_resp = httpx.get(f"{API_BRESIL}/mesures/", timeout=15.0)
     assert all_resp.status_code == 200
@@ -74,6 +78,7 @@ def test_bresil_mesures_filter_by_lot(bresil_lot_id):
 
 
 @pytest.mark.integration
+@skip_on_render  # API Brésil non déployée sur Render
 def test_bresil_mesures_newest_first(bresil_lot_id):
     response = httpx.get(
         f"{API_BRESIL}/mesures/",
