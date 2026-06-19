@@ -32,4 +32,3 @@ async def set_cache(key: str, data, ttl: int | None = None) -> None:
     except Exception:
         # Si Redis échoue, on continue sans cache
         pass
-
