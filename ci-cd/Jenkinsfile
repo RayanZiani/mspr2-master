@@ -11,6 +11,7 @@ pipeline {
         SKIP_E2E = 'false'
         E2E_USER = 'admin_siege'
         E2E_PASSWORD = 'Admin@2025!'
+        CI = 'true'
         // Note: Les APIs pays (Brésil, Équateur, Colombie) ne sont pas déployées séparément sur Render
         // Elles sont intégrées dans l'API Siège en mode production
     }
@@ -43,10 +44,10 @@ pipeline {
                     python3 -m pip install fastapi uvicorn python-dotenv redis httpx paho-mqtt --break-system-packages || true
                     python3 -m pip install bcrypt passlib python-jose --break-system-packages || true
                     
-                    # Installer les dépendances Node.js et Playwright (navigateur + libs système)
+                    # Installer les dépendances Node.js et Playwright
                     npm ci || npm install
-                    npx playwright install chromium || true
-                    npx playwright install-deps chromium || true
+                    bash ci-cd/scripts/install_playwright_deps.sh
+                    npx playwright install chromium
                 '''
             }
         }

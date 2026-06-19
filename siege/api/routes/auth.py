@@ -10,13 +10,17 @@ from api.services.auth_service import get_user_account
 
 router = APIRouter()
 
+_LOGIN_RESPONSES = {
+    401: {"description": "Identifiants invalides"},
+}
+
 
 class LoginRequest(BaseModel):
     username: str
     password: str
 
 
-@router.post("/login")
+@router.post("/login", responses=_LOGIN_RESPONSES)
 async def login(body: LoginRequest, request: Request):
     user = await get_user_account(body.username)
     if not user or not user.get("active"):
@@ -62,4 +66,3 @@ async def me(user: Annotated[dict, Depends(require_user)]):
         "pays_code": (account or {}).get("pays_code"),
         "email": (account or {}).get("email"),
     }
-

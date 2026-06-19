@@ -1,14 +1,21 @@
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException
+
 from api.auth import require_user
 from api.permissions import UserPermissions
 from api.services.data_service import get_lot_pays_slug, get_mesures_for_lot
 
 router = APIRouter()
 
+_MESURES_RESPONSES = {
+    400: {"description": "Paramètre lot_id requis pour récupérer les relevés"},
+    403: {"description": "Accès refusé"},
+    404: {"description": "Lot introuvable"},
+}
 
-@router.get("/")
+
+@router.get("/", responses=_MESURES_RESPONSES)
 async def get_all_mesures(
     user: Annotated[dict, Depends(require_user)],
     lot_id: str | None = None,

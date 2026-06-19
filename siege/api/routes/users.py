@@ -7,6 +7,10 @@ from api.db.database import SessionLocal
 
 router = APIRouter()
 
+VALID_ROLES = frozenset({"ADMIN", "USER"})
+VALID_PAYS = frozenset({"SIEGE", "BRESIL", "EQUATEUR", "COLOMBIE"})
+
+_USER_BAD_REQUEST = {"description": "Données utilisateur invalides"}
 
 class CreateUserRequest(BaseModel):
     username: str
@@ -55,6 +59,50 @@ UPDATE_SQL = text(
 )
 
 
+def _validate_role(role: str) -> str:
+    normalized = role.upper()
+    if normalized not in VALID_ROLES:
+        raise HTTPException(status_code=400, detail="role invalide")
+    return normalized
+
+
+def _validate_username(username: str) -> None:
+    if not username or len(username) > 100:
+        raise HTTPException(status_code=400, detail="username invalide")
+
+
+def _normalize_pays_code(pays_code: str | None) -> str | None:
+    if not pays_code:
+        return None
+    normalized = pays_code.upper()
+    if normalized not in VALID_PAYS:
+        raise HTTPException(status_code=400, detail="pays_code invalide")
+    return normalized
+
+
+def _resolve_password_hash(password: str | None, password_hash: str | None) -> str:
+    if password:
+        if len(password) < 4:
+            raise HTTPException(status_code=400, detail="password trop court")
+        return hash_password(password)
+
+    if not password_hash:
+        raise HTTPException(status_code=400, detail="password requis")
+
+    try:
+        verify_password("test", password_hash)
+    except Exception:
+        raise HTTPException(status_code=400, detail="password_hash invalide")
+    return password_hash
+
+
+def _validate_optional_password_hash(password_hash: str) -> None:
+    try:
+        verify_password("test", password_hash)
+    except Exception:
+        raise HTTPException(status_code=400, detail="password_hash invalide")
+
+
 @router.get("/")
 async def list_users():
     async with SessionLocal() as session:
@@ -62,35 +110,18 @@ async def list_users():
         return [dict(r) for r in res.mappings().all()]
 
 
-@router.post("/")
+@router.post(
+    "/",
+    responses={
+        400: _USER_BAD_REQUEST,
+        409: {"description": "Nom d'utilisateur déjà existant"},
+    },
+)
 async def create_user(body: CreateUserRequest):
-    role = body.role.upper()
-    if role not in {"ADMIN", "USER"}:
-        raise HTTPException(status_code=400, detail="role invalide")
-
-    if not body.username or len(body.username) > 100:
-        raise HTTPException(status_code=400, detail="username invalide")
-
-    pays_code = body.pays_code.upper() if body.pays_code else None
-    if pays_code and pays_code not in {"SIEGE", "BRESIL", "EQUATEUR", "COLOMBIE"}:
-        raise HTTPException(status_code=400, detail="pays_code invalide")
-
-    if not body.password and not body.password_hash:
-        raise HTTPException(status_code=400, detail="password requis")
-
-    if body.password and len(body.password) < 4:
-        raise HTTPException(status_code=400, detail="password trop court")
-
-    password_hash = None
-    if body.password:
-        password_hash = hash_password(body.password)
-    else:
-        # Validation légère: le hash doit être vérifiable par passlib.
-        try:
-            verify_password("test", body.password_hash or "")  # peut lever si format invalide
-        except Exception:
-            raise HTTPException(status_code=400, detail="password_hash invalide")
-        password_hash = body.password_hash
+    role = _validate_role(body.role)
+    _validate_username(body.username)
+    pays_code = _normalize_pays_code(body.pays_code)
+    password_hash = _resolve_password_hash(body.password, body.password_hash)
 
     async with SessionLocal() as session:
         try:
@@ -112,27 +143,22 @@ async def create_user(body: CreateUserRequest):
     return {"ok": True}
 
 
-@router.patch("/{username}")
+@router.patch(
+    "/{username}",
+    responses={
+        400: _USER_BAD_REQUEST,
+        404: {"description": "Utilisateur introuvable"},
+    },
+)
 async def update_user(username: str, body: UpdateUserRequest):
-    role = body.role.upper() if body.role else None
-    if role and role not in {"ADMIN", "USER"}:
-        raise HTTPException(status_code=400, detail="role invalide")
-
-    pays_code = body.pays_code.upper() if body.pays_code else None
-    if pays_code and pays_code not in {"SIEGE", "BRESIL", "EQUATEUR", "COLOMBIE"}:
-        raise HTTPException(status_code=400, detail="pays_code invalide")
+    role = _validate_role(body.role) if body.role else None
+    pays_code = _normalize_pays_code(body.pays_code)
 
     password_hash = body.password_hash
     if body.password is not None:
-        if len(body.password) < 4:
-            raise HTTPException(status_code=400, detail="password trop court")
-        password_hash = hash_password(body.password)
-
-    if password_hash is not None:
-        try:
-            verify_password("test", password_hash)
-        except Exception:
-            raise HTTPException(status_code=400, detail="password_hash invalide")
+        password_hash = _resolve_password_hash(body.password, None)
+    elif password_hash is not None:
+        _validate_optional_password_hash(password_hash)
 
     async with SessionLocal() as session:
         res = await session.execute(
@@ -151,4 +177,3 @@ async def update_user(username: str, body: UpdateUserRequest):
             raise HTTPException(status_code=404, detail="user introuvable")
 
     return {"ok": True}
-

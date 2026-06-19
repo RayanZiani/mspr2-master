@@ -9,35 +9,44 @@ const ICON = {
   info:    { C: Info,          cls: 'toast-icon-info' },
 }
 
+function ToastItem({ toast, onDismiss }) {
+  const { C: Icon, cls } = ICON[toast.type] || ICON.info
+
+  function handleDismiss() {
+    onDismiss(toast.id)
+  }
+
+  return (
+    <div className={`toast toast-${toast.type}`}>
+      <Icon size={15} className={cls} />
+      <span>{toast.message}</span>
+      <button type="button" className="toast-close" onClick={handleDismiss}>
+        <X size={13} />
+      </button>
+    </div>
+  )
+}
+
 export function ToastProvider({ children }) {
   const [toasts, setToasts] = useState([])
 
-  const toast = useCallback((message, type = 'info') => {
-    const id = Date.now()
-    setToasts(prev => [...prev, { id, message, type }])
-    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 5000)
+  const removeToast = useCallback((id) => {
+    setToasts((prev) => prev.filter((item) => item.id !== id))
   }, [])
 
-  const dismiss = useCallback((id) => {
-    setToasts(prev => prev.filter(t => t.id !== id))
-  }, [])
+  const toast = useCallback((message, type = 'info') => {
+    const id = Date.now()
+    setToasts((prev) => [...prev, { id, message, type }])
+    setTimeout(() => removeToast(id), 5000)
+  }, [removeToast])
 
   return (
     <ToastCtx.Provider value={toast}>
       {children}
       <div className="toast-container">
-        {toasts.map(t => {
-          const { C: Icon, cls } = ICON[t.type] || ICON.info
-          return (
-            <div key={t.id} className={`toast toast-${t.type}`}>
-              <Icon size={15} className={cls} />
-              <span>{t.message}</span>
-              <button className="toast-close" onClick={() => dismiss(t.id)}>
-                <X size={13} />
-              </button>
-            </div>
-          )
-        })}
+        {toasts.map((item) => (
+          <ToastItem key={item.id} toast={item} onDismiss={removeToast} />
+        ))}
       </div>
     </ToastCtx.Provider>
   )

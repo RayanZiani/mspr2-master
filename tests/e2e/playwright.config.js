@@ -1,5 +1,7 @@
 import { defineConfig, devices } from '@playwright/test'
 
+const isCI = Boolean(process.env.CI || process.env.JENKINS_URL)
+
 export default defineConfig({
   fullyParallel: false,
   retries: 1,
@@ -9,6 +11,9 @@ export default defineConfig({
     baseURL: process.env.E2E_BASE_URL || process.env.FRONTEND_URL || 'http://localhost:80',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
+    launchOptions: isCI
+      ? { args: ['--no-sandbox', '--disable-dev-shm-usage', '--disable-gpu'] }
+      : undefined,
   },
   projects: [
     {
