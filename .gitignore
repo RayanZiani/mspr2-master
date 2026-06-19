@@ -153,6 +153,10 @@ pip-delete-this-directory.txt
 
 # Unit test / coverage
 htmlcov/
+tests/reports/*
+!tests/reports/.gitkeep
+tests/e2e/.auth/
+test-results/
 .tox/
 .nox/
 .coverage

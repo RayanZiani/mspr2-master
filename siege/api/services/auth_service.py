@@ -16,4 +16,3 @@ async def get_user_account(username: str) -> dict | None:
         result = await session.execute(GET_USER_SQL, {"username": username})
         row = result.mappings().first()
         return dict(row) if row else None
-

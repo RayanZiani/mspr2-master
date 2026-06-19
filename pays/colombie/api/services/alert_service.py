@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timezone
 from api.config import (
     SEUIL_TEMP, SEUIL_HUMIDITY,
     TOLERANCE_TEMP, TOLERANCE_HUMIDITY,
@@ -22,4 +22,4 @@ def check_alerts(payload: dict) -> list[str]:
 
 
 def is_lot_perime(date_stockage: datetime) -> bool:
-    return (datetime.utcnow() - date_stockage).days > PEREMPTION_JOURS
+    return (datetime.now(timezone.utc).replace(tzinfo=None) - date_stockage).days > PEREMPTION_JOURS

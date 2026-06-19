@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   mosquitto-colombie:
     image: eclipse-mosquitto:2
@@ -21,6 +19,12 @@ services:
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     volumes:
       - mysql-colombie-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
     networks:
       - colombie-net
 
@@ -31,8 +35,11 @@ services:
     ports:
       - "8003:8000"
     depends_on:
-      - mysql-colombie
-      - mosquitto-colombie
+      mysql-colombie:
+        condition: service_healthy
+      mosquitto-colombie:
+        condition: service_started
+    restart: unless-stopped
     networks:
       - colombie-net
 

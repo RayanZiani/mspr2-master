@@ -2,10 +2,12 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-COPY requirements.txt api/
-RUN pip install --no-cache-dir -r api/requirements.txt
+# Copie requirements.txt depuis siege/api (contexte Docker à la racine)
+COPY siege/api/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
-COPY . api/
+# Copie tout le code de l'API dans un sous-dossier "api" pour préserver les imports
+COPY siege/api/ ./api/
 
 ENV PYTHONPATH=/app
 

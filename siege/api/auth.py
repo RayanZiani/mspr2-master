@@ -1,18 +1,14 @@
 import os
 from datetime import datetime, timedelta, timezone
 
+import bcrypt
 from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 
 _oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
-_pwd = CryptContext(
-    # Compat: on garde pbkdf2_sha256 pour les anciens comptes,
-    # mais on privilégie bcrypt (coût ~12) pour les nouveaux.
-    schemes=["bcrypt", "pbkdf2_sha256"],
-    deprecated="auto",
-)
+_pwd = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
 
 
 def _require_env(name: str) -> str:
@@ -37,13 +33,22 @@ def _access_ttl_minutes() -> int:
 
 
 def verify_password(password: str, password_hash: str) -> bool:
+    if password_hash.startswith("$2"):
+        try:
+            return bcrypt.checkpw(
+                password.encode("utf-8"),
+                password_hash.encode("utf-8"),
+            )
+        except ValueError:
+            return False
     return _pwd.verify(password, password_hash)
 
 
 def hash_password(password: str) -> str:
-    # Passlib choisit le premier schéma (bcrypt) par défaut.
-    # On fixe explicitement le coût pour correspondre aux seeds.
-    return _pwd.hash(password, rounds=12)
+    return bcrypt.hashpw(
+        password.encode("utf-8"),
+        bcrypt.gensalt(rounds=12),
+    ).decode("utf-8")
 
 
 def create_access_token(sub: str, role: str, pays_code: str | None) -> str:

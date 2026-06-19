@@ -116,6 +116,23 @@ python scripts/generate_demo_excel.py
 
 Les scripts ci-dessus necessitent `MYSQL_URL` (voir `.env.example` racine).
 
+## Tests et CI/CD
+
+```powershell
+# Tests unitaires (sans Docker)
+pip install -r tests/requirements.txt
+npm run test:unit
+
+# Stack complete + tous les tests
+npm start
+bash ci-cd/scripts/wait_for_stack.sh
+npm run test
+```
+
+Documentation detaillee :
+- `docs/technique/plan_tests.md`
+- `docs/technique/ci_cd.md`
+
 ## Troubleshooting rapide
 
 - Port 80 deja utilise:

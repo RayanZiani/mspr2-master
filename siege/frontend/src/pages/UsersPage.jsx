@@ -185,8 +185,19 @@ export default function UsersPage() {
       </div>
 
       {createOpen && (
-        <div className="users-modal-backdrop" onClick={() => !saving && setCreateOpen(false)}>
-          <div className="users-modal" onClick={e => e.stopPropagation()}>
+        <div
+          className="users-modal-backdrop"
+          role="button"
+          tabIndex={0}
+          onClick={() => !saving && setCreateOpen(false)}
+          onKeyDown={(e) => {
+            if ((e.key === 'Enter' || e.key === ' ') && !saving) {
+              e.preventDefault()
+              setCreateOpen(false)
+            }
+          }}
+        >
+          <div className="users-modal" role="dialog" aria-modal="true" onMouseDown={e => e.stopPropagation()}>
             <div className="users-modal-title">Créer un utilisateur</div>
             <form onSubmit={onCreate} className="users-form">
               <label className="users-label">

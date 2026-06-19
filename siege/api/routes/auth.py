@@ -1,3 +1,5 @@
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 from sqlalchemy import text
@@ -52,7 +54,7 @@ async def login(body: LoginRequest, request: Request):
 
 
 @router.get("/me")
-async def me(user: dict = Depends(require_user)):
+async def me(user: Annotated[dict, Depends(require_user)]):
     account = await get_user_account(user["sub"])
     return {
         "username": user["sub"],

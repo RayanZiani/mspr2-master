@@ -1,5 +1,5 @@
 WIFI_SSID = "NomDuReseau"
-WIFI_PASSWORD = "MotDePasse"
+WIFI_PSK = ""  # secret WiFi — à renseigner avant déploiement terrain
 
 MQTT_BROKER = "192.168.1.100"
 MQTT_PORT = 1883

@@ -1,9 +1,28 @@
 import os
+import tempfile
+from pathlib import Path
 from urllib.parse import parse_qs, unquote, urlparse
 
 from dotenv import load_dotenv
 
 load_dotenv()
+
+# Gestion du certificat SSL depuis une variable d'environnement
+def _setup_ssl_certificate() -> str:
+    """
+    Configure le certificat SSL MySQL.
+    Si MYSQL_SSL_CERT_CONTENT est défini, crée un fichier temporaire.
+    Sinon, utilise le chemin défini dans MYSQL_SSL_CA.
+    """
+    cert_content = os.getenv("MYSQL_SSL_CERT_CONTENT")
+    if cert_content:
+        # Crée un fichier temporaire pour le certificat
+        cert_path = Path(tempfile.gettempdir()) / "mysql-ca.pem"
+        cert_path.write_text(cert_content)
+        return str(cert_path)
+    
+    # Utilise le chemin par défaut si défini
+    return os.getenv("MYSQL_SSL_CA", "/app/database/ca.pem")
 
 PAYS_SLUG = {
     "BR": "bresil",
@@ -23,7 +42,13 @@ REDIS_CACHE_TTL = int(os.getenv("REDIS_CACHE_TTL", 60))
 MESURES_DAYS = int(os.getenv("MESURES_DAYS", 30))
 MESURES_LIMIT = int(os.getenv("MESURES_LIMIT", 5000))
 
-MYSQL_SSL_CA = os.getenv("MYSQL_SSL_CA", "/app/database/ca.pem")
+API_URLS = {
+    "bresil": os.getenv("API_BRESIL_URL", "http://api-bresil:8000"),
+    "equateur": os.getenv("API_EQUATEUR_URL", "http://api-equateur:8000"),
+    "colombie": os.getenv("API_COLOMBIE_URL", "http://api-colombie:8000"),
+}
+
+MYSQL_SSL_CA = _setup_ssl_certificate()
 
 
 def _parse_mysql_url(mysql_url: str) -> tuple[str, dict]:
@@ -48,9 +73,15 @@ def _parse_mysql_url(mysql_url: str) -> tuple[str, dict]:
     if ssl_mode not in {"DISABLED", "DISABLE"}:
         import ssl
 
+        # Utilise le certificat personnalisé s'il existe, sinon utilise les certificats système par défaut
         if os.path.isfile(MYSQL_SSL_CA):
             ctx = ssl.create_default_context(cafile=MYSQL_SSL_CA)
-            connect_args["ssl"] = ctx
+        else:
+            # Certificats système par défaut (pour Aiven, Render, etc.)
+            ctx = ssl.create_default_context()
+        ctx.minimum_version = ssl.TLSVersion.TLSv1_2
+        
+        connect_args["ssl"] = ctx
 
     return async_url, connect_args
 

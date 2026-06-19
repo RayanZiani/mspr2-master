@@ -21,12 +21,15 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# Configuration CORS permissive pour le développement et la production
+# Autorise toutes les origines onrender.com et localhost
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origin_regex=r"https://.*\.onrender\.com|http://localhost:\d+",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
 
 app.include_router(auth.router, prefix="/auth", tags=["Auth"])
@@ -57,11 +60,13 @@ app.include_router(
 
 
 @app.get("/health")
+@app.head("/health")  # Support pour HEAD (monitoring)
 async def health():
     return {"status": "ok", "service": "siege", "source": "mysql"}
 
 
 @app.get("/health/db")
+@app.head("/health/db")  # Support pour HEAD (monitoring)
 async def health_db():
     try:
         async with engine.connect() as conn:

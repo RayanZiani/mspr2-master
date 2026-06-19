@@ -1,3 +1,5 @@
+from typing import Annotated
+
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -8,7 +10,7 @@ router = APIRouter()
 
 
 @router.get("/")
-async def list_alertes(session: AsyncSession = Depends(get_session)):
+async def list_alertes(session: Annotated[AsyncSession, Depends(get_session)]):
     result = await session.execute(
         select(Lot)
         .where(Lot.statut != "conforme")

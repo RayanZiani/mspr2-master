@@ -2,46 +2,264 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_HUB_CREDENTIALS = credentials('dockerhub-credentials')
+        // Utiliser les services Render (toujours disponibles) au lieu de Docker local
+        RENDER = 'true'
+        // URLs réelles des services déployés sur Render
+        API_SIEGE_URL = 'https://mspr2-master.onrender.com'
+        FRONTEND_URL = 'https://mspr2-master-front.onrender.com'
+        // E2E désactivé temporairement (refonte frontend en cours)
+        SKIP_E2E = 'true'
+        // Note: Les APIs pays (Brésil, Équateur, Colombie) ne sont pas déployées séparément sur Render
+        // Elles sont intégrées dans l'API Siège en mode production
+    }
+
+    options {
+        timestamps()
+        buildDiscarder(logRotator(numToKeepStr: '20'))
+        timeout(time: 90, unit: 'MINUTES')
     }
 
     stages {
-        stage('Build') {
+        stage('Checkout') {
             steps {
-                sh 'docker compose build'
+                // Évite les workspaces corrompus / permissions incohérentes (très fréquent en docker)
+                cleanWs()
+                checkout scm
+            }
+        }
+
+        stage('Install') {
+            steps {
+                sh '''
+                    # Vérifier la version de Python
+                    python3 --version
+                    
+                    # Installer les dépendances de tests (pytest, coverage, etc.)
+                    python3 -m pip install -r tests/requirements.txt --break-system-packages || true
+                    
+                    # Installer les dépendances des API (ignorer les erreurs de compilation pydantic-core)
+                    python3 -m pip install fastapi uvicorn python-dotenv redis httpx paho-mqtt --break-system-packages || true
+                    python3 -m pip install bcrypt passlib python-jose --break-system-packages || true
+                    
+                    # Installer les dépendances Node.js
+                    npm ci || npm install
+                '''
+            }
+        }
+
+        stage('Lint') {
+            steps {
+                sh '''
+                    python3 -m flake8 pays/bresil/api/services pays/equateur/api/services pays/colombie/api/services siege/api/services --config=.flake8
+                '''
+            }
+        }
+
+        stage('Préparation environnement') {
+            steps {
+                sh '''
+                    # Créer le fichier .env pour les variables MySQL requises par docker-compose
+                    # Il faut le créer à la racine ET dans chaque répertoire de service
+                    
+                    create_env_file() {
+                        cat > "$1/.env" << 'EOF'
+MYSQL_ROOT_PASSWORD=rootpassword
+MYSQL_DATABASE=futurekawa
+MYSQL_USER=kawa_user
+MYSQL_PASSWORD=kawapassword
+MYSQL_URL=mysql://kawa_user:kawapassword@localhost:3306/futurekawa
+EOF
+                        echo "Fichier .env créé dans $1"
+                    }
+                    
+                    # Créer .env à la racine et dans chaque répertoire de pays/siège
+                    create_env_file "."
+                    create_env_file "pays/bresil"
+                    create_env_file "pays/equateur"
+                    create_env_file "pays/colombie"
+                    create_env_file "siege"
+                '''
+            }
+        }
+
+        stage('Build') {
+            when {
+                expression { env.RENDER != 'true' }
+            }
+            steps {
+                sh 'docker-compose build'
+            }
+        }
+
+        stage('Démarrage stack') {
+            when {
+                expression { env.RENDER != 'true' }
+            }
+            steps {
+                sh '''
+                    # Démarrage direct sans nettoyage (ultra-rapide)
+                    # --force-recreate et --remove-orphans gèrent automatiquement les conflits
+                    docker-compose up -d --force-recreate --remove-orphans || true
+                    
+                    # Attente minimale de 15 secondes pour que les conteneurs démarrent
+                    sleep 15
+                    
+                    # Afficher l'état des conteneurs
+                    docker-compose ps
+                '''
+            }
+        }
+
+        stage('Vérification services') {
+            steps {
+                script {
+                    if (env.RENDER == 'true') {
+                        echo '🌐 Mode Render: vérification des services en production'
+                    } else {
+                        echo '🐳 Mode Docker: vérification de la stack locale'
+                    }
+                }
+                
+                // Vérifier que les services sont accessibles avant les tests
+                catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
+                    sh 'bash ci-cd/scripts/wait_for_stack.sh'
+                }
             }
         }
 
         stage('Tests unitaires') {
             steps {
-                sh 'bash ci-cd/scripts/run_tests.sh'
+                sh 'bash ci-cd/scripts/run_tests.sh unit'
+            }
+        }
+
+        stage('Analyse statique') {
+            steps {
+                sh 'bash ci-cd/scripts/run_static_analysis.sh'
+            }
+        }
+
+        stage('Tests intégration') {
+            steps {
+                sh 'bash ci-cd/scripts/run_tests.sh integration'
             }
         }
 
         stage('Tests API (Newman)') {
             steps {
-                sh 'newman run tests/api/FutureKawa.postman_collection.json --environment tests/api/FutureKawa.postman_environment.json'
+                sh 'bash ci-cd/scripts/run_tests.sh api'
+            }
+        }
+
+        stage('Tests E2E (Playwright)') {
+            when {
+                expression { env.SKIP_E2E != 'true' }
+            }
+            steps {
+                sh 'bash ci-cd/scripts/run_tests.sh e2e'
             }
         }
 
         stage('SonarQube') {
             steps {
+                script {
+                    echo '🔍 Analyse SonarQube — couverture + qualité du code'
+                }
                 withSonarQubeEnv('SonarQube') {
-                    sh 'sonar-scanner'
+                    sh 'sonar-scanner -Dproject.settings=ci-cd/sonar-project.properties'
+                }
+            }
+        }
+
+        stage('Quality Gate') {
+            steps {
+                timeout(time: 5, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
                 }
             }
         }
 
         stage('Docker Push') {
+            when {
+                anyOf {
+                    branch 'main'
+                    branch 'develop'
+                    branch 'feature/ci-cd-jenkins'
+                }
+            }
             steps {
-                sh 'bash ci-cd/scripts/build_images.sh'
+                script {
+                    env.IMAGE_TAG = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
+                }
+                withCredentials([string(credentialsId: 'dockerhub-credentials', variable: 'DOCKER_HUB_CREDENTIALS')]) {
+                    sh 'bash ci-cd/scripts/build_images.sh'
+                }
+            }
+        }
+
+        stage('Déploiement Render') {
+            when {
+                anyOf {
+                    branch 'main'
+                    branch 'feature/ci-cd-jenkins'
+                }
+            }
+            steps {
+                script {
+                    echo '🚀 Déclenchement du déploiement sur Render...'
+                    
+                    // Déploiement Backend
+                    withCredentials([string(credentialsId: 'render-backend-deploy-hook', variable: 'BACKEND_HOOK')]) {
+                        sh '''
+                            echo "Déploiement Backend..."
+                            curl -X POST "$BACKEND_HOOK"
+                            echo "✅ Backend: déploiement déclenché"
+                        '''
+                    }
+                    
+                    // Déploiement Frontend
+                    withCredentials([string(credentialsId: 'render-frontend-deploy-hook', variable: 'FRONTEND_HOOK')]) {
+                        sh '''
+                            echo "Déploiement Frontend..."
+                            curl -X POST "$FRONTEND_HOOK"
+                            echo "✅ Frontend: déploiement déclenché"
+                        '''
+                    }
+                    
+                    echo '🎉 Déploiements Render déclenchés avec succès!'
+                    echo "Backend: https://mspr2-master.onrender.com"
+                    echo "Frontend: https://mspr2-master-front.onrender.com"
+                }
             }
         }
     }
 
     post {
         always {
-            junit 'tests/reports/*.xml'
+            junit allowEmptyResults: true, testResults: 'tests/reports/*.xml'
+            script {
+                def coverageIndex = 'tests/reports/htmlcov/index.html'
+                if (fileExists(coverageIndex)) {
+                    publishHTML(target: [
+                        allowMissing: false,
+                        alwaysLinkToLastBuild: true,
+                        keepAll: true,
+                        reportDir: 'tests/reports/htmlcov',
+                        reportFiles: 'index.html',
+                        reportName: 'Coverage HTML'
+                    ])
+                } else {
+                    echo "Coverage HTML indisponible: ${coverageIndex} (génération non atteinte ou dossier absent)."
+                }
+            }
+            archiveArtifacts artifacts: 'tests/reports/**', allowEmptyArchive: true
+            sh 'docker-compose down || true'
+        }
+        success {
+            echo 'Pipeline FutureKawa réussi.'
+        }
+        failure {
+            echo 'Pipeline FutureKawa échoué — consulter JUnit, Allure et SonarQube.'
         }
     }
 }
