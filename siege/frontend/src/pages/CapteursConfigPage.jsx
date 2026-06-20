@@ -4,6 +4,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { api } from '../services/api'
 import { useToast } from '../components/Toast'
 import { useSeuils } from '../hooks/useSeuils'
+import { UserPermissions } from '../auth/permissions'
 
 const PAYS_LABEL = {
   BR: 'Bresil',
@@ -35,6 +36,7 @@ function formFor(row, forms) {
 export default function CapteursConfigPage() {
   const toast = useToast()
   const qc = useQueryClient()
+  const perms = UserPermissions()
   const { list, isLoading, isError } = useSeuils()
   const [forms, setForms] = useState({})
   const [saving, setSaving] = useState(null)
@@ -42,10 +44,11 @@ export default function CapteursConfigPage() {
   const [discordOk, setDiscordOk] = useState(null)
 
   useEffect(() => {
+    if (!perms.canManageGlobalWebhook()) return
     api.getWebhookStatus()
       .then(r => setDiscordOk(r.discord_configured))
       .catch(() => setDiscordOk(false))
-  }, [])
+  }, [perms])
 
   useEffect(() => {
     const next = {}
@@ -55,7 +58,10 @@ export default function CapteursConfigPage() {
     setForms(next)
   }, [list])
 
-  const rows = useMemo(() => list.slice().sort((a, b) => a.code.localeCompare(b.code)), [list])
+  const rows = useMemo(() => {
+    const sorted = list.slice().sort((a, b) => a.code.localeCompare(b.code))
+    return sorted.filter(row => perms.canConfigThresholdsFor(row.code))
+  }, [list, perms])
 
   function setField(code, field, value) {
     setForms(prev => ({
@@ -90,7 +96,7 @@ export default function CapteursConfigPage() {
     try {
       await api.testWebhook()
       setDiscordOk(true)
-      toast('Webhook Discord envoye', 'success')
+      toast('Message de validation envoye sur Discord', 'success')
     } catch {
       setDiscordOk(false)
       toast('Echec envoi Discord (URL configuree ?)', 'error')
@@ -125,22 +131,30 @@ export default function CapteursConfigPage() {
         </p>
       </div>
 
+      {perms.canManageGlobalWebhook() && (
       <div className="card mb-2 config-webhook-bar">
         <div className="config-webhook-info">
-          <strong>Discord</strong>
+          <strong>Discord — validation webhook</strong>
           <p className="config-webhook-status">
-            {discordOk === true && 'Webhook configure (DISCORD_WEBHOOK_URL)'}
+            {discordOk === true && 'Webhook configure (DISCORD_WEBHOOK_URL) — reserve au super administrateur'}
             {discordOk === false && 'Webhook non configure cote API — ajoutez DISCORD_WEBHOOK_URL sur Render'}
             {discordOk === null && 'Verification…'}
           </p>
         </div>
         <button type="button" className="btn config-webhook-btn" onClick={onTestWebhook} disabled={testingWebhook || discordOk === false}>
           <Send size={14} />
-          {testingWebhook ? 'Envoi…' : 'Tester Discord'}
+          {testingWebhook ? 'Envoi…' : 'Valider sur Discord'}
         </button>
       </div>
+      )}
 
-      <div className="config-grid">
+      {rows.length === 0 && (
+        <div className="card empty-state">
+          <p>Aucun pays configurable pour votre compte.</p>
+        </div>
+      )}
+
+      <div className={`config-grid${rows.length === 1 ? ' config-grid-single' : ''}`}>
         {rows.map(row => {
           const f = formFor(row, forms)
           return (

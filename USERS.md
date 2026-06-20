@@ -22,7 +22,7 @@
 | Role | Description |
 |------|-------------|
 | **SUPER_ADMIN** | Proprietaire plateforme (`admin_siege`) — gestion utilisateurs + tout le reste |
-| **ADMIN** | Administration operationnelle — seuils IoT, lots, vue multi-pays (sans gestion users) |
+| **ADMIN** | Administration operationnelle — seuils IoT (siège = tous pays, pays local = son pays), lots, vue multi-pays réservée au siège |
 | **USER** | Acces metier selon le pays associe |
 
 Migration BDD existante (Aiven) :
@@ -35,19 +35,21 @@ mysql ... < database/migrations/001_add_super_admin_role.sql
 
 Legende: ✅ autorise · — lecture seule · 🔒 interdit
 
-| fonctionnalite | SUPER_ADMIN | ADMIN | USER (SIEGE) | USER (pays) |
-|---|---:|---:|---:|---:|
-| gestion utilisateurs | ✅ | 🔒 | 🔒 | 🔒 |
-| config seuils IoT | ✅ | ✅ | 🔒 | 🔒 |
-| creer / modifier lot | ✅ | ✅ | 🔒 | ✅ (son pays) |
-| vue multi-pays | ✅ | ✅ | ✅ | 🔒 |
-| courbes IoT | ✅ | ✅ | — | ✅ (son pays) |
-| alertes | ✅ | ✅ | — | ✅ (son pays) |
+| fonctionnalite | SUPER_ADMIN | ADMIN (SIEGE) | ADMIN (pays) | USER (SIEGE) | USER (pays) |
+|---|---:|---:|---:|---:|---:|
+| gestion utilisateurs | ✅ | 🔒 | 🔒 | 🔒 | 🔒 |
+| config seuils IoT | ✅ | ✅ (tous) | ✅ (son pays) | 🔒 | 🔒 |
+| webhook Discord global | ✅ | 🔒 | 🔒 | 🔒 | 🔒 |
+| creer / modifier lot | ✅ | ✅ (tous) | ✅ (son pays) | 🔒 | ✅ (son pays) |
+| vue multi-pays | ✅ | ✅ | 🔒 | ✅ | 🔒 |
+| courbes IoT | ✅ | ✅ | ✅ (son pays) | — | ✅ (son pays) |
+| alertes | ✅ | ✅ | ✅ (son pays) | — | ✅ (son pays) |
 
 ## 4) Logique de conditionnement (resume)
 
 - **SUPER_ADMIN** : acces total incluant `/users` et promotion de roles.
-- **ADMIN** : config capteurs, CRUD lots tous pays, pas d acces gestion utilisateurs.
+- **ADMIN + SIEGE** : config capteurs tous pays, CRUD lots tous pays, pas d acces gestion utilisateurs ni webhook global.
+- **ADMIN + pays** : config seuils **son pays uniquement**, CRUD lots **son pays**, pas de vue multi-pays ni webhook global.
 - **USER + SIEGE** : lecture consolidee multi-pays.
 - **USER + pays** : acces limite a son pays (donnees + ecriture lots).
 

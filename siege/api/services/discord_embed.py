@@ -69,6 +69,54 @@ def build_condition_embed(
     }
 
 
+def build_test_webhook_embed(*, triggered_by: str, environment: str) -> dict:
+    """Embed de validation manuelle du webhook Discord (super admin)."""
+    now = datetime.now(timezone.utc)
+    return {
+        "title": ":white_check_mark: Validation webhook Discord — FutureKawa",
+        "url": "https://mspr2-master-front.onrender.com/config/capteurs",
+        "description": (
+            "Test manuel declenche depuis **Configuration capteurs**.\n"
+            "Si vous recevez ce message, le canal de notification siege est **operationnel**."
+        ),
+        "color": _COLORS["ok"],
+        "fields": [
+            {
+                "name": ":bust_in_silhouette: Declenche par",
+                "value": f"**{triggered_by}**",
+                "inline": True,
+            },
+            {
+                "name": ":globe_with_meridians: Environnement",
+                "value": f"`{environment}`",
+                "inline": True,
+            },
+            {
+                "name": ":clipboard: Verifications effectuees",
+                "value": (
+                    ":white_check_mark: Connexion API → Discord\n"
+                    ":white_check_mark: Format embed Markdown\n"
+                    ":white_check_mark: Canal alertes IoT siege\n"
+                    ":white_check_mark: Horodatage UTC"
+                ),
+                "inline": False,
+            },
+            {
+                "name": ":information_source: Prochaines etapes",
+                "value": (
+                    "• Ajuster les seuils sur "
+                    "[/config/capteurs](https://mspr2-master-front.onrender.com/config/capteurs)\n"
+                    "• Surveiller les alertes reelles sur "
+                    "[/alertes](https://mspr2-master-front.onrender.com/alertes)"
+                ),
+                "inline": False,
+            },
+        ],
+        "footer": {"text": "FutureKawa IoT Monitoring • Test webhook super admin"},
+        "timestamp": now.isoformat(),
+    }
+
+
 def build_message_embed(
     text: str,
     pays: str,

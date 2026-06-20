@@ -11,6 +11,12 @@ _COUNTRY_SLUG_BY_PAYS_CODE: dict[str, str] = {
     "COLOMBIE": "colombie",
 }
 
+_PAYS_CODE_TO_COUNTRY_CODE: dict[str, str] = {
+    "BRESIL": "BR",
+    "EQUATEUR": "EC",
+    "COLOMBIE": "CO",
+}
+
 _ALERT_RECIPIENT_BY_PAYS_CODE: dict[str, str] = {
     "SIEGE": "admin@futurekawa.com",
     "BRESIL": "resp.br@futurekawa.com",
@@ -52,18 +58,53 @@ class UserPermissions:
     def can_manage_users(self) -> bool:
         return self.is_super_admin()
 
+    def can_manage_global_webhook(self) -> bool:
+        return self.is_super_admin()
+
     def can_config_iot_thresholds(self) -> bool:
-        return self.is_admin()
+        if self.is_super_admin():
+            return True
+        if self.role != "ADMIN" or not self.pays_code:
+            return False
+        pays = self.pays_code.upper()
+        return pays == "SIEGE" or pays in _PAYS_CODE_TO_COUNTRY_CODE
+
+    def allowed_config_country_codes(self) -> set[str] | None:
+        """None = tous les pays. Sinon codes BR/EC/CO autorises."""
+        if not self.can_config_iot_thresholds():
+            return set()
+        if self.is_super_admin():
+            return None
+        pays = (self.pays_code or "").upper()
+        if pays == "SIEGE":
+            return None
+        code = _PAYS_CODE_TO_COUNTRY_CODE.get(pays)
+        return {code} if code else set()
+
+    def can_config_iot_thresholds_for(self, country_code: str) -> bool:
+        allowed = self.allowed_config_country_codes()
+        if not self.can_config_iot_thresholds():
+            return False
+        if allowed is None:
+            return True
+        return country_code.upper() in allowed
 
     def can_write_lots(self) -> bool:
-        if self.is_admin():
+        if self.is_super_admin():
             return True
+        if self.role == "ADMIN":
+            pays = (self.pays_code or "").upper()
+            return pays == "SIEGE" or pays in _PAYS_CODE_TO_COUNTRY_CODE
         if self.is_siege_user():
             return False
         return self.role == "USER" and self.pays_code in _COUNTRY_SLUG_BY_PAYS_CODE
 
     def can_view_multi_pays(self) -> bool:
-        return self.is_admin() or self.is_siege_user()
+        if self.is_super_admin():
+            return True
+        if self.role == "ADMIN" and (self.pays_code or "").upper() == "SIEGE":
+            return True
+        return self.is_siege_user()
 
     def allowed_pays_slugs(self) -> set[str] | None:
         if self.can_view_multi_pays():

@@ -15,7 +15,7 @@ from api.services.threshold_service import (
     seuils_to_dict,
     update_pays_seuils,
 )
-from api.services.webhook_service import DISCORD_WEBHOOK_URL, notify
+from api.services.webhook_service import DISCORD_WEBHOOK_URL, send_test_webhook
 
 router = APIRouter()
 
@@ -46,8 +46,11 @@ async def patch_seuils(
     user: dict = Depends(require_user),
 ):
     perms = UserPermissions.from_jwt_user(user)
-    if not perms.can_config_iot_thresholds():
-        raise HTTPException(status_code=403, detail="Seuls les administrateurs peuvent modifier les seuils")
+    if not perms.can_config_iot_thresholds_for(code):
+        raise HTTPException(
+            status_code=403,
+            detail="Modification des seuils non autorisee pour ce pays",
+        )
 
     try:
         async with SessionLocal() as session:
@@ -72,23 +75,17 @@ async def patch_seuils(
 @router.get("/webhooks/status", response_model=WebhookStatus)
 async def webhook_status(user: dict = Depends(require_user)):
     perms = UserPermissions.from_jwt_user(user)
-    if not perms.can_config_iot_thresholds():
-        raise HTTPException(status_code=403, detail="Acces reserve aux administrateurs")
+    if not perms.can_manage_global_webhook():
+        raise HTTPException(status_code=403, detail="Acces reserve au super administrateur")
     return WebhookStatus(discord_configured=bool(DISCORD_WEBHOOK_URL))
 
 
 @router.post("/webhooks/test")
 async def webhook_test(user: dict = Depends(require_user)):
     perms = UserPermissions.from_jwt_user(user)
-    if not perms.can_config_iot_thresholds():
-        raise HTTPException(status_code=403, detail="Acces reserve aux administrateurs")
+    if not perms.can_manage_global_webhook():
+        raise HTTPException(status_code=403, detail="Acces reserve au super administrateur")
     if not DISCORD_WEBHOOK_URL:
         raise HTTPException(status_code=503, detail="DISCORD_WEBHOOK_URL non configure")
-    await notify(
-        "**Webhook operationnel**\n"
-        "- Configuration capteurs / seuils OK\n"
-        "- Notifications Discord actives",
-        "siege",
-        alert_type="test",
-    )
+    await send_test_webhook(triggered_by=str(user.get("sub") or "inconnu"))
     return {"ok": True, "discord_configured": True}

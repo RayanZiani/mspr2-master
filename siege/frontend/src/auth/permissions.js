@@ -47,6 +47,12 @@ const COUNTRY_SLUG_BY_PAYS_CODE = {
   COLOMBIE: 'colombie',
 }
 
+const PAYS_CODE_TO_COUNTRY_CODE = {
+  BRESIL: 'BR',
+  EQUATEUR: 'EC',
+  COLOMBIE: 'CO',
+}
+
 export const ROLE_LABELS = {
   SUPER_ADMIN: 'Super Admin',
   ADMIN: 'Administrateur',
@@ -64,21 +70,50 @@ export function UserPermissions() {
   const isSuperAdmin = role === 'SUPER_ADMIN'
   const isAdmin = role === 'ADMIN' || isSuperAdmin
   const isSiegeUser = role === 'USER' && paysCode === 'SIEGE'
+  const isSiegeAdmin = role === 'ADMIN' && paysCode === 'SIEGE'
+
+  function allowedConfigCountryCodes() {
+    if (!canConfigThresholds()) return new Set()
+    if (isSuperAdmin || isSiegeAdmin) return null
+    if (role === 'ADMIN') {
+      const code = PAYS_CODE_TO_COUNTRY_CODE[paysCode]
+      return code ? new Set([code]) : new Set()
+    }
+    return new Set()
+  }
 
   function canManageUsers() {
     return isSuperAdmin
   }
 
   function canConfigThresholds() {
-    return isAdmin
+    if (isSuperAdmin) return true
+    if (role !== 'ADMIN' || !paysCode) return false
+    return paysCode === 'SIEGE' || Boolean(PAYS_CODE_TO_COUNTRY_CODE[paysCode])
+  }
+
+  function canConfigThresholdsFor(countryCode) {
+    if (!canConfigThresholds()) return false
+    const allowed = allowedConfigCountryCodes()
+    if (allowed === null) return true
+    return allowed.has(String(countryCode || '').toUpperCase())
+  }
+
+  function canManageGlobalWebhook() {
+    return isSuperAdmin
   }
 
   function canViewMultiPays() {
-    return isAdmin || isSiegeUser
+    if (isSuperAdmin) return true
+    if (isSiegeAdmin) return true
+    return isSiegeUser
   }
 
   function canWriteLots() {
-    if (isAdmin) return true
+    if (isSuperAdmin) return true
+    if (role === 'ADMIN') {
+      return paysCode === 'SIEGE' || Boolean(COUNTRY_SLUG_BY_PAYS_CODE[paysCode])
+    }
     if (isSiegeUser) return false
     return role === 'USER' && Boolean(COUNTRY_SLUG_BY_PAYS_CODE[paysCode])
   }
@@ -110,8 +145,12 @@ export function UserPermissions() {
     isSuperAdmin,
     isAdmin,
     isSiegeUser,
+    isSiegeAdmin,
     canManageUsers,
     canConfigThresholds,
+    canConfigThresholdsFor,
+    allowedConfigCountryCodes,
+    canManageGlobalWebhook,
     canViewMultiPays,
     canWriteLots,
     allowedPaysSlugs,

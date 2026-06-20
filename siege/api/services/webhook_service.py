@@ -11,6 +11,7 @@ import httpx
 from api.services.discord_embed import (
     build_condition_embed,
     build_message_embed,
+    build_test_webhook_embed,
     webhook_payload,
 )
 
@@ -36,6 +37,12 @@ async def _post_embed(payload: dict[str, Any], context: str) -> None:
             )
         except httpx.HTTPError:
             logger.exception("Webhook Discord — erreur reseau (%s)", context)
+
+
+async def send_test_webhook(*, triggered_by: str) -> None:
+    env = "production" if os.getenv("RENDER") else os.getenv("ENVIRONMENT", "local")
+    embed = build_test_webhook_embed(triggered_by=triggered_by, environment=env)
+    await _post_embed(webhook_payload(embed), f"test/{triggered_by}")
 
 
 async def send_discord(text: str, pays: str, alert_type: str = "condition") -> None:
