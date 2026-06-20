@@ -1,23 +1,26 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy import text
 
-from api.auth import hash_password, verify_password
+from api.auth import hash_password, require_user, verify_password
 from api.db.database import SessionLocal
+from api.permissions import UserPermissions
 
 router = APIRouter()
 
-VALID_ROLES = frozenset({"ADMIN", "USER"})
+VALID_ROLES = frozenset({"SUPER_ADMIN", "ADMIN", "USER"})
+ASSIGNABLE_BY_SUPER_ADMIN = frozenset({"SUPER_ADMIN", "ADMIN", "USER"})
 VALID_PAYS = frozenset({"SIEGE", "BRESIL", "EQUATEUR", "COLOMBIE"})
 
 _USER_BAD_REQUEST = {"description": "Données utilisateur invalides"}
+
 
 class CreateUserRequest(BaseModel):
     username: str
     password: str | None = None
     password_hash: str | None = None
-    role: str = "USER"  # ADMIN | USER
-    pays_code: str | None = None  # SIEGE | BRESIL | EQUATEUR | COLOMBIE
+    role: str = "USER"
+    pays_code: str | None = None
     email: str | None = None
 
 
@@ -35,6 +38,12 @@ LIST_SQL = text(
     SELECT id, username, role, active, pays_code, email, last_login_at, last_login_ip, created_at
     FROM user_account
     ORDER BY created_at DESC
+    """
+)
+
+GET_USER_SQL = text(
+    """
+    SELECT username, role FROM user_account WHERE username = :username LIMIT 1
     """
 )
 
@@ -59,9 +68,13 @@ UPDATE_SQL = text(
 )
 
 
-def _validate_role(role: str) -> str:
+def _validate_role(role: str, *, actor: UserPermissions) -> str:
     normalized = role.upper()
     if normalized not in VALID_ROLES:
+        raise HTTPException(status_code=400, detail="role invalide")
+    if normalized == "SUPER_ADMIN" and not actor.is_super_admin():
+        raise HTTPException(status_code=403, detail="Seul un SUPER_ADMIN peut attribuer ce role")
+    if normalized not in ASSIGNABLE_BY_SUPER_ADMIN:
         raise HTTPException(status_code=400, detail="role invalide")
     return normalized
 
@@ -103,8 +116,17 @@ def _validate_optional_password_hash(password_hash: str) -> None:
         raise HTTPException(status_code=400, detail="password_hash invalide")
 
 
+async def _get_target_role(session, username: str) -> str | None:
+    res = await session.execute(GET_USER_SQL, {"username": username})
+    row = res.mappings().first()
+    return str(row["role"]).upper() if row else None
+
+
 @router.get("/")
-async def list_users():
+async def list_users(user: dict = Depends(require_user)):
+    perms = UserPermissions.from_jwt_user(user)
+    if not perms.can_manage_users():
+        raise HTTPException(status_code=403, detail="Acces reserve aux SUPER_ADMIN")
     async with SessionLocal() as session:
         res = await session.execute(LIST_SQL)
         return [dict(r) for r in res.mappings().all()]
@@ -117,8 +139,11 @@ async def list_users():
         409: {"description": "Nom d'utilisateur déjà existant"},
     },
 )
-async def create_user(body: CreateUserRequest):
-    role = _validate_role(body.role)
+async def create_user(body: CreateUserRequest, user: dict = Depends(require_user)):
+    actor = UserPermissions.from_jwt_user(user)
+    if not actor.can_manage_users():
+        raise HTTPException(status_code=403, detail="Acces reserve aux SUPER_ADMIN")
+    role = _validate_role(body.role, actor=actor)
     _validate_username(body.username)
     pays_code = _normalize_pays_code(body.pays_code)
     password_hash = _resolve_password_hash(body.password, body.password_hash)
@@ -150,17 +175,31 @@ async def create_user(body: CreateUserRequest):
         404: {"description": "Utilisateur introuvable"},
     },
 )
-async def update_user(username: str, body: UpdateUserRequest):
-    role = _validate_role(body.role) if body.role else None
-    pays_code = _normalize_pays_code(body.pays_code)
-
-    password_hash = body.password_hash
-    if body.password is not None:
-        password_hash = _resolve_password_hash(body.password, None)
-    elif password_hash is not None:
-        _validate_optional_password_hash(password_hash)
+async def update_user(username: str, body: UpdateUserRequest, user: dict = Depends(require_user)):
+    actor = UserPermissions.from_jwt_user(user)
+    if not actor.can_manage_users():
+        raise HTTPException(status_code=403, detail="Acces reserve aux SUPER_ADMIN")
 
     async with SessionLocal() as session:
+        target_role = await _get_target_role(session, username)
+        if target_role is None:
+            raise HTTPException(status_code=404, detail="user introuvable")
+        if target_role == "SUPER_ADMIN" and user.get("sub") != username:
+            if body.role and body.role.upper() != "SUPER_ADMIN":
+                raise HTTPException(
+                    status_code=403,
+                    detail="Impossible de retrograder un autre SUPER_ADMIN",
+                )
+
+        role = _validate_role(body.role, actor=actor) if body.role else None
+        pays_code = _normalize_pays_code(body.pays_code)
+
+        password_hash = body.password_hash
+        if body.password is not None:
+            password_hash = _resolve_password_hash(body.password, None)
+        elif password_hash is not None:
+            _validate_optional_password_hash(password_hash)
+
         res = await session.execute(
             UPDATE_SQL,
             {

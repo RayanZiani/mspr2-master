@@ -44,7 +44,7 @@ VALUES (@pays_br, @exploitation_id, @entrepot_id, (UTC_TIMESTAMP(3) - INTERVAL 1
 -- Comptes applicatifs (siège) — users de développement
 INSERT INTO user_account (username, password_hash, role, pays_code, email, active)
 VALUES
-  ('admin_siege',        '$2b$12$hrcCoLHsdEnHTSB/pucd9.KWhPkmFOqB9f7R0vjHBiO0qq32eOp3a', 'ADMIN', 'SIEGE',    'admin@futurekawa.com',        1),
+  ('admin_siege',        '$2b$12$hrcCoLHsdEnHTSB/pucd9.KWhPkmFOqB9f7R0vjHBiO0qq32eOp3a', 'SUPER_ADMIN', 'SIEGE',    'admin@futurekawa.com',        1),
   ('direction_siege',    '$2b$12$7mgmZCs28/vPLx3ej4UADOPw1G999syXUrK5AGOLLb3l6k91/loq6', 'USER',  'SIEGE',    'direction@futurekawa.com',    1),
   ('supply_siege',       '$2b$12$BWhEsz0ydjK.CA0hT46XEeCGVXjenfbsIM9.Dn592b7KReCzY3K6W', 'USER',  'SIEGE',    'supply@futurekawa.com',       1),
   ('resp_bresil',        '$2b$12$IGTl7YjBnncax91d.acQZ.Iyqi/JpkLt16P4Z6k/NEvk17F4rdIam', 'USER',  'BRESIL',   'resp.br@futurekawa.com',      1),

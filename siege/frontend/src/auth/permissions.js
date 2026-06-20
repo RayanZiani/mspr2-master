@@ -47,15 +47,26 @@ const COUNTRY_SLUG_BY_PAYS_CODE = {
   COLOMBIE: 'colombie',
 }
 
+export const ROLE_LABELS = {
+  SUPER_ADMIN: 'Super Admin',
+  ADMIN: 'Administrateur',
+  USER: 'Utilisateur',
+}
+
+export function roleLabel(role) {
+  return ROLE_LABELS[String(role || '').toUpperCase()] || role
+}
+
 export function UserPermissions() {
   const role = getEffectiveRole()
   const paysCode = String(getEffectivePaysCode() || '').toUpperCase()
 
-  const isAdmin = role === 'ADMIN'
+  const isSuperAdmin = role === 'SUPER_ADMIN'
+  const isAdmin = role === 'ADMIN' || isSuperAdmin
   const isSiegeUser = role === 'USER' && paysCode === 'SIEGE'
 
   function canManageUsers() {
-    return isAdmin
+    return isSuperAdmin
   }
 
   function canConfigThresholds() {
@@ -96,6 +107,7 @@ export function UserPermissions() {
   return {
     role,
     paysCode,
+    isSuperAdmin,
     isAdmin,
     isSiegeUser,
     canManageUsers,
@@ -106,4 +118,3 @@ export function UserPermissions() {
     getAlertRecipientByPays,
   }
 }
-

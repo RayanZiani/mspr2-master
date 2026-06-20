@@ -4,7 +4,7 @@
 
 | username | password (clair) | role | pays | email |
 |---|---|---|---|---|
-| `admin_siege` | `Admin@2025!` | ADMIN | SIEGE | admin@futurekawa.com |
+| `admin_siege` | `Admin@2025!` | **SUPER_ADMIN** | SIEGE | admin@futurekawa.com |
 | `direction_siege` | `Direction@2025!` | USER | SIEGE | direction@futurekawa.com |
 | `supply_siege` | `Supply@2025!` | USER | SIEGE | supply@futurekawa.com |
 | `resp_bresil` | `Bresil@2025!` | USER | BRESIL | resp.br@futurekawa.com |
@@ -17,31 +17,40 @@
 | `entrepot_colombie` | `Entrepot_Co@2025!` | USER | COLOMBIE | entrepot.co@futurekawa.com |
 | `qualite_colombie` | `Qualite_Co@2025!` | USER | COLOMBIE | qualite.co@futurekawa.com |
 
-## 2) Matrice des droits
+## 2) Hierarchie des roles
 
-Légende: ✅ autorisé · — lecture seule (si applicable) · 🔒 interdit
+| Role | Description |
+|------|-------------|
+| **SUPER_ADMIN** | Proprietaire plateforme (`admin_siege`) — gestion utilisateurs + tout le reste |
+| **ADMIN** | Administration operationnelle — seuils IoT, lots, vue multi-pays (sans gestion users) |
+| **USER** | Acces metier selon le pays associe |
 
-| fonctionnalité | ADMIN | USER (SIEGE) | USER (BRESIL/EQUATEUR/COLOMBIE) |
-|---|---:|---:|---:|
-| créer lot | ✅ | 🔒 | ✅ (pays du user uniquement) |
-| modifier lot | ✅ | 🔒 | ✅ (pays du user uniquement) |
-| voir stocks (local) | ✅ | — | ✅ (pays du user uniquement) |
-| vue multi-pays | ✅ | ✅ | 🔒 |
-| courbes IoT | ✅ | — | ✅ (entrepôts de son pays uniquement) |
-| alertes email | ✅ | — | ✅ (pays du user uniquement) |
-| gérer statuts qualité | ✅ | 🔒 | ✅ (pays du user uniquement) |
-| config seuils | ✅ | 🔒 | 🔒 |
-| gestion users | ✅ | 🔒 | 🔒 |
+Migration BDD existante (Aiven) :
 
-## 3) Logique de conditionnement (résumé)
+```bash
+mysql ... < database/migrations/001_add_super_admin_role.sql
+```
 
-- `ADMIN` (tous pays): accès total (CRUD lots, seuils IoT, users, multi-pays, logs).
-- `USER + SIEGE`: lecture consolidée multi-pays (stocks, courbes, alertes, traçabilité).
-- `USER + (BRESIL|EQUATEUR|COLOMBIE)`: accès limité à son pays (données + écriture lots).
-- Toute donnée hors pays (pour user local) est masquée côté UI **et** bloquée côté API.
-- Les destinataires d’alertes email sont les emails des comptes `resp_*` du pays concerné.
+## 3) Matrice des droits
 
-## 4) Avertissement
+Legende: ✅ autorise · — lecture seule · 🔒 interdit
 
-**Ce fichier contient des credentials de développement. Ne pas committer en production. Ajouter à `.gitignore` si nécessaire.**
+| fonctionnalite | SUPER_ADMIN | ADMIN | USER (SIEGE) | USER (pays) |
+|---|---:|---:|---:|---:|
+| gestion utilisateurs | ✅ | 🔒 | 🔒 | 🔒 |
+| config seuils IoT | ✅ | ✅ | 🔒 | 🔒 |
+| creer / modifier lot | ✅ | ✅ | 🔒 | ✅ (son pays) |
+| vue multi-pays | ✅ | ✅ | ✅ | 🔒 |
+| courbes IoT | ✅ | ✅ | — | ✅ (son pays) |
+| alertes | ✅ | ✅ | — | ✅ (son pays) |
 
+## 4) Logique de conditionnement (resume)
+
+- **SUPER_ADMIN** : acces total incluant `/users` et promotion de roles.
+- **ADMIN** : config capteurs, CRUD lots tous pays, pas d acces gestion utilisateurs.
+- **USER + SIEGE** : lecture consolidee multi-pays.
+- **USER + pays** : acces limite a son pays (donnees + ecriture lots).
+
+## 5) Avertissement
+
+**Ce fichier contient des credentials de developpement. Ne pas committer en production.**

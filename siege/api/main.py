@@ -37,7 +37,7 @@ app.include_router(
     users.router,
     prefix="/users",
     tags=["Users"],
-    dependencies=[Depends(require_role("ADMIN"))],
+    dependencies=[Depends(require_role("SUPER_ADMIN"))],
 )
 app.include_router(
     stocks.router,

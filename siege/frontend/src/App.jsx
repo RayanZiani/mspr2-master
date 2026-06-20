@@ -16,7 +16,7 @@ import {
 import { ToastProvider } from './components/Toast'
 import { useDbHealth } from './hooks/useDbHealth'
 import { clearSession, getSession, isAuthed } from './auth/session'
-import { UserPermissions } from './auth/permissions'
+import { UserPermissions, roleLabel } from './auth/permissions'
 
 // Chargement différé des pages : réduit le bundle initial (AG Grid, Recharts,
 // react-select ne sont téléchargés qu'à l'ouverture des pages concernées).
@@ -90,7 +90,7 @@ function AccountMenu({ statusCls, statusTitle }) {
         <div className="account-menu" role="menu">
           <div className="account-meta">
             <div className="account-user">{username || 'Compte'}</div>
-            <div className="account-role">{role}</div>
+            <div className="account-role">{roleLabel(role)}</div>
           </div>
 
           <button type="button" className="account-item" onClick={() => go('/sante')} role="menuitem" title={statusTitle}>
@@ -106,7 +106,7 @@ function AccountMenu({ statusCls, statusTitle }) {
             </button>
           )}
 
-          {perms.isAdmin && (
+          {perms.canManageUsers() && (
             <button type="button" className="account-item" onClick={() => go('/users')} role="menuitem">
               <Users size={15} />
               <span>Utilisateurs</span>

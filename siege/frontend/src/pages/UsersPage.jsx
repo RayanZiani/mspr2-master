@@ -4,6 +4,8 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '../services/api'
 import { useToast } from '../components/Toast'
 import Select2Like from '../components/Select2Like'
+import { roleLabel } from '../auth/permissions'
+import { getSession } from '../auth/session'
 
 function passwordNotice() {
   return "Créer / reset le mot de passe directement (hash côté serveur)."
@@ -21,8 +23,9 @@ function fmtDate(d) {
 }
 
 const ROLE_OPTIONS = [
-  { value: 'USER', label: 'USER' },
-  { value: 'ADMIN', label: 'ADMIN' },
+  { value: 'USER', label: 'Utilisateur' },
+  { value: 'ADMIN', label: 'Administrateur' },
+  { value: 'SUPER_ADMIN', label: 'Super Admin' },
 ]
 
 const PAYS_OPTIONS = [
@@ -36,6 +39,7 @@ const PAYS_OPTIONS = [
 export default function UsersPage() {
   const toast = useToast()
   const qc = useQueryClient()
+  const { username: currentUsername } = getSession()
   const { data, isLoading, isError } = useQuery({
     queryKey: ['users'],
     queryFn: api.listUsers,
@@ -82,6 +86,10 @@ export default function UsersPage() {
   }
 
   async function changeRole(u, nextRole) {
+    if (u.role === 'SUPER_ADMIN' && u.username !== currentUsername) {
+      toast('Impossible de modifier un autre Super Admin', 'error')
+      return
+    }
     try {
       await api.updateUser(u.username, { role: nextRole })
       await qc.invalidateQueries({ queryKey: ['users'] })
@@ -122,7 +130,7 @@ export default function UsersPage() {
       <div className="page-header users-header">
         <div>
           <h1 className="page-title">Gestion des utilisateurs</h1>
-          <p className="page-sub">ADMIN uniquement · {passwordNotice()}</p>
+          <p className="page-sub">Super Admin uniquement · {passwordNotice()}</p>
         </div>
         <button className="users-add" onClick={() => setCreateOpen(true)}>
           <UserPlus size={16} />
@@ -144,14 +152,18 @@ export default function UsersPage() {
             <div className="users-row" key={u.username}>
               <div className="users-username">{u.username}</div>
               <div>
-                <Select2Like
-                  className="users-select2"
-                  isSearchable
-                  isClearable={false}
-                  value={ROLE_OPTIONS.find(o => o.value === u.role) || ROLE_OPTIONS[0]}
-                  options={ROLE_OPTIONS}
-                  onChange={opt => changeRole(u, opt?.value || 'USER')}
-                />
+                {u.role === 'SUPER_ADMIN' && u.username !== currentUsername ? (
+                  <span className="users-pill ok">{roleLabel(u.role)}</span>
+                ) : (
+                  <Select2Like
+                    className="users-select2"
+                    isSearchable
+                    isClearable={false}
+                    value={ROLE_OPTIONS.find(o => o.value === u.role) || ROLE_OPTIONS[0]}
+                    options={ROLE_OPTIONS}
+                    onChange={opt => changeRole(u, opt?.value || 'USER')}
+                  />
+                )}
               </div>
               <div>
                 <span className={`users-pill ${u.active ? 'ok' : 'ko'}`}>

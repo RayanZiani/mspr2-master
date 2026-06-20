@@ -15,7 +15,7 @@ def test_login_returns_bearer_token():
     assert response.status_code == 200
     body = response.json()
     assert body["token_type"] == "bearer"
-    assert body["role"] == "ADMIN"
+    assert body["role"] == "SUPER_ADMIN"
     assert body["username"] == "admin_siege"
     assert len(body["access_token"]) > 20
 

@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+_ADMIN_ROLES = frozenset({"ADMIN", "SUPER_ADMIN"})
+
 
 _COUNTRY_SLUG_BY_PAYS_CODE: dict[str, str] = {
     "BRESIL": "bresil",
@@ -20,7 +22,12 @@ _ALERT_RECIPIENT_BY_PAYS_CODE: dict[str, str] = {
 @dataclass(frozen=True)
 class UserPermissions:
     """
-    Règles dérivées UNIQUEMENT du token JWT courant: role + pays_code.
+    Regles derivees du token JWT courant: role + pays_code.
+
+    Hierarchie :
+    - SUPER_ADMIN : proprietaire plateforme (gestion utilisateurs incluse)
+    - ADMIN       : administration operationnelle (seuils, lots, multi-pays)
+    - USER        : acces selon pays (SIEGE lecture multi-pays, pays local ecriture lots)
     """
 
     role: str
@@ -33,14 +40,17 @@ class UserPermissions:
             pays_code=(str(user.get("pays_code")).upper() if user.get("pays_code") else None),
         )
 
+    def is_super_admin(self) -> bool:
+        return self.role == "SUPER_ADMIN"
+
     def is_admin(self) -> bool:
-        return self.role == "ADMIN"
+        return self.role in _ADMIN_ROLES
 
     def is_siege_user(self) -> bool:
         return self.role == "USER" and (self.pays_code or "").upper() == "SIEGE"
 
     def can_manage_users(self) -> bool:
-        return self.is_admin()
+        return self.is_super_admin()
 
     def can_config_iot_thresholds(self) -> bool:
         return self.is_admin()
@@ -48,20 +58,14 @@ class UserPermissions:
     def can_write_lots(self) -> bool:
         if self.is_admin():
             return True
-        # User siège: lecture seule
         if self.is_siege_user():
             return False
-        # Users pays: écriture sur leur pays uniquement (le filtrage pays se fait route/service)
         return self.role == "USER" and self.pays_code in _COUNTRY_SLUG_BY_PAYS_CODE
 
     def can_view_multi_pays(self) -> bool:
         return self.is_admin() or self.is_siege_user()
 
     def allowed_pays_slugs(self) -> set[str] | None:
-        """
-        - None: accès à tous les pays (ADMIN + USER/SIEGE).
-        - set([...]): accès restreint aux slugs de pays autorisés.
-        """
         if self.can_view_multi_pays():
             return None
         if not self.pays_code:
@@ -71,4 +75,3 @@ class UserPermissions:
 
     def getAlertRecipientByPays(self, pays_code: str) -> str | None:
         return _ALERT_RECIPIENT_BY_PAYS_CODE.get((pays_code or "").upper())
-

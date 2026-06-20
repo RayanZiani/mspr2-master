@@ -12,6 +12,7 @@ from api.permissions import UserPermissions
 
 
 @pytest.mark.parametrize("role,pays,expected", [
+    ("SUPER_ADMIN", "SIEGE", True),
     ("ADMIN", "SIEGE", True),
     ("USER", "SIEGE", False),
     ("USER", "BRESIL", False),
@@ -21,9 +22,20 @@ def test_is_admin(role, pays, expected):
     assert perms.is_admin() is expected
 
 
+@pytest.mark.parametrize("role,expected", [
+    ("SUPER_ADMIN", True),
+    ("ADMIN", False),
+    ("USER", False),
+])
+def test_is_super_admin(role, expected):
+    perms = UserPermissions(role=role, pays_code="SIEGE")
+    assert perms.is_super_admin() is expected
+
+
 @pytest.mark.parametrize("role,pays,expected", [
     ("USER", "SIEGE", True),
     ("ADMIN", "SIEGE", False),
+    ("SUPER_ADMIN", "SIEGE", False),
     ("USER", "BRESIL", False),
 ])
 def test_is_siege_user(role, pays, expected):
@@ -32,6 +44,7 @@ def test_is_siege_user(role, pays, expected):
 
 
 @pytest.mark.parametrize("role,pays,can_write", [
+    ("SUPER_ADMIN", "SIEGE", True),
     ("ADMIN", "SIEGE", True),
     ("USER", "SIEGE", False),
     ("USER", "BRESIL", True),
@@ -44,6 +57,7 @@ def test_can_write_lots(role, pays, can_write):
 
 
 @pytest.mark.parametrize("role,pays,multi", [
+    ("SUPER_ADMIN", "SIEGE", True),
     ("ADMIN", "SIEGE", True),
     ("USER", "SIEGE", True),
     ("USER", "BRESIL", False),
@@ -79,6 +93,13 @@ def test_alert_recipient_by_pays(pays_code, email):
     assert perms.getAlertRecipientByPays(pays_code) == email
 
 
-def test_only_admin_can_manage_users():
-    assert UserPermissions(role="ADMIN", pays_code="SIEGE").can_manage_users()
+def test_only_super_admin_can_manage_users():
+    assert UserPermissions(role="SUPER_ADMIN", pays_code="SIEGE").can_manage_users()
+    assert not UserPermissions(role="ADMIN", pays_code="SIEGE").can_manage_users()
     assert not UserPermissions(role="USER", pays_code="SIEGE").can_manage_users()
+
+
+def test_admin_and_super_admin_can_config_thresholds():
+    assert UserPermissions(role="SUPER_ADMIN", pays_code="SIEGE").can_config_iot_thresholds()
+    assert UserPermissions(role="ADMIN", pays_code="SIEGE").can_config_iot_thresholds()
+    assert not UserPermissions(role="USER", pays_code="SIEGE").can_config_iot_thresholds()

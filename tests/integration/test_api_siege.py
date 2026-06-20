@@ -10,7 +10,7 @@ def test_siege_login(auth_headers):
     assert response.status_code == 200
     payload = response.json()
     assert payload.get("username") == "admin_siege"
-    assert payload.get("role") == "ADMIN"
+    assert payload.get("role") == "SUPER_ADMIN"
     assert payload.get("email") == "admin@futurekawa.com"
 
 

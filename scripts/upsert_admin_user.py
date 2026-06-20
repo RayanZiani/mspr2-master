@@ -45,9 +45,9 @@ def main() -> int:
 
     username = os.getenv("AUTH_USER_USERNAME") or os.getenv("AUTH_ADMIN_USER", "admin")
     password_hash = _require_env("AUTH_USER_PASSWORD_HASH") if os.getenv("AUTH_USER_PASSWORD_HASH") else _require_env("AUTH_ADMIN_PASSWORD_HASH")
-    role = os.getenv("AUTH_USER_ROLE", "ADMIN").upper()
-    if role not in {"ADMIN", "USER"}:
-        raise SystemExit("AUTH_USER_ROLE doit être ADMIN ou USER")
+    role = os.getenv("AUTH_USER_ROLE", "SUPER_ADMIN").upper()
+    if role not in {"SUPER_ADMIN", "ADMIN", "USER"}:
+        raise SystemExit("AUTH_USER_ROLE doit etre SUPER_ADMIN, ADMIN ou USER")
 
     ssl_disabled = cfg["ssl_mode"] in {"DISABLED", "DISABLE"}
 
