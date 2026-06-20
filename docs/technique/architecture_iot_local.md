@@ -66,6 +66,18 @@ Arrêter le simulateur (autre terminal) :
 npm run sim:stop
 ```
 
+Surveillance seuils + Discord (dernier releve Aiven, toutes les 60 s) :
+
+```bash
+npm run sim:watch
+npm run sim:watch:stop
+npm run sim:test-alert    # injecte un releve hors seuil (demo)
+```
+
+Documentation detaillee : [`docs/technique/surveillance_seuils.md`](surveillance_seuils.md)
+
+Utile en parallele du simulateur ou du pont MQTT : re-verifie les lots et envoie une alerte Discord si hors seuils.
+
 **Important** : ne lance qu’**une seule** instance (`sim:start`). Un second processus (ex. test `--pays BR` avec un intervalle différent) fausse les courbes Brésil.
 
 Ancienne stack Docker (MySQL local + MQTT) : si des conteneurs tournent encore, arrête-les :

@@ -8,14 +8,19 @@ import os
 import urllib.error
 import urllib.request
 from dataclasses import dataclass
+from pathlib import Path
 
 from dotenv import load_dotenv
 
-load_dotenv()
+from discord_embed import build_condition_embed, webhook_payload
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+load_dotenv(REPO_ROOT / ".env")
 
 logger = logging.getLogger(__name__)
 
 PAYS_SLUG = {"BR": "bresil", "EC": "equateur", "CO": "colombie"}
+PAYS_LABEL = {"BR": "Bresil", "EC": "Equateur", "CO": "Colombie"}
 
 
 @dataclass(frozen=True)
@@ -29,6 +34,33 @@ class PaysSeuils:
     temp_max: float
     hum_min: float
     hum_max: float
+
+
+@dataclass(frozen=True)
+class ReleveCheckResult:
+    pays_code: str
+    pays_label: str
+    entrepot_nom: str
+    lot_id: str
+    temperature: float
+    humidity: float
+    temp_min: float
+    temp_max: float
+    hum_min: float
+    hum_max: float
+    violations: tuple[str, ...]
+    new_alert: bool
+    resolved: bool
+    discord_sent: bool
+    lot_statut: str
+
+    @property
+    def temp_ok(self) -> bool:
+        return self.temp_min <= self.temperature <= self.temp_max
+
+    @property
+    def hum_ok(self) -> bool:
+        return self.hum_min <= self.humidity <= self.hum_max
 
 
 def _load_context(cur, capteur_id: str) -> PaysSeuils | None:
@@ -87,41 +119,186 @@ def _check_reading(seuils: PaysSeuils, temperature: float, humidity: float) -> l
     return messages
 
 
-def _send_discord(text: str, pays: str) -> None:
+def _build_result(
+    ctx: PaysSeuils,
+    lot_id: str,
+    temperature: float,
+    humidity: float,
+    violations: tuple[str, ...],
+    *,
+    new_alert: bool,
+    resolved: bool,
+    discord_sent: bool,
+    lot_statut: str,
+) -> ReleveCheckResult:
+    return ReleveCheckResult(
+        pays_code=ctx.code,
+        pays_label=PAYS_LABEL.get(ctx.code, ctx.code),
+        entrepot_nom=ctx.entrepot_nom,
+        lot_id=lot_id,
+        temperature=temperature,
+        humidity=humidity,
+        temp_min=ctx.temp_min,
+        temp_max=ctx.temp_max,
+        hum_min=ctx.hum_min,
+        hum_max=ctx.hum_max,
+        violations=violations,
+        new_alert=new_alert,
+        resolved=resolved,
+        discord_sent=discord_sent,
+        lot_statut=lot_statut,
+    )
+
+
+def _metric_line(label: str, value: float, unit: str, ok: bool, low: float, high: float) -> str:
+    flag = "OK" if ok else "HORS SEUIL !"
+    return (
+        f"  {label:<8} {value:5.1f} {unit:<2}  "
+        f"(seuil {low:.1f} - {high:.1f} {unit})  [{flag}]"
+    )
+
+
+def _print_one_alert(result: ReleveCheckResult) -> None:
+    if result.resolved:
+        tag = "RETOUR CONFORME"
+    elif result.new_alert:
+        tag = "NOUVELLE ALERTE"
+    else:
+        tag = "ALERTE ACTIVE"
+
+    print(f"\n  --- {tag} : {result.pays_label.upper()} ({result.pays_code}) ---")
+    print(f"  Entrepot : {result.entrepot_nom}")
+    if result.lot_id:
+        print(f"  Lot      : {result.lot_id[:8]}...")
+    print(
+        f"  Mesure   : {result.temperature:.1f} C  |  {result.humidity:.1f} %"
+    )
+    print(_metric_line("Temp.", result.temperature, "C", result.temp_ok, result.temp_min, result.temp_max))
+    print(_metric_line("Humid.", result.humidity, "%", result.hum_ok, result.hum_min, result.hum_max))
+
+    if result.resolved:
+        print("  Action   : lot repasse en CONFORME")
+    elif result.new_alert:
+        discord = "Discord envoye OK" if result.discord_sent else "Discord ECHEC (verifier URL)"
+        print(f"  Action   : alerte BDD + {discord}")
+    else:
+        print(f"  Statut   : lot deja en {result.lot_statut}")
+
+
+def _print_active_compact(result: ReleveCheckResult) -> None:
+    t_flag = "OK" if result.temp_ok else "HORS SEUIL"
+    h_flag = "OK" if result.hum_ok else "HORS SEUIL"
+    print(
+        f"  >> {result.pays_code} {result.entrepot_nom} | "
+        f"T={result.temperature:.1f}C [{result.temp_min:.0f}-{result.temp_max:.0f}] {t_flag} | "
+        f"H={result.humidity:.1f}% [{result.hum_min:.0f}-{result.hum_max:.0f}] {h_flag} | "
+        f"lot {result.lot_statut}"
+    )
+
+
+def print_alerts_console(
+    results: list[ReleveCheckResult],
+    stamp: str | None = None,
+) -> None:
+    """Affiche un bloc d'alertes formate (simulateur + surveillance)."""
+    notable = [r for r in results if r.new_alert or r.resolved]
+    active = [r for r in results if r.violations and not r.new_alert]
+
+    if not notable and not active:
+        return
+
+    width = 52
+
+    if notable:
+        print()
+        print("=" * width)
+        title = "  ALERTES SEUILS IoT"
+        if stamp:
+            title += f" - {stamp}"
+        print(title)
+        print(f"  {len(notable)} evenement(s)")
+        print("=" * width)
+        for result in notable:
+            _print_one_alert(result)
+        print()
+        print("=" * width)
+
+    if active:
+        print()
+        print(f"  Hors seuil en cours ({len(active)}) :")
+        for result in active:
+            _print_active_compact(result)
+
+
+def print_scan_summary(
+    stamp: str,
+    sensor_count: int,
+    results: list[ReleveCheckResult],
+) -> None:
+    """Ligne de synthese apres chaque cycle de surveillance."""
+    active = sum(1 for r in results if r.violations and not r.new_alert)
+    fresh = sum(1 for r in results if r.new_alert)
+    resolved = sum(1 for r in results if r.resolved)
+    parts = [f"{sensor_count} capteur(s) verifie(s)"]
+    if fresh:
+        parts.append(f"{fresh} nouvelle(s) alerte(s)")
+    if active:
+        parts.append(f"{active} hors seuil (deja active)")
+    if resolved:
+        parts.append(f"{resolved} retour conforme")
+    if not fresh and not active and not resolved:
+        parts.append("tous conformes")
+    print(f"[{stamp} UTC] {' | '.join(parts)}")
+
+
+def _send_discord_alert(ctx: PaysSeuils, lot_id: str, temperature: float, humidity: float) -> bool:
     url = os.getenv("DISCORD_WEBHOOK_URL", "")
     if not url:
-        logger.debug("DISCORD_WEBHOOK_URL absent — alerte Discord ignoree")
-        return
-    payload = {
-        "embeds": [
-            {
-                "title": f"ALERTE FutureKawa — {pays.upper()}",
-                "description": text,
-                "color": 0xFF0000,
-                "footer": {"text": "FutureKawa IoT Monitoring"},
-            }
-        ]
-    }
+        logger.debug("DISCORD_WEBHOOK_URL absent - alerte Discord ignoree")
+        return False
+    embed = build_condition_embed(
+        pays_slug=ctx.slug,
+        pays_label=PAYS_LABEL.get(ctx.code, ctx.code),
+        entrepot=ctx.entrepot_nom,
+        lot_id=lot_id,
+        temperature=temperature,
+        humidity=humidity,
+        temp_min=ctx.temp_min,
+        temp_max=ctx.temp_max,
+        hum_min=ctx.hum_min,
+        hum_max=ctx.hum_max,
+    )
+    payload = webhook_payload(embed)
     req = urllib.request.Request(
         url,
         data=json.dumps(payload).encode("utf-8"),
-        headers={"Content-Type": "application/json"},
+        headers={
+            "Content-Type": "application/json",
+            "User-Agent": "FutureKawa-Monitor/1.0",
+        },
         method="POST",
     )
     try:
         with urllib.request.urlopen(req, timeout=10):
-            logger.info("Alerte Discord envoyee (%s)", pays)
+            logger.info("Alerte Discord envoyee (%s)", ctx.slug)
+            return True
     except urllib.error.URLError as exc:
         logger.warning("Echec Discord : %s", exc)
+        return False
 
 
-def process_releve(cnx, capteur_id: str, temperature: float, humidity: float) -> None:
+def process_releve(
+    cnx,
+    capteur_id: str,
+    temperature: float,
+    humidity: float,
+) -> ReleveCheckResult | None:
     """Verifie les seuils apres INSERT releve_capteur."""
     cur = cnx.cursor(dictionary=True)
     try:
         ctx = _load_context(cur, capteur_id)
         if not ctx:
-            return
+            return None
 
         alerts = _check_reading(ctx, temperature, humidity)
 
@@ -136,15 +313,25 @@ def process_releve(cnx, capteur_id: str, temperature: float, humidity: float) ->
         )
         lot = cur.fetchone()
         if not lot:
-            return
+            return None
 
         lot_id = str(lot["id"])
         statut = str(lot["statut"] or "CONFORME").upper()
 
         if alerts:
             if statut != "CONFORME":
-                return
-            message = f"Lot {lot_id[:8]}… — {ctx.entrepot_nom}\n" + "\n".join(alerts)
+                return _build_result(
+                    ctx,
+                    lot_id,
+                    temperature,
+                    humidity,
+                    tuple(alerts),
+                    new_alert=False,
+                    resolved=False,
+                    discord_sent=False,
+                    lot_statut=statut,
+                )
+            message = f"Lot {lot_id[:8]}... - {ctx.entrepot_nom}\n" + "\n".join(alerts)
             cur.execute(
                 "UPDATE lot SET statut = 'ALERTE' WHERE id = %s",
                 (lot_id,),
@@ -157,16 +344,40 @@ def process_releve(cnx, capteur_id: str, temperature: float, humidity: float) ->
                 (ctx.pays_id, ctx.entrepot_id, lot_id, message),
             )
             cnx.commit()
-            print(f"\n!!! ALERTE {ctx.code} — {message}\n")
-            _send_discord(message, ctx.slug)
-        elif statut == "ALERTE":
+            discord_sent = _send_discord_alert(ctx, lot_id, temperature, humidity)
+            return _build_result(
+                ctx,
+                lot_id,
+                temperature,
+                humidity,
+                tuple(alerts),
+                new_alert=True,
+                resolved=False,
+                discord_sent=discord_sent,
+                lot_statut="ALERTE",
+            )
+
+        if statut == "ALERTE":
             cur.execute(
                 "UPDATE lot SET statut = 'CONFORME' WHERE id = %s",
                 (lot_id,),
             )
             cnx.commit()
+            return _build_result(
+                ctx,
+                lot_id,
+                temperature,
+                humidity,
+                (),
+                new_alert=False,
+                resolved=True,
+                discord_sent=False,
+                lot_statut="CONFORME",
+            )
+        return None
     except Exception:
         cnx.rollback()
         logger.exception("Erreur evaluation seuils capteur %s", capteur_id)
+        return None
     finally:
         cur.close()

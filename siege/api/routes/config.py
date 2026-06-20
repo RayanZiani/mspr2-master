@@ -85,8 +85,10 @@ async def webhook_test(user: dict = Depends(require_user)):
     if not DISCORD_WEBHOOK_URL:
         raise HTTPException(status_code=503, detail="DISCORD_WEBHOOK_URL non configure")
     await notify(
-        "Test webhook FutureKawa — configuration capteurs / seuils OK.",
+        "**Webhook operationnel**\n"
+        "- Configuration capteurs / seuils OK\n"
+        "- Notifications Discord actives",
         "siege",
-        alert_type="condition",
+        alert_type="test",
     )
     return {"ok": True, "discord_configured": True}

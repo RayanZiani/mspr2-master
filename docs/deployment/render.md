@@ -23,6 +23,24 @@ Le frontend Render lit la **base MySQL centrale (Aiven)** via l'API siège :
 | `MYSQL_URL` | Connexion Aiven MySQL |
 | `REDIS_URL` | Cache Redis (optionnel) |
 | `JWT_SECRET` | Secret auth |
+| `DISCORD_WEBHOOK_URL` | Webhook Discord pour alertes seuils (obligatoire pour notifications) |
+
+### Où ajouter `DISCORD_WEBHOOK_URL` sur Render
+
+1. Ouvrir [dashboard.render.com](https://dashboard.render.com) et se connecter
+2. Cliquer sur le service **Web Service** de l'API (ex. `mspr2-master`, pas le frontend)
+3. Menu gauche : **Environment** (parfois sous **Settings** selon l'interface)
+4. Section **Environment Variables** → **Add Environment Variable**
+5. Renseigner :
+   - **Key** : `DISCORD_WEBHOOK_URL`
+   - **Value** : l'URL complète du webhook Discord
+6. **Save Changes** — Render redéploie automatiquement l'API
+
+> Si vous ne voyez pas **Environment** : vous êtes peut‑être sur le mauvais service (frontend static site) ou sur la page **Events/Logs**. Revenez à la liste des services et sélectionnez l'API Python (Docker).
+
+Vérification : bouton **Tester Discord** sur `/config/capteurs` → message vert « Webhook configuré ».
+
+**Ne pas** committer l'URL dans Git — uniquement dans Render + fichiers `.env` locaux (gitignored).
 
 ## Déploiement
 

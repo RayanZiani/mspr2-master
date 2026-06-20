@@ -8,7 +8,7 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.services.threshold_service import PaysSeuils, row_to_seuils
-from api.services.webhook_service import notify
+from api.services.webhook_service import send_condition_alert
 
 logger = logging.getLogger(__name__)
 
@@ -97,7 +97,18 @@ async def process_releve_for_capteur(
                 },
             )
             await session.commit()
-            await notify(message, seuils.slug, alert_type="condition")
+            await send_condition_alert(
+                pays_slug=seuils.slug,
+                pays_label=seuils.nom,
+                entrepot=str(ctx["entrepot_nom"]),
+                lot_id=lot_id,
+                temperature=temperature,
+                humidity=humidity,
+                temp_min=seuils.temperature.min,
+                temp_max=seuils.temperature.max,
+                hum_min=seuils.humidity.min,
+                hum_max=seuils.humidity.max,
+            )
     elif statut == "ALERTE":
         await session.execute(
             text("UPDATE lot SET statut = 'CONFORME' WHERE id = :lot_id"),

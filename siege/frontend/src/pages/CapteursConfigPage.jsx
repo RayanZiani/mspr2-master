@@ -20,6 +20,18 @@ function emptyForm(row) {
   }
 }
 
+function formFor(row, forms) {
+  const base = emptyForm(row)
+  const saved = forms[row.code]
+  if (!saved) return base
+  return {
+    temperature_min: saved.temperature_min !== '' ? saved.temperature_min : base.temperature_min,
+    temperature_max: saved.temperature_max !== '' ? saved.temperature_max : base.temperature_max,
+    humidity_min: saved.humidity_min !== '' ? saved.humidity_min : base.humidity_min,
+    humidity_max: saved.humidity_max !== '' ? saved.humidity_max : base.humidity_max,
+  }
+}
+
 export default function CapteursConfigPage() {
   const toast = useToast()
   const qc = useQueryClient()
@@ -53,7 +65,7 @@ export default function CapteursConfigPage() {
   }
 
   async function onSave(code) {
-    const f = forms[code]
+    const f = formFor(rows.find(r => r.code === code) || {}, forms)
     setSaving(code)
     try {
       await api.updateSeuils(code, {
@@ -77,8 +89,10 @@ export default function CapteursConfigPage() {
     setTestingWebhook(true)
     try {
       await api.testWebhook()
+      setDiscordOk(true)
       toast('Webhook Discord envoye', 'success')
     } catch {
+      setDiscordOk(false)
       toast('Echec envoi Discord (URL configuree ?)', 'error')
     } finally {
       setTestingWebhook(false)
@@ -112,15 +126,15 @@ export default function CapteursConfigPage() {
       </div>
 
       <div className="card mb-2 config-webhook-bar">
-        <div>
+        <div className="config-webhook-info">
           <strong>Discord</strong>
-          <p className="page-sub" style={{ marginTop: 4 }}>
+          <p className="config-webhook-status">
             {discordOk === true && 'Webhook configure (DISCORD_WEBHOOK_URL)'}
-            {discordOk === false && 'Webhook non configure cote API'}
+            {discordOk === false && 'Webhook non configure cote API — ajoutez DISCORD_WEBHOOK_URL sur Render'}
             {discordOk === null && 'Verification…'}
           </p>
         </div>
-        <button type="button" className="btn" onClick={onTestWebhook} disabled={testingWebhook}>
+        <button type="button" className="btn config-webhook-btn" onClick={onTestWebhook} disabled={testingWebhook || discordOk === false}>
           <Send size={14} />
           {testingWebhook ? 'Envoi…' : 'Tester Discord'}
         </button>
@@ -128,7 +142,7 @@ export default function CapteursConfigPage() {
 
       <div className="config-grid">
         {rows.map(row => {
-          const f = forms[row.code] || emptyForm(row)
+          const f = formFor(row, forms)
           return (
             <div key={row.code} className="card config-card">
               <div className="config-card-head">
@@ -140,68 +154,72 @@ export default function CapteursConfigPage() {
               </div>
 
               <div className="config-fields">
-                <span className="config-section-label">Temperature (C)</span>
-                <div className="config-row-2">
-                  <label className="config-field">
-                    <span>Min</span>
-                    <input
-                      type="number"
-                      className="users-input"
-                      step="0.1"
-                      value={f.temperature_min}
-                      onChange={e => setField(row.code, 'temperature_min', e.target.value)}
-                    />
-                  </label>
-                  <label className="config-field">
-                    <span>Max</span>
-                    <input
-                      type="number"
-                      className="users-input"
-                      step="0.1"
-                      value={f.temperature_max}
-                      onChange={e => setField(row.code, 'temperature_max', e.target.value)}
-                    />
-                  </label>
+                <div className="config-section">
+                  <span className="config-section-label">Temperature (C)</span>
+                  <div className="config-row-2">
+                    <label className="config-field">
+                      <span>Min</span>
+                      <input
+                        type="number"
+                        className="users-input"
+                        step="0.1"
+                        value={f.temperature_min}
+                        onChange={e => setField(row.code, 'temperature_min', e.target.value)}
+                      />
+                    </label>
+                    <label className="config-field">
+                      <span>Max</span>
+                      <input
+                        type="number"
+                        className="users-input"
+                        step="0.1"
+                        value={f.temperature_max}
+                        onChange={e => setField(row.code, 'temperature_max', e.target.value)}
+                      />
+                    </label>
+                  </div>
+                  <p className="config-hint">
+                    Ideal actuel : {row.temperature.ideal} C
+                  </p>
                 </div>
-                <p className="config-hint">
-                  Ideal actuel : {row.temperature.ideal} C
-                </p>
 
-                <span className="config-section-label">Humidite (%)</span>
-                <div className="config-row-2">
-                  <label className="config-field">
-                    <span>Min</span>
-                    <input
-                      type="number"
-                      className="users-input"
-                      step="0.1"
-                      min="0"
-                      max="100"
-                      value={f.humidity_min}
-                      onChange={e => setField(row.code, 'humidity_min', e.target.value)}
-                    />
-                  </label>
-                  <label className="config-field">
-                    <span>Max</span>
-                    <input
-                      type="number"
-                      className="users-input"
-                      step="0.1"
-                      min="0"
-                      max="100"
-                      value={f.humidity_max}
-                      onChange={e => setField(row.code, 'humidity_max', e.target.value)}
-                    />
-                  </label>
+                <div className="config-section">
+                  <span className="config-section-label">Humidite (%)</span>
+                  <div className="config-row-2">
+                    <label className="config-field">
+                      <span>Min</span>
+                      <input
+                        type="number"
+                        className="users-input"
+                        step="0.1"
+                        min="0"
+                        max="100"
+                        value={f.humidity_min}
+                        onChange={e => setField(row.code, 'humidity_min', e.target.value)}
+                      />
+                    </label>
+                    <label className="config-field">
+                      <span>Max</span>
+                      <input
+                        type="number"
+                        className="users-input"
+                        step="0.1"
+                        min="0"
+                        max="100"
+                        value={f.humidity_max}
+                        onChange={e => setField(row.code, 'humidity_max', e.target.value)}
+                      />
+                    </label>
+                  </div>
+                  <p className="config-hint">
+                    Ideal actuel : {row.humidity.ideal} %
+                  </p>
                 </div>
-                <p className="config-hint">
-                  Ideal actuel : {row.humidity.ideal} %
-                </p>
               </div>
 
               <button
                 type="button"
-                className="btn"
+                className="btn config-save-btn"
                 onClick={() => onSave(row.code)}
                 disabled={saving === row.code}
               >
