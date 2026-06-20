@@ -1,83 +1,42 @@
-# Déploiement sur Render
+# Déploiement Render
 
-## Configuration des services
+## Ce qui est déployé aujourd'hui
 
-### 1. API Brésil (Web Service)
-- **Name**: `futurekawa-api-bresil`
-- **Root Directory**: `pays/bresil/api`
-- **Build Command**: `pip install -r requirements.txt`
-- **Start Command**: `uvicorn main:app --host 0.0.0.0 --port $PORT`
-- **Environment Variables**:
-  - `DATABASE_URL`: URL MySQL depuis Render
-  - `MQTT_BROKER`: Broker MQTT externe ou service Render
+| Service | URL | Rôle |
+|---------|-----|------|
+| API Siège | `https://mspr2-master.onrender.com` | Auth, stocks, mesures, alertes |
+| Frontend | `https://mspr2-master-front.onrender.com` | Supervision IoT |
 
-### 2. API Équateur (Web Service)
-- **Name**: `futurekawa-api-equateur`
-- **Root Directory**: `pays/equateur/api`
-- **Build Command**: `pip install -r requirements.txt`
-- **Start Command**: `uvicorn main:app --host 0.0.0.0 --port $PORT`
+Les **APIs pays** et les **simulateurs MQTT** ne sont **pas** sur Render — ils tournent en local (voir `docs/technique/architecture_iot_local.md`).
 
-### 3. API Colombie (Web Service)
-- **Name**: `futurekawa-api-colombie`
-- **Root Directory**: `pays/colombie/api`
-- **Build Command**: `pip install -r requirements.txt`
-- **Start Command**: `uvicorn main:app --host 0.0.0.0 --port $PORT`
+## Données affichées sur Render
 
-### 4. API Siège (Web Service)
-- **Name**: `futurekawa-api-siege`
-- **Root Directory**: `siege/api`
-- **Build Command**: `pip install -r requirements.txt`
-- **Start Command**: `uvicorn main:app --host 0.0.0.0 --port $PORT`
-- **Environment Variables**:
-  - `MYSQL_URL`: Base de données principale
-  - `REDIS_URL`: Redis cache (Render Redis instance)
-  - `API_BRESIL_URL`: https://futurekawa-api-bresil.onrender.com
-  - `API_EQUATEUR_URL`: https://futurekawa-api-equateur.onrender.com
-  - `API_COLOMBIE_URL`: https://futurekawa-api-colombie.onrender.com
+Le frontend Render lit la **base MySQL centrale (Aiven)** via l'API siège :
 
-### 5. Frontend (Static Site)
-- **Name**: `futurekawa-frontend`
-- **Root Directory**: `siege/frontend`
-- **Build Command**: `npm install && npm run build`
-- **Publish Directory**: `dist`
-- **Environment Variables**:
-  - `VITE_API_URL`: https://futurekawa-api-siege.onrender.com
+- Lots, mesures et alertes de **démonstration** (schéma `database/schema_mysql.sql`)
+- Comportement actuel conservé : dashboard, courbes, page alertes
 
-## Health Checks
+## Variables d'environnement (API siège)
 
-Render vérifie automatiquement `/health` pour chaque service. Assurez-vous que tous vos services exposent cet endpoint.
+| Variable | Description |
+|----------|-------------|
+| `MYSQL_URL` | Connexion Aiven MySQL |
+| `REDIS_URL` | Cache Redis (optionnel) |
+| `JWT_SECRET` | Secret auth |
 
-## Tests d'intégration sur Render
+## Déploiement
 
-Pour tester la stack déployée, configurez ces variables d'environnement dans votre CI/CD :
+Déclenché par GitHub Actions sur push `main` → Deploy Hooks Render (`RENDER_BACKEND_DEPLOY_HOOK`, `RENDER_FRONTEND_DEPLOY_HOOK`).
 
-```bash
-export RENDER=true
-export BASE_URL=https://futurekawa.onrender.com
-export API_BRESIL_URL=https://futurekawa-api-bresil.onrender.com
-export API_EQUATEUR_URL=https://futurekawa-api-equateur.onrender.com
-export API_COLOMBIE_URL=https://futurekawa-api-colombie.onrender.com
+## Local vs Render
 
-bash ci-cd/scripts/wait_for_stack.sh
-```
+| | Local | Render |
+|---|-------|--------|
+| MQTT / ESP32 | Oui (`mosquitto-bresil`) | Non |
+| Simulateurs EC/CO | Oui | Non |
+| Frontend | `localhost` (nginx) ou dev Vite | Static site Render |
+| Source données | BDD pays (MQTT) | BDD siège Aiven |
 
-## Différences avec Docker local
+## Health check
 
-| Aspect | Local Docker | Render Production |
-|--------|--------------|-------------------|
-| Réseau | `host.docker.internal` | URLs publiques HTTPS |
-| Base de données | MySQL local | Render PostgreSQL/MySQL |
-| MQTT | Mosquitto local | Service externe (CloudMQTT, etc.) |
-| Redis | Redis local | Render Redis |
-| Health checks | Script manuel | Render automatique |
-| Frontend | Vite dev server | Build statique optimisé |
-
-## Notes importantes
-
-1. **Frontend Vite** : En production, utilisez `npm run build` pour générer des fichiers statiques optimisés
-2. **MQTT** : Render ne supporte pas MQTT nativement. Utilisez un service externe comme:
-   - CloudMQTT
-   - HiveMQ Cloud
-   - AWS IoT Core
-3. **Bases de données** : Créez des instances PostgreSQL ou MySQL séparées sur Render
-4. **Variables d'environnement** : Configurez-les dans le dashboard Render pour chaque service
+Render vérifie `GET /health` sur l'API siège.

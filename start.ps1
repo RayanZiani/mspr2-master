@@ -1,4 +1,5 @@
-# Lance toute l'application FutureKawa (3 pays + siège) en une commande.
+# Lance le siège FutureKawa (frontend + API → Aiven).
+# Simulateurs capteurs : npm run sim:start (hors Docker)
 # Usage : .\start.ps1          (logs en direct)
 #         .\start.ps1 -Detached (arrière-plan)
 

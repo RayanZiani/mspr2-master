@@ -14,6 +14,6 @@ DATABASE_URL = (
     f"@{os.getenv('MYSQL_HOST', 'mysql-equateur')}:3306/{os.getenv('MYSQL_DATABASE')}"
 )
 
-MQTT_BROKER_HOST = os.getenv("MQTT_BROKER_HOST", "mosquitto-equateur")
+MQTT_BROKER_HOST = os.getenv("MQTT_BROKER_HOST", "mosquitto-bresil")
 MQTT_BROKER_PORT = int(os.getenv("MQTT_BROKER_PORT", 1883))
 MQTT_TOPIC = f"futurekawa/{PAYS}/+/sensors"

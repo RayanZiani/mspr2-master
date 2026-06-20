@@ -1,7 +1,16 @@
 import json
 import time
 import network
-from firmware.config import WIFI_SSID, WIFI_PSK, MQTT_BROKER, MQTT_PORT, MQTT_TOPIC, READ_INTERVAL
+from firmware.config import (
+    WIFI_SSID,
+    WIFI_PSK,
+    MQTT_BROKER,
+    MQTT_PORT,
+    MQTT_TOPIC,
+    READ_INTERVAL,
+    PAYS,
+    ENTREPOT,
+)
 from firmware.mqtt_client import get_client
 from firmware.sensor_dht import SensorDHT22
 
@@ -17,7 +26,7 @@ def connect_wifi():
 def main():
     connect_wifi()
     sensor = SensorDHT22(pin=4)
-    client = get_client(MQTT_BROKER, MQTT_PORT)
+    client = get_client(MQTT_BROKER, MQTT_PORT, PAYS, ENTREPOT)
 
     while True:
         data = sensor.read()

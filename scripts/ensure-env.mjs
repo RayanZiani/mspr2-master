@@ -18,16 +18,19 @@ for (const dir of ['siege', 'pays/bresil', 'pays/equateur', 'pays/colombie']) {
   }
 }
 
-const siegeEnvPath = join(root, 'siege', '.env')
-if (existsSync(siegeEnvPath)) {
-  const siegeContent = readFileSync(siegeEnvPath, 'utf8')
-  if (!/^MYSQL_URL=/m.test(siegeContent)) {
-    const bresilEnvPath = join(root, 'pays/bresil', '.env')
-    if (existsSync(bresilEnvPath)) {
-      const dbUrl = envValue(readFileSync(bresilEnvPath, 'utf8'), 'DATABASE_URL')
-      if (dbUrl) {
-        appendFileSync(siegeEnvPath, `\nMYSQL_URL=${dbUrl}\n`)
-        console.log('[start] MYSQL_URL ajouté dans siege/.env (depuis pays/bresil)')
+const rootEnvPath = join(root, '.env')
+if (existsSync(rootEnvPath)) {
+  const rootContent = readFileSync(rootEnvPath, 'utf8')
+  const mysqlUrl = envValue(rootContent, 'MYSQL_URL')
+  if (mysqlUrl) {
+    for (const dir of ['pays/bresil', 'pays/equateur', 'pays/colombie']) {
+      const envPath = join(root, dir, '.env')
+      if (existsSync(envPath)) {
+        let content = readFileSync(envPath, 'utf8')
+        if (!/^MYSQL_URL=/m.test(content)) {
+          appendFileSync(envPath, `\nMYSQL_URL=${mysqlUrl}\n`)
+          console.log(`[start] MYSQL_URL propagé dans ${dir}/.env`)
+        }
       }
     }
   }

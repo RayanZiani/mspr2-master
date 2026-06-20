@@ -31,9 +31,22 @@ mpremote cp firmware/main.py :main.py
 
 ## Simulateur (fallback démo)
 
-```bash
-python iot/simulator/simulate_sensor.py --pays bresil --entrepot entrepot_A
+Les pays **Équateur** et **Colombie** sont simulés via :
 
-# Publier des données factices sur les trois brokers
-python iot/simulator/simulate_sensor.py --pays bresil --entrepot entrepot_A --all --count 3
+```bash
+npm run sim:start:ec-co
 ```
+
+## Capteur réel Brésil (ESP32)
+
+- **Fréquence** : 1 relevé **toutes les 30 s** (`READ_INTERVAL` dans `firmware/config.py`)
+- **Topic MQTT** : `futurekawa/bresil/entrepot_A/sensors` → mappe vers **Entrepôt BR-1** dans Aiven
+
+```bash
+npm run iot:up       # broker MQTT (port 1883)
+npm run iot:bridge   # pont MQTT -> Aiven
+```
+
+Configurer `firmware/config.py` : WiFi + IP du PC (`MQTT_BROKER`).
+
+Voir `docs/technique/mqtt_topics.md` pour le mapping complet.

@@ -1,8 +1,12 @@
-# Compose RACINE — lance TOUT pour la démo jury
-# Usage : npm start   (ou : .\start.ps1   ou : docker compose up --build)
+# Compose RACINE — siège (frontend + API + Redis)
+# Usage : npm start
+#
+# Simulateurs capteurs (local, hors Docker) :
+#   npm run sim:clear
+#   npm run sim:start
+#
+# Broker MQTT ESP32 (optionnel) :
+#   docker compose -f docker-compose.iot.yml up -d
 
 include:
-  - pays/bresil/docker-compose.yml
-  - pays/equateur/docker-compose.yml
-  - pays/colombie/docker-compose.yml
   - siege/docker-compose.yml

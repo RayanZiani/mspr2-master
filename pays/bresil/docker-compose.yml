@@ -1,78 +1,15 @@
-services:
-  mosquitto-bresil:
-    image: eclipse-mosquitto:2
-    container_name: mosquitto-bresil
-    volumes:
-      - ./broker/mosquitto.conf:/mosquitto/config/mosquitto.conf
-    ports:
-      - "1883:1883"
-    networks:
-      - bresil-net
-
-  mysql-bresil:
-    image: mysql:8.0
-    container_name: mysql-bresil
-    environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${MYSQL_DATABASE}
-      MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
-    volumes:
-      - mysql-bresil-data:/var/lib/mysql
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-p${MYSQL_ROOT_PASSWORD}"]
-      interval: 5s
-      timeout: 5s
-      retries: 12
-      start_period: 30s
-    networks:
-      - bresil-net
-
-  api-bresil:
-    build: ./api
-    container_name: api-bresil
-    env_file: .env
-    ports:
-      - "8001:8000"
-    depends_on:
-      mysql-bresil:
-        condition: service_healthy
-      mosquitto-bresil:
-        condition: service_started
-    restart: unless-stopped
-    networks:
-      - bresil-net
-
-  node-red-bresil:
-    image: nodered/node-red:latest
-    container_name: node-red-bresil
-    volumes:
-      - ./node-red/flows.json:/data/flows.json
-    ports:
-      - "1880:1880"
-    depends_on:
-      - mosquitto-bresil
-    networks:
-      - bresil-net
-
-  # Simulateur IoT — desactiver ce service quand l'ESP32 est branche sur le port COM
-  simulator-bresil:
-    build: ../../iot/simulator
-    container_name: simulator-bresil
-    environment:
-      PAYS: bresil
-      MQTT_BROKER_HOST: mosquitto-bresil
-      MQTT_BROKER_PORT: "1883"
-      SIMULATE_INTERVAL: "30"
-    depends_on:
-      - mosquitto-bresil
-    networks:
-      - bresil-net
-    restart: unless-stopped
-
-volumes:
-  mysql-bresil-data:
-
-networks:
-  bresil-net:
-    driver: bridge
+services:
+  # Broker MQTT — ESP32 Brésil (optionnel, voir docker-compose.iot.yml)
+  mosquitto-bresil:
+    image: eclipse-mosquitto:2
+    container_name: mosquitto-bresil
+    volumes:
+      - ./broker/mosquitto.conf:/mosquitto/config/mosquitto.conf
+    ports:
+      - "1883:1883"
+    networks:
+      - bresil-net
+
+networks:
+  bresil-net:
+    driver: bridge
