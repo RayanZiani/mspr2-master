@@ -3,8 +3,9 @@ name: Deploy to Render
 on:
   push:
     branches:
-      - feature/ci-cd-jenkins
+      - master
       - main
+      - feature/ci-cd-jenkins
   workflow_dispatch: # Permet de lancer manuellement
 
 jobs:
