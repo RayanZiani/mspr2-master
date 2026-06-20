@@ -26,7 +26,18 @@ Le frontend Render lit la **base MySQL centrale (Aiven)** via l'API siège :
 
 ## Déploiement
 
-Déclenché par GitHub Actions sur push `main` → Deploy Hooks Render (`RENDER_BACKEND_DEPLOY_HOOK`, `RENDER_FRONTEND_DEPLOY_HOOK`).
+Déclenché par GitHub Actions sur push `master` / `main` → Deploy Hooks Render (`RENDER_BACKEND_DEPLOY_HOOK`, `RENDER_FRONTEND_DEPLOY_HOOK`).
+
+### Configuration Render (Docker)
+
+Les Dockerfiles supposent un **contexte de build à la racine du dépôt** :
+
+| Service | Root Directory | Dockerfile Path |
+|---------|----------------|-----------------|
+| Backend | *(vide — racine repo)* | `siege/api/Dockerfile` |
+| Frontend | *(vide — racine repo)* | `siege/frontend/Dockerfile` |
+
+Variable frontend : `VITE_API_BASE_URL=https://mspr2-master.onrender.com`
 
 ## Local vs Render
 

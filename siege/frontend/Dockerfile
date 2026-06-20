@@ -4,10 +4,10 @@ WORKDIR /app
 
 ARG VITE_API_BASE_URL=https://mspr2-master.onrender.com
 
-COPY package.json package-lock.json ./
+COPY siege/frontend/package.json siege/frontend/package-lock.json ./
 RUN npm ci
 
-COPY . ./
+COPY siege/frontend/ ./
 
 ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
 RUN npm run build

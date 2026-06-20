@@ -1,0 +1,13 @@
+**/.git
+**/.pytest_cache
+**/__pycache__
+**/node_modules
+**/dist
+**/.env
+tests/
+docs/
+ci-cd/
+pays/
+scripts/
+iot/
+*.md

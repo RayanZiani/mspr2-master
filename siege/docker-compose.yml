@@ -1,6 +1,8 @@
 services:
   api-siege:
-    build: ./api
+    build:
+      context: ..
+      dockerfile: siege/api/Dockerfile
     container_name: api-siege
     env_file:
       - ../.env
@@ -16,7 +18,9 @@ services:
       - siege-net
 
   frontend:
-    build: ./frontend
+    build:
+      context: ..
+      dockerfile: siege/frontend/Dockerfile
     container_name: frontend-siege
     networks:
       - siege-net
