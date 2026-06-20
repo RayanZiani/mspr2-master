@@ -24,6 +24,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from aiven_mysql import connect_aiven
+from threshold_alert import process_releve
 
 
 @dataclass
@@ -173,6 +174,8 @@ def _insert_releves(capteurs: list[CapteurSim]) -> None:
             names = ", ".join(c.entrepot for c in by_pays[code])
             print(f"    {code} : {len(by_pays[code])} capteur(s) — {names}")
         print()
+        for capteur in capteurs:
+            process_releve(cnx, capteur.capteur_id, capteur.temperature, capteur.humidite)
     except Exception as exc:
         cnx.rollback()
         print(f"ERREUR INSERT : {exc}", file=sys.stderr)

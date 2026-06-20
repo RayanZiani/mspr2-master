@@ -107,6 +107,9 @@ def _insert_releve(capteur_id: str, temp: float, humidity: float, ts: datetime) 
             (capteur_id, ts, temp, humidity),
         )
         cnx.commit()
+        from threshold_alert import process_releve
+
+        process_releve(cnx, capteur_id, temp, humidity)
     except Exception:
         cnx.rollback()
         raise

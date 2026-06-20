@@ -2,6 +2,7 @@ import { useParams, useLocation, Link } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import { useStocks } from '../hooks/useStocks'
 import { useMesures } from '../hooks/useMesures'
+import { useSeuils } from '../hooks/useSeuils'
 import LotDetail from '../components/LotDetail'
 import Charts from '../components/Charts'
 
@@ -21,6 +22,7 @@ export default function LotView() {
     error,
     refetch,
   } = useMesures(lotId)
+  const { bySlug: seuilsBySlug } = useSeuils()
 
   return (
     <div>
@@ -34,7 +36,7 @@ export default function LotView() {
         <p className="page-sub">Historique des relevés IoT depuis la mise en stockage</p>
       </div>
 
-      <LotDetail lot={lot} />
+      <LotDetail lot={lot} seuilsBySlug={seuilsBySlug} />
 
       {mesuresLoading ? (
         <div className="loading">
@@ -50,7 +52,7 @@ export default function LotView() {
           </button>
         </div>
       ) : (
-        <Charts data={mesuresData} pays={lot?.pays} />
+        <Charts data={mesuresData} pays={lot?.pays} seuilsBySlug={seuilsBySlug} />
       )}
     </div>
   )

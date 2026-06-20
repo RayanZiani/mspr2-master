@@ -140,3 +140,17 @@ python scripts/import_demo_excel_to_mysql.py
 ```
 
 Puis `npm run sim:clear` pour repartir sans historique de températures.
+
+---
+
+## Seuils et alertes Discord
+
+- Seuils **min / max** par pays (table `pays` sur Aiven)
+- UI admin : menu compte → **Config capteurs** (`/config/capteurs`)
+- Chaque INSERT releve (simulateur ou pont MQTT) :
+  - compare temp/humidite aux seuils
+  - lot → `ALERTE` + ligne `alerte` + Discord si configure
+
+```env
+DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/...
+```

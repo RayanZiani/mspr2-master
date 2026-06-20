@@ -6,7 +6,7 @@ from sqlalchemy import text
 
 from api.auth import require_role, require_user
 from api.db.database import engine
-from api.routes import alertes, auth, mesures, stocks, users
+from api.routes import alertes, auth, config, mesures, stocks, users
 
 
 @asynccontextmanager
@@ -56,6 +56,11 @@ app.include_router(
     prefix="/alertes",
     tags=["Alertes"],
     dependencies=[Depends(require_user)],
+)
+app.include_router(
+    config.router,
+    prefix="/config",
+    tags=["Config"],
 )
 
 

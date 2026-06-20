@@ -6,12 +6,6 @@ const PAYS_LABEL = {
   colombie: 'Colombie',
 }
 
-const SEUILS = {
-  bresil:   { temp: 29, humidity: 55 },
-  equateur: { temp: 31, humidity: 60 },
-  colombie: { temp: 26, humidity: 80 },
-}
-
 const STATUS_MAP = {
   conforme: { cls: 'badge-conforme', label: 'Conforme', Icon: CheckCircle2 },
   alerte:   { cls: 'badge-alerte',   label: 'Alerte',   Icon: AlertTriangle },
@@ -31,7 +25,7 @@ function daysInStock(dateStr) {
   return Math.floor((Date.now() - new Date(dateStr).getTime()) / 86_400_000)
 }
 
-export default function LotDetail({ lot }) {
+export default function LotDetail({ lot, seuilsBySlug }) {
   if (!lot) {
     return (
       <div className="card mb-2">
@@ -41,7 +35,7 @@ export default function LotDetail({ lot }) {
   }
 
   const days   = daysInStock(lot.date_stockage)
-  const seuil  = SEUILS[lot.pays]
+  const seuil  = seuilsBySlug?.[lot.pays]
   const status = STATUS_MAP[lot.statut] || STATUS_MAP.conforme
   const daysClass = days > 365 ? 'danger' : days > 300 ? 'warning' : ''
 
@@ -88,7 +82,9 @@ export default function LotDetail({ lot }) {
         {seuil && (
           <div className="lot-detail-field">
             <span className="lot-field-label"><Thermometer size={10} /> Seuils pays</span>
-            <span className="lot-field-value">{seuil.temp}°C ±3 · {seuil.humidity}% ±2</span>
+            <span className="lot-field-value">
+              {seuil.tempMin}–{seuil.tempMax} °C · {seuil.humMin}–{seuil.humMax} %
+            </span>
           </div>
         )}
       </div>

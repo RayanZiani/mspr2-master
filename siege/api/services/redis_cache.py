@@ -35,3 +35,14 @@ async def set_cache(key: str, data, ttl: int | None = None) -> None:
     except (RedisError, TypeError):
         # Si Redis échoue, on continue sans cache
         pass
+
+
+async def delete_cache_prefix(prefix: str) -> None:
+    """Supprime les cles Redis commencant par prefix (ex: siege:stocks)."""
+    if not redis_available or redis_client is None:
+        return
+    try:
+        async for key in redis_client.scan_iter(match=f"{prefix}*"):
+            await redis_client.delete(key)
+    except RedisError:
+        pass

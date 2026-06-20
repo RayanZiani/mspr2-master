@@ -9,6 +9,7 @@ import {
   LogOut,
   ChevronDown,
   Users,
+  Settings2,
   Menu,
   X,
 } from 'lucide-react'
@@ -26,6 +27,7 @@ const Login = lazy(() => import('./pages/Login'))
 const UsersPage = lazy(() => import('./pages/UsersPage'))
 const MesuresPage = lazy(() => import('./pages/MesuresPage'))
 const HealthPage = lazy(() => import('./pages/HealthPage'))
+const CapteursConfigPage = lazy(() => import('./pages/CapteursConfigPage'))
 
 function PageFallback() {
   return (
@@ -96,6 +98,13 @@ function AccountMenu({ statusCls, statusTitle }) {
             <span>Santé système</span>
             <span className={`status-mini ${statusCls}`} aria-hidden="true" />
           </button>
+
+          {perms.isAdmin && (
+            <button type="button" className="account-item" onClick={() => go('/config/capteurs')} role="menuitem">
+              <Settings2 size={15} />
+              <span>Config capteurs</span>
+            </button>
+          )}
 
           {perms.isAdmin && (
             <button type="button" className="account-item" onClick={() => go('/users')} role="menuitem">
@@ -231,6 +240,10 @@ export default function App() {
             <Route
               path="/sante"
               element={<RequireAuth><HealthPage /></RequireAuth>}
+            />
+            <Route
+              path="/config/capteurs"
+              element={<RequirePerm can={p => p.canConfigThresholds()}><CapteursConfigPage /></RequirePerm>}
             />
             <Route
               path="/users"

@@ -5,16 +5,8 @@ import {
   ResponsiveContainer, ReferenceLine, ReferenceArea,
 } from 'recharts'
 
-// Conditions idéales et tolérances par pays (cf. cahier des charges).
-const SEUILS = {
-  bresil:   { temp: 29, humidity: 55 },
-  equateur: { temp: 31, humidity: 60 },
-  colombie: { temp: 26, humidity: 80 },
-}
-const TOL = { temp: 3, humidity: 2 }
+// Seuils dynamiques via API /config/seuils (prop seuilsBySlug).
 
-// Nombre max de points tracés : au-delà, on agrège (sinon le hover rame
-// avec des centaines de points, à la manière des graphes Google Finance).
 const MAX_POINTS = 140
 
 const DAY = 86_400_000
@@ -28,11 +20,11 @@ const RANGES = [
 const SERIES = {
   temp: {
     key: 'temperature', label: 'Température', unit: '°C',
-    rawColor: '#FB923C', Icon: Thermometer, iconCls: 'temp', tol: TOL.temp,
+    rawColor: '#FB923C', Icon: Thermometer, iconCls: 'temp',
   },
   humidity: {
     key: 'humidity', label: 'Humidité', unit: '%',
-    rawColor: '#38BDF8', Icon: Droplets, iconCls: 'humidity', tol: TOL.humidity,
+    rawColor: '#38BDF8', Icon: Droplets, iconCls: 'humidity',
   },
 }
 
@@ -82,10 +74,10 @@ function CustomTooltip({ active, payload, label }) {
   )
 }
 
-function MetricChart({ cfg, rows, ideal, stats, animate }) {
+function MetricChart({ cfg, rows, band, stats, animate }) {
   const gid = `grad-${cfg.key}`
-  const lo = ideal != null ? Math.min(stats?.min ?? ideal, ideal - cfg.tol) : stats?.min
-  const hi = ideal != null ? Math.max(stats?.max ?? ideal, ideal + cfg.tol) : stats?.max
+  const lo = band?.min != null ? Math.min(stats?.min ?? band.min, band.min) : stats?.min
+  const hi = band?.max != null ? Math.max(stats?.max ?? band.max, band.max) : stats?.max
   const pad = Math.max(1, ((hi ?? 0) - (lo ?? 0)) * 0.15)
 
   return (
@@ -131,27 +123,29 @@ function MetricChart({ cfg, rows, ideal, stats, animate }) {
             allowDecimals={false}
           />
 
-          {ideal != null && (
+          {band && band.min != null && band.max != null && (
             <>
               <ReferenceArea
-                y1={ideal - cfg.tol}
-                y2={ideal + cfg.tol}
+                y1={band.min}
+                y2={band.max}
                 fill="var(--accent)"
                 fillOpacity={0.07}
                 stroke="var(--accent-border)"
                 strokeOpacity={0.22}
                 strokeDasharray="4 4"
               />
-              <ReferenceLine
-                y={ideal}
-                stroke="var(--accent)"
-                strokeDasharray="6 4"
-                strokeOpacity={0.65}
-                label={{
-                  value: `Idéal ${ideal}${cfg.unit}`,
-                  fill: 'var(--accent)', fontSize: 10, position: 'insideTopRight',
-                }}
-              />
+              {band.ideal != null && (
+                <ReferenceLine
+                  y={band.ideal}
+                  stroke="var(--accent)"
+                  strokeDasharray="6 4"
+                  strokeOpacity={0.65}
+                  label={{
+                    value: `Ideal ${band.ideal}${cfg.unit}`,
+                    fill: 'var(--accent)', fontSize: 10, position: 'insideTopRight',
+                  }}
+                />
+              )}
             </>
           )}
 
@@ -176,7 +170,7 @@ function MetricChart({ cfg, rows, ideal, stats, animate }) {
   )
 }
 
-export default function Charts({ data, pays }) {
+export default function Charts({ data, pays, seuilsBySlug }) {
   const [range, setRange] = useState('all')
 
   const allRows = useMemo(() => {
@@ -225,8 +219,14 @@ export default function Charts({ data, pays }) {
     )
   }
 
-  const seuil = SEUILS[pays]
+  const seuil = seuilsBySlug?.[pays]
   const animate = view.length <= 60
+  const tempBand = seuil
+    ? { min: seuil.tempMin, max: seuil.tempMax, ideal: seuil.tempIdeal }
+    : null
+  const humBand = seuil
+    ? { min: seuil.humMin, max: seuil.humMax, ideal: seuil.humIdeal }
+    : null
 
   return (
     <div>
@@ -251,8 +251,8 @@ export default function Charts({ data, pays }) {
       </div>
 
       <div className="chart-grid-2">
-        <MetricChart cfg={SERIES.temp} rows={view} ideal={seuil?.temp} stats={tempStats} animate={animate} />
-        <MetricChart cfg={SERIES.humidity} rows={view} ideal={seuil?.humidity} stats={humStats} animate={animate} />
+        <MetricChart cfg={SERIES.temp} rows={view} band={tempBand} stats={tempStats} animate={animate} />
+        <MetricChart cfg={SERIES.humidity} rows={view} band={humBand} stats={humStats} animate={animate} />
       </div>
     </div>
   )
