@@ -105,8 +105,9 @@ def main() -> int:
             }
         )
 
-        # 2 exploitations / pays
-        for e_idx in range(1, 3):
+        # Brésil : 1 exploitation ; autres pays : 2
+        exp_count = 1 if p.code == "BR" else 2
+        for e_idx in range(1, exp_count + 1):
             exploitation_rows.append(
                 {
                     "id": exploitation_id,

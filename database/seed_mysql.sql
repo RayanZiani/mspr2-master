@@ -19,22 +19,22 @@ ON DUPLICATE KEY UPDATE
 SET @pays_br := (SELECT id FROM pays WHERE code = 'BR' LIMIT 1);
 
 INSERT INTO exploitation (pays_id, nom)
-VALUES (@pays_br, 'Fazenda Alpha')
+VALUES (@pays_br, 'Exploitation BR-1')
 ON DUPLICATE KEY UPDATE nom = VALUES(nom);
 
 SET @exploitation_id := (
   SELECT id FROM exploitation
-  WHERE pays_id = @pays_br AND nom = 'Fazenda Alpha'
+  WHERE pays_id = @pays_br AND nom = 'Exploitation BR-1'
   LIMIT 1
 );
 
 INSERT INTO entrepot (pays_id, exploitation_id, nom, adresse)
-VALUES (@pays_br, @exploitation_id, 'Entrepôt São Paulo', 'São Paulo')
+VALUES (@pays_br, @exploitation_id, 'Entrepôt BR-1', 'Brésil - site 1')
 ON DUPLICATE KEY UPDATE adresse = VALUES(adresse);
 
 SET @entrepot_id := (
   SELECT id FROM entrepot
-  WHERE pays_id = @pays_br AND nom = 'Entrepôt São Paulo'
+  WHERE pays_id = @pays_br AND nom = 'Entrepôt BR-1'
   LIMIT 1
 );
 
@@ -84,22 +84,22 @@ ON DUPLICATE KEY UPDATE
 SET @pays_br := (SELECT id FROM pays WHERE code = 'BR' LIMIT 1);
 
 INSERT INTO exploitation (pays_id, nom)
-VALUES (@pays_br, 'Fazenda Alpha')
+VALUES (@pays_br, 'Exploitation BR-1')
 ON DUPLICATE KEY UPDATE nom = VALUES(nom);
 
 SET @exploitation_id := (
   SELECT id FROM exploitation
-  WHERE pays_id = @pays_br AND nom = 'Fazenda Alpha'
+  WHERE pays_id = @pays_br AND nom = 'Exploitation BR-1'
   LIMIT 1
 );
 
 INSERT INTO entrepot (pays_id, exploitation_id, nom, adresse)
-VALUES (@pays_br, @exploitation_id, 'Entrepôt São Paulo', 'São Paulo')
+VALUES (@pays_br, @exploitation_id, 'Entrepôt BR-1', 'Brésil - site 1')
 ON DUPLICATE KEY UPDATE adresse = VALUES(adresse);
 
 SET @entrepot_id := (
   SELECT id FROM entrepot
-  WHERE pays_id = @pays_br AND nom = 'Entrepôt São Paulo'
+  WHERE pays_id = @pays_br AND nom = 'Entrepôt BR-1'
   LIMIT 1
 );
 

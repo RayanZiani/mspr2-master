@@ -867,6 +867,19 @@ body::before {
 
 select.input { cursor: pointer; }
 
+select.input optgroup {
+  font-weight: 600;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  background: var(--surface-2);
+}
+
+select.input option {
+  font-weight: 400;
+  color: var(--text);
+  background: var(--surface);
+}
+
 .filter-item {
   display: inline-flex;
   align-items: center;

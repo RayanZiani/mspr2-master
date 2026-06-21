@@ -5,6 +5,8 @@ import Charts from '../components/Charts'
 import { useStocks } from '../hooks/useStocks'
 import { useMesures } from '../hooks/useMesures'
 import { useLotLocationFilters } from '../hooks/useLotLocationFilters'
+import { UserPermissions } from '../auth/permissions'
+import { groupLotsByOrigin } from '../utils/groupLotsByOrigin'
 
 export default function MesuresPage() {
   const {
@@ -35,6 +37,12 @@ export default function MesuresPage() {
     entrepotOptions,
     locationFilteredLots,
   } = useLotLocationFilters(allLots)
+
+  const perms = UserPermissions()
+  const lotGroups = useMemo(() => {
+    if (!perms.isSuperAdmin || !locationFilteredLots.length) return null
+    return groupLotsByOrigin(locationFilteredLots, { includePays: !selectedPays })
+  }, [locationFilteredLots, perms.isSuperAdmin, selectedPays])
 
   useEffect(() => {
     if (!locationFilteredLots.length) {
@@ -120,11 +128,21 @@ export default function MesuresPage() {
           onChange={(e) => setSelectedLotId(e.target.value)}
         >
           {!locationFilteredLots.length && <option value="">Aucun lot disponible</option>}
-          {locationFilteredLots.map((lot) => (
-            <option key={lot.id} value={lot.id}>
-              {lot.id} - {lot.exploitation || '-'} / {lot.entrepot || '-'}
-            </option>
-          ))}
+          {lotGroups
+            ? lotGroups.map((group) => (
+              <optgroup key={group.key} label={group.label}>
+                {group.lots.map((lot) => (
+                  <option key={lot.id} value={lot.id}>
+                    {lot.id}
+                  </option>
+                ))}
+              </optgroup>
+            ))
+            : locationFilteredLots.map((lot) => (
+              <option key={lot.id} value={lot.id}>
+                {lot.id} - {lot.exploitation || '-'} / {lot.entrepot || '-'}
+              </option>
+            ))}
         </select>
       </div>
 

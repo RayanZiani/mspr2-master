@@ -24,7 +24,7 @@ SEUILS = {
 }
 
 ENTREPOTS = {
-    "bresil":   ["entrepot_A", "entrepot_B", "entrepot_C"],
+    "bresil":   ["entrepot_A"],
     "equateur": ["entrepot_B", "entrepot_C"],
     "colombie": ["entrepot_C", "entrepot_D"],
 }
