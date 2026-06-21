@@ -1,9 +1,10 @@
 import { useMemo, useState, useEffect } from 'react'
 import { Activity } from 'lucide-react'
-import CountrySelector from '../components/CountrySelector'
+import LocationFilters from '../components/LocationFilters'
 import Charts from '../components/Charts'
 import { useStocks } from '../hooks/useStocks'
 import { useMesures } from '../hooks/useMesures'
+import { useLotLocationFilters } from '../hooks/useLotLocationFilters'
 
 export default function MesuresPage() {
   const {
@@ -14,7 +15,6 @@ export default function MesuresPage() {
     refetch: refetchStocks,
   } = useStocks()
 
-  const [selectedPays, setSelectedPays] = useState('')
   const [selectedLotId, setSelectedLotId] = useState('')
 
   const allLots = useMemo(() => {
@@ -24,23 +24,31 @@ export default function MesuresPage() {
     )
   }, [stocksData])
 
-  const countryLots = useMemo(() => {
-    return selectedPays ? allLots.filter((l) => l.pays === selectedPays) : allLots
-  }, [allLots, selectedPays])
+  const {
+    selectedPays,
+    setSelectedPays,
+    selectedExploitation,
+    setSelectedExploitation,
+    selectedEntrepot,
+    setSelectedEntrepot,
+    exploitationOptions,
+    entrepotOptions,
+    locationFilteredLots,
+  } = useLotLocationFilters(allLots)
 
   useEffect(() => {
-    if (!countryLots.length) {
+    if (!locationFilteredLots.length) {
       setSelectedLotId('')
       return
     }
-    if (!selectedLotId || !countryLots.find((lot) => lot.id === selectedLotId)) {
-      setSelectedLotId(countryLots[0].id)
+    if (!selectedLotId || !locationFilteredLots.find((lot) => lot.id === selectedLotId)) {
+      setSelectedLotId(locationFilteredLots[0].id)
     }
-  }, [countryLots, selectedLotId])
+  }, [locationFilteredLots, selectedLotId])
 
   const currentLot = useMemo(
-    () => countryLots.find((l) => l.id === selectedLotId),
-    [countryLots, selectedLotId]
+    () => locationFilteredLots.find((l) => l.id === selectedLotId),
+    [locationFilteredLots, selectedLotId]
   )
 
   const {
@@ -92,7 +100,16 @@ export default function MesuresPage() {
         <p className="page-sub">Visualiser les releves temperature/humidite par lot</p>
       </div>
 
-      <CountrySelector value={selectedPays} onChange={setSelectedPays} />
+      <LocationFilters
+        selectedPays={selectedPays}
+        onPaysChange={setSelectedPays}
+        selectedExploitation={selectedExploitation}
+        onExploitationChange={setSelectedExploitation}
+        selectedEntrepot={selectedEntrepot}
+        onEntrepotChange={setSelectedEntrepot}
+        exploitationOptions={exploitationOptions}
+        entrepotOptions={entrepotOptions}
+      />
 
       <div className="toolbar mb-2">
         <label className="filter-item" htmlFor="lot-select">Lot</label>
@@ -102,8 +119,8 @@ export default function MesuresPage() {
           value={selectedLotId}
           onChange={(e) => setSelectedLotId(e.target.value)}
         >
-          {!countryLots.length && <option value="">Aucun lot disponible</option>}
-          {countryLots.map((lot) => (
+          {!locationFilteredLots.length && <option value="">Aucun lot disponible</option>}
+          {locationFilteredLots.map((lot) => (
             <option key={lot.id} value={lot.id}>
               {lot.id} - {lot.exploitation || '-'} / {lot.entrepot || '-'}
             </option>

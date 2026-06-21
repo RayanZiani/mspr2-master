@@ -3,8 +3,9 @@ import { useNavigate } from 'react-router-dom'
 import { Package, CheckCircle2, AlertTriangle, XCircle } from 'lucide-react'
 import { useStocks } from '../hooks/useStocks'
 import { useToast } from '../components/Toast'
-import CountrySelector from '../components/CountrySelector'
+import LocationFilters from '../components/LocationFilters'
 import LotList from '../components/LotList'
+import { useLotLocationFilters } from '../hooks/useLotLocationFilters'
 import { exportLotsCsv } from '../utils/exportCsv'
 import { formatTimeAgo } from '../utils/time'
 
@@ -18,7 +19,6 @@ export default function Dashboard() {
     isFetching,
     dataUpdatedAt,
   } = useStocks()
-  const [selectedPays, setSelectedPays] = useState('')
   const [search, setSearch] = useState('')
   const [statusFilters, setStatusFilters] = useState([])
   const [now, setNow] = useState(Date.now())
@@ -36,14 +36,21 @@ export default function Dashboard() {
     )
   }, [stocksData])
 
-  const lotsByCountry = useMemo(() =>
-    selectedPays ? allLots.filter(l => l.pays === selectedPays) : allLots,
-    [allLots, selectedPays]
-  )
+  const {
+    selectedPays,
+    setSelectedPays,
+    selectedExploitation,
+    setSelectedExploitation,
+    selectedEntrepot,
+    setSelectedEntrepot,
+    exploitationOptions,
+    entrepotOptions,
+    locationFilteredLots,
+  } = useLotLocationFilters(allLots)
 
   const filteredLots = useMemo(() => {
     const q = search.trim().toLowerCase()
-    return lotsByCountry.filter((lot) => {
+    return locationFilteredLots.filter((lot) => {
       const matchesSearch = q.length === 0
         || (lot.id || '').toLowerCase().includes(q)
         || (lot.exploitation || '').toLowerCase().includes(q)
@@ -53,7 +60,7 @@ export default function Dashboard() {
 
       return matchesSearch && matchesStatus
     })
-  }, [lotsByCountry, search, statusFilters])
+  }, [locationFilteredLots, search, statusFilters])
 
   useEffect(() => {
     const timer = setInterval(() => setNow(Date.now()), 10_000)
@@ -156,7 +163,16 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <CountrySelector value={selectedPays} onChange={setSelectedPays} />
+      <LocationFilters
+        selectedPays={selectedPays}
+        onPaysChange={setSelectedPays}
+        selectedExploitation={selectedExploitation}
+        onExploitationChange={setSelectedExploitation}
+        selectedEntrepot={selectedEntrepot}
+        onEntrepotChange={setSelectedEntrepot}
+        exploitationOptions={exploitationOptions}
+        entrepotOptions={entrepotOptions}
+      />
 
       <div className="toolbar mb-2">
         <input

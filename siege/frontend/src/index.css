@@ -885,6 +885,14 @@ select.input { cursor: pointer; }
   cursor: pointer;
 }
 
+.location-filters-row {
+  margin-top: 0.75rem;
+}
+
+.location-filter-select {
+  min-width: 200px;
+}
+
 /* Status badges */
 .badge {
   display: inline-flex;
