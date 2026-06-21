@@ -9,6 +9,7 @@
     "stop": "docker compose down",
     "logs": "docker compose logs -f",
     "sim:clear": "python scripts/clear_releve_capteur_aiven.py",
+    "sim:clear:bresil": "python scripts/clear_releve_capteur_aiven.py --pays BR",
     "sim:start": "powershell -ExecutionPolicy Bypass -File scripts/start_simulateurs.ps1",
     "sim:stop": "powershell -ExecutionPolicy Bypass -File scripts/stop_simulateurs.ps1",
     "iot:up": "docker compose -f docker-compose.iot.yml up -d",

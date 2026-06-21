@@ -1,15 +1,30 @@
-services:
-  # Broker MQTT — ESP32 Brésil (optionnel, voir docker-compose.iot.yml)
-  mosquitto-bresil:
-    image: eclipse-mosquitto:2
-    container_name: mosquitto-bresil
-    volumes:
-      - ./broker/mosquitto.conf:/mosquitto/config/mosquitto.conf
-    ports:
-      - "1883:1883"
-    networks:
-      - bresil-net
-
-networks:
-  bresil-net:
-    driver: bridge
+services:
+
+  # Broker MQTT — ESP32 Brésil (optionnel, voir docker-compose.iot.yml)
+
+  mosquitto-bresil:
+
+    image: eclipse-mosquitto:2
+
+    container_name: mosquitto-bresil
+
+    volumes:
+
+      - ./broker/mosquitto.conf:/mosquitto/config/mosquitto.conf
+
+    ports:
+
+      - "1883:1883"
+
+    networks:
+
+      - bresil-net
+
+
+
+networks:
+
+  bresil-net:
+
+    driver: bridge
+

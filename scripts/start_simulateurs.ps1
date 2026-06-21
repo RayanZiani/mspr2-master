@@ -1,14 +1,17 @@
-# Lance le simulateur de capteurs (tous pays -> Aiven).
+# Lance le simulateur de capteurs (Equateur + Colombie -> Aiven).
+# Le Brésil est exclu par défaut (données via broker MQTT / ESP32).
 # Affichage + insertion BDD toutes les 30 s (1 releve par capteur actif).
 #
 # Usage :
 #   powershell -File scripts/start_simulateurs.ps1
 #   powershell -File scripts/start_simulateurs.ps1 -Pays EC
+#   powershell -File scripts/start_simulateurs.ps1 -IncludeBresil
 
 param(
     [ValidateSet("ALL", "BR", "EC", "CO")]
     [string]$Pays = "ALL",
-    [string]$ExcludePays = ""
+    [string]$ExcludePays = "BR",
+    [switch]$IncludeBresil
 )
 
 $ErrorActionPreference = "Stop"
@@ -28,7 +31,11 @@ if ($running) {
     Start-Sleep -Seconds 1
 }
 
-Write-Host "Simulateur capteurs -> Aiven (pays=$Pays)" -ForegroundColor Cyan
+if ($IncludeBresil) {
+    $ExcludePays = ""
+}
+
+Write-Host "Simulateur capteurs -> Aiven (pays=$Pays, exclude=$ExcludePays)" -ForegroundColor Cyan
 Write-Host "Affichage + insert BDD : 30 s | Arret : Ctrl+C ou npm run sim:stop" -ForegroundColor DarkGray
 
 $env:PYTHONIOENCODING = 'utf-8'
