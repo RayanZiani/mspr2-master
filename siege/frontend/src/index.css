@@ -1116,6 +1116,70 @@ select.input option {
 }
 .alert-lot-desc { font-size: 0.76rem; color: var(--text-muted); margin-top: 3px; }
 
+.alert-lot-seuils,
+.seuils-summary.compact {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.45rem;
+  font-size: 0.74rem;
+  color: var(--text-secondary);
+}
+
+.seuils-summary.detailed {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.seuils-summary-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--warning);
+  margin-bottom: 0.65rem;
+}
+
+.seuils-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.75rem;
+}
+
+.seuils-metric {
+  padding: 0.65rem 0.75rem;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+}
+
+.seuils-metric.out-of-range {
+  border-color: color-mix(in srgb, var(--warning) 45%, var(--border));
+  background: color-mix(in srgb, var(--warning) 8%, var(--surface-2));
+}
+
+.seuils-metric-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.seuils-metric-range,
+.seuils-metric-value {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: 0.78rem;
+}
+
+.seuils-metric-value.danger {
+  color: var(--danger);
+  font-weight: 600;
+}
+
 /* Section header */
 .section-header {
   display: flex;

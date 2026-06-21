@@ -2,6 +2,7 @@ import { useMemo, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AlertTriangle, XCircle, PackageCheck } from 'lucide-react'
 import { useStocks } from '../hooks/useStocks'
+import { useSeuils } from '../hooks/useSeuils'
 import AlertBadge from '../components/AlertBadge'
 import { useToast } from '../components/Toast'
 import { exportLotsCsv } from '../utils/exportCsv'
@@ -17,6 +18,7 @@ export default function AlertsPage() {
     isFetching,
     dataUpdatedAt,
   } = useStocks()
+  const { bySlug: seuilsBySlug } = useSeuils()
   const navigate = useNavigate()
   const toast = useToast()
   const [now, setNow] = useState(Date.now())
@@ -110,6 +112,7 @@ export default function AlertsPage() {
                   <AlertBadge
                     key={l.id}
                     lot={l}
+                    seuilsBySlug={seuilsBySlug}
                     onClick={() => navigate(`/lots/${l.id}`, { state: { lot: l } })}
                   />
                 ))}
@@ -127,6 +130,7 @@ export default function AlertsPage() {
                   <AlertBadge
                     key={l.id}
                     lot={l}
+                    seuilsBySlug={seuilsBySlug}
                     onClick={() => navigate(`/lots/${l.id}`, { state: { lot: l } })}
                   />
                 ))}

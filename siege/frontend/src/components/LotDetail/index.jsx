@@ -1,4 +1,5 @@
-import { MapPin, Warehouse, Calendar, Clock, Thermometer, CheckCircle2, AlertTriangle, XCircle } from 'lucide-react'
+import { MapPin, Warehouse, Calendar, Clock, CheckCircle2, AlertTriangle, XCircle } from 'lucide-react'
+import SeuilsSummary from '../SeuilsSummary'
 
 const PAYS_LABEL = {
   bresil:   'Brésil',
@@ -25,7 +26,7 @@ function daysInStock(dateStr) {
   return Math.floor((Date.now() - new Date(dateStr).getTime()) / 86_400_000)
 }
 
-export default function LotDetail({ lot, seuilsBySlug }) {
+export default function LotDetail({ lot, seuilsBySlug, latestMesure }) {
   if (!lot) {
     return (
       <div className="card mb-2">
@@ -35,7 +36,6 @@ export default function LotDetail({ lot, seuilsBySlug }) {
   }
 
   const days   = daysInStock(lot.date_stockage)
-  const seuil  = seuilsBySlug?.[lot.pays]
   const status = STATUS_MAP[lot.statut] || STATUS_MAP.conforme
   const daysClass = days > 365 ? 'danger' : days > 300 ? 'warning' : ''
 
@@ -79,15 +79,16 @@ export default function LotDetail({ lot, seuilsBySlug }) {
             {days > 300 && days <= 365 && ' (proche péremption)'}
           </span>
         </div>
-        {seuil && (
-          <div className="lot-detail-field">
-            <span className="lot-field-label"><Thermometer size={10} /> Seuils pays</span>
-            <span className="lot-field-value">
-              {seuil.tempMin}–{seuil.tempMax} °C · {seuil.humMin}–{seuil.humMax} %
-            </span>
-          </div>
-        )}
       </div>
+
+      {lot.statut === 'alerte' && (
+        <SeuilsSummary
+          lot={lot}
+          seuilsBySlug={seuilsBySlug}
+          latestMesure={latestMesure}
+          variant="detailed"
+        />
+      )}
     </div>
   )
 }
