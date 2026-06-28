@@ -172,7 +172,7 @@ Les réponses sont agrégées et synthétisées dans le tableau ci-dessous (sect
 
 **E1.** Quelle est la qualité de la connexion internet dans vos entrepôts ?
 
-> Contrainte prise en compte : architecture **autonome par pays** — chaque pays a son propre broker MQTT local Mosquitto, sa propre base MySQL et son propre API FastAPI. La connexion avec le siège n'est pas requise pour le fonctionnement local.
+> Contrainte prise en compte : broker MQTT **local Mosquitto** pour le prototype ESP32 ; relevés persistés dans **Aiven MySQL** (base unique). L'API siège fonctionne tant qu'Aiven est accessible.
 
 **E2.** Avez-vous des contraintes de sécurité des données ?
 
@@ -180,7 +180,7 @@ Les réponses sont agrégées et synthétisées dans le tableau ci-dessous (sect
 
 **E3.** L'application doit-elle fonctionner si la connexion entre pays et siège est coupée ?
 
-> Implémenté : chaque pays enregistre les relevés localement (MySQL local). L'API siège agrège à la demande — si un pays est inaccessible, les autres continuent de fonctionner.
+> Implémenté : les capteurs/simulateurs écrivent dans **Aiven** via scripts locaux ; le dashboard siège lit Aiven — pas de BDD locale par pays.
 
 ---
 
@@ -233,7 +233,7 @@ Les réponses sont agrégées et synthétisées dans le tableau ci-dessous (sect
 | Courbes historiques température/humidité | ✓ | Composant `Charts` (Recharts), `LotView` |
 | Export CSV | ✓ | `exportLotsCsv()` dans `exportCsv.js` |
 | Détection capteur hors ligne | ✓ | `get_capteur_status()`, `_append_disconnected_section` |
-| Architecture résiliente par pays | ✓ | Docker Compose par pays, broker MQTT local |
+| Architecture résiliente | ✓ | Base **Aiven** centralisée + simulateurs locaux |
 | Seuils configurables par pays | ✓ | Table `pays` + `config.py` par pays |
 | Authentification et RBAC | ✓ | JWT, `permissions.py`, `USERS.md` |
 
@@ -241,7 +241,7 @@ Les réponses sont agrégées et synthétisées dans le tableau ci-dessous (sect
 
 | Contrainte | Prise en compte |
 |---|---|
-| Connexion 4G intermittente | Architecture locale par pays indépendante du siège |
+| Connexion 4G intermittente | Relevés via scripts locaux → Aiven ; dashboard lit Aiven |
 | Sécurité des données | JWT, RBAC, HTTPS Nginx, bcrypt |
 | Utilisateurs peu à l'aise avec l'informatique | Interface simple, badges colorés, guide utilisateur |
 | Pas de ressource IT locale | `docker compose up --build` en une commande, README complet |

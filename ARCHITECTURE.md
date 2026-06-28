@@ -32,39 +32,32 @@ Une plateforme IoT multi-pays permettant de :
 ## 2. Architecture globale
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                     PAYS (x3 identiques)                     │
-│                                                              │
-│  ┌──────────┐  USB/série  ┌──────────────┐   MQTT   ┌───────────┐                       │
-│  │ ESP32    │────────────▶│ PC (pont     │─────────▶│ Mosquitto │                       │
-│  │ + DHT11  │             │ serial→MQTT) │          │  Broker   │                       │
-│  └──────────┘           └─────┬─────┘                       │
-│                               │ subscribe                    │
-│                         ┌─────▼─────┐   ┌──────────────┐   │
-│                         │  FastAPI  │   │   Node-RED   │   │
-│                         │  API Pays │   │  (alerting)  │   │
-│                         └─────┬─────┘   └──────────────┘   │
-│                               │                              │
-│                         ┌─────▼─────┐                       │
-│                         │   MySQL   │                       │
-│                         │    BDD    │                       │
-│                         └───────────┘                       │
-└──────────────────────────┬──────────────────────────────────┘
-                           │ HTTP REST (httpx async)
-                           ▼
-┌──────────────────────────────────────────────────────────────┐
-│                        SIÈGE (central)                        │
-│                                                              │
-│  ┌──────────────┐    ┌───────────┐    ┌──────────────────┐  │
-│  │  FastAPI     │    │   Redis   │    │  React + Vite    │  │
-│  │  API Siège   │◀──▶│  (cache)  │    │  Frontend Web    │  │
-│  └──────┬───────┘    └───────────┘    └──────────────────┘  │
-│         │                                      ▲             │
-│         └──────────── Nginx ───────────────────┘             │
-└──────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│              IoT / simulateurs (machine de dev)                  │
+│  ESP32 USB → serial_to_mqtt → Mosquitto (optionnel, local)      │
+│  simulate_releves_aiven.py / mqtt_bridge_bresil.py              │
+└────────────────────────────┬────────────────────────────────────┘
+                             │ INSERT releve_capteur
+                             ▼
+              ┌──────────────────────────────────┐
+              │     Aiven MySQL (cloud)          │
+              │  lot · capteur · releve_capteur  │
+              │  pays · alerte · user_account    │
+              └──────────────┬───────────────────┘
+                             │ SQL (MYSQL_URL + TLS)
+                             ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                     SIÈGE (central)                              │
+│  ┌──────────────┐    ┌───────────┐    ┌──────────────────┐      │
+│  │  FastAPI     │    │   Redis   │    │  React + Vite    │      │
+│  │  API Siège   │◀──▶│  (cache)  │    │  Frontend Web    │      │
+│  └──────┬───────┘    └───────────┘    └──────────────────┘      │
+│         └──────────── Nginx ───────────────────▲                  │
+└─────────────────────────────────────────────────────────────────┘
+         Déploiement : Docker local (npm start) ou Render
 ```
 
-**Règle clé** : chaque pays est **complètement autonome** (sa propre BDD, son propre broker, sa propre API). Le siège ne fait qu'**agréger** via des appels HTTP vers les 3 APIs pays. Il n'y a pas de BDD centrale.
+**Règle clé** : **une seule base Aiven MySQL** pour tout le projet. L'API siège lit/écrit directement Aiven (`data_service.py`). Il n'y a **pas** de MySQL dans Docker ni de BDD par pays.
 
 ---
 
@@ -75,7 +68,7 @@ futurekawa/
 │
 ├── README.md                          # prise en main globale, commandes de lancement
 ├── .gitignore
-├── docker-compose.yml                 # compose RACINE : lance TOUT pour la démo jury
+├── docker-compose.yml                 # compose RACINE : siège uniquement (npm start)
 │
 ├── database/                          # schéma BDD + CA SSL + données démo
 │   ├── schema_mysql.sql               # DDL MySQL (tables + vues)
@@ -97,9 +90,9 @@ futurekawa/
 │
 ├── pays/
 │   ├── bresil/
-│   │   ├── docker-compose.yml         # mosquitto + mysql + api + node-red
+│   │   ├── docker-compose.yml         # legacy / MQTT optionnel (pas de MySQL local)
 │   │   ├── .env.example
-│   │   ├── api/                       # FastAPI Python
+│   │   ├── api/                       # FastAPI Python (tests unitaires, legacy)
 │   │   │   ├── Dockerfile
 │   │   │   ├── requirements.txt
 │   │   │   ├── main.py
@@ -114,8 +107,7 @@ futurekawa/
 │   │   │   │   ├── mqtt_subscriber.py # souscrit au broker Mosquitto local
 │   │   │   │   └── alert_service.py   # règles seuils ±3°C / ±2% + péremption 365j
 │   │   │   └── db/
-│   │   │       ├── database.py        # SQLAlchemy + MySQL
-│   │   │       └── migrations/
+│   │   │       └── database.py        # SQLAlchemy → Aiven (MYSQL_URL)
 │   │   ├── broker/
 │   │   │   └── mosquitto.conf         # topic : futurekawa/bresil/{entrepot}/sensors
 │   │   └── node-red/
@@ -130,18 +122,18 @@ futurekawa/
 ├── siege/
 │   ├── docker-compose.yml             # api-siege + redis + nginx + frontend
 │   ├── .env.example
-│   ├── api/                           # FastAPI central
+│   ├── api/                           # FastAPI central → Aiven
 │   │   ├── Dockerfile
 │   │   ├── requirements.txt
 │   │   ├── main.py
-│   │   ├── config.py                  # URLs des 3 APIs pays (via Docker network)
+│   │   ├── config.py                  # MYSQL_URL Aiven, Redis, auth
 │   │   ├── routes/
-│   │   │   ├── stocks.py              # agrège les 3 pays
+│   │   │   ├── stocks.py
 │   │   │   ├── mesures.py
 │   │   │   └── alertes.py
 │   │   └── services/
-│   │       ├── aggregator.py          # appels async httpx vers APIs pays
-│   │       └── redis_cache.py         # cache Redis pour éviter surcharge des APIs pays
+│   │       ├── data_service.py        # requêtes SQL directes Aiven
+│   │       └── redis_cache.py         # cache Redis
 │   │
 │   ├── frontend/                      # React + Vite
 │   │   ├── Dockerfile
@@ -248,8 +240,8 @@ futurekawa/
 |---|---|---|---|
 | Framework API (pays) | **FastAPI (Python)** | ✅ Validé | Swagger auto-généré, async natif |
 | Framework API (siège) | **FastAPI (Python)** | ✅ Validé | Cohérence avec backends pays |
-| Base de données | **MySQL** | ✅ Validé | PostgreSQL cité dans CDC mais non obligatoire — justifier à l'oral |
-| Cache siège | **Redis** | ✅ Validé | Évite de requêter les 3 pays à chaque chargement |
+| Base de données | **MySQL (Aiven cloud)** | ✅ Validé | Une instance partagée — pas de BDD Docker locale |
+| Cache siège | **Redis** | ✅ Validé | Cache stocks/mesures (optionnel sur Render) |
 | Communication inter-services | **REST / JSON** | ✅ Validé | Documentable via Swagger |
 | Broker MQTT | **Mosquitto × 3** | ⛔ Imposé | 1 broker par pays dans son Docker Compose |
 | Alertes email | **Node-RED** | ✅ Validé | Flux MQTT → règles seuils → SMTP |
@@ -257,21 +249,20 @@ futurekawa/
 
 ---
 
-## 4.1 Base de données (MySQL) — Schéma, connexion SSL, données de démo
+## 4.1 Base de données (Aiven MySQL) — Schéma, connexion SSL, données de démo
 
 ### Schéma (DDL)
 - `database/schema_mysql.sql` : création des tables **pays / exploitation / entrepot / lot / capteur / releve_capteur / alerte** + vues de démo.
 - `database/seed_mysql.sql` : seed minimal (BR/EC/CO + 1 exemple).
 
-### Connexion (Aiven / SSL)
-- **URL de connexion** : stockée dans `.env` via `MYSQL_URL=...`
-- **Certificat CA** : `database/ca.pem`
-- **TLS requis** : `ssl-mode=REQUIRED` (minimum). Pour un client SQL, préférer `VERIFY_CA` + CA.
+### Connexion Aiven (SSL)
+- **URL** : `MYSQL_URL=mysql://user:pass@host:port/defaultdb?ssl-mode=REQUIRED`
+- **Certificat CA** : `database/ca.pem` (monté dans le conteneur API siège)
+- **Utilisée par** : API siège (local + Render), scripts Python, simulateurs IoT
 
 ⚠️ **Sécurité** : ne jamais commiter `.env` (contient un mot de passe).
 
-### Scripts “push” (Windows friendly, sans client mysql)
-Dans ce repo, on utilise un venv Python et des scripts pour appliquer le schéma/données sans installer `mysql.exe` :
+### Scripts « push » vers Aiven (sans client mysql local)
 - `scripts/push_mysql_schema.py` : applique `database/schema_mysql.sql`
 - `scripts/push_mysql_seed.py` : applique `database/seed_mysql.sql`
 
@@ -281,10 +272,10 @@ Commandes :
 .\.venv\Scripts\python .\scripts\push_mysql_seed.py
 ```
 
-### Données de démonstration (Excel → MySQL)
+### Données de démonstration (Excel → Aiven)
 - Génération : `scripts/generate_demo_excel.py` produit `database/demo_data.xlsx`
   - Relevés toutes les **5 minutes** du **08/05/2026** au **31/07/2026** (pour alimenter les courbes).
-- Import : `scripts/import_demo_excel_to_mysql.py` charge l’Excel dans MySQL (ordre FK + insert par batch).
+- Import : `scripts/import_demo_excel_to_mysql.py` charge l'Excel dans **Aiven**
 
 Commandes :
 ```powershell
@@ -340,7 +331,7 @@ Commandes :
 
 | Membre | Périmètre | Technos principales |
 |---|---|---|
-| **Elyes** | Broker MQTT pays 1/2/3 + Base de données | Mosquitto, MySQL, Docker |
+| **Elyes** | IoT + pont MQTT → Aiven | Mosquitto local, scripts simulateurs |
 | **Rayan** | API Pays 1/2/3 (collab Elyes) + Frontend Web | FastAPI, React/Vite, Recharts |
 | **Julien** | API Siège + CI/CD + Tests | FastAPI, Jenkins, pytest, Playwright, Newman |
 | **Mohammed** | Documentation complète + Plan 4 axes + Notion | Draw.io, Notion, Word |

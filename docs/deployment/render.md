@@ -1,72 +1,66 @@
 # Déploiement Render
 
-## Ce qui est déployé aujourd'hui
+## Ce qui est déployé
 
 | Service | URL | Rôle |
 |---------|-----|------|
 | API Siège | `https://mspr2-master.onrender.com` | Auth, stocks, mesures, alertes |
 | Frontend | `https://mspr2-master-front.onrender.com` | Supervision IoT |
 
-Les **APIs pays** et les **simulateurs MQTT** ne sont **pas** sur Render — ils tournent en local (voir `docs/technique/architecture_iot_local.md`).
+Les simulateurs MQTT et le pont ESP32 tournent **en local** sur la machine de dev (voir [`docs/technique/architecture_iot_local.md`](../technique/architecture_iot_local.md)) — ils alimentent la **même base Aiven** que Render.
 
-## Données affichées sur Render
+## Données affichées
 
-Le frontend Render lit la **base MySQL centrale (Aiven)** via l'API siège :
+Le frontend Render lit **Aiven MySQL** via l'API siège :
 
-- Lots, mesures et alertes de **démonstration** (schéma `database/schema_mysql.sql`)
-- Comportement actuel conservé : dashboard, courbes, page alertes
+- Lots, capteurs, relevés (`releve_capteur`), alertes
+- Schéma : `database/schema_mysql.sql`
+- Données démo : `scripts/import_demo_excel_to_mysql.py`
 
 ## Variables d'environnement (API siège)
 
 | Variable | Description |
 |----------|-------------|
-| `MYSQL_URL` | Connexion Aiven MySQL |
-| `REDIS_URL` | Cache Redis (optionnel) |
-| `JWT_SECRET` | Secret auth |
-| `DISCORD_WEBHOOK_URL` | Webhook Discord pour alertes seuils (obligatoire pour notifications) |
+| `MYSQL_URL` | Connexion **Aiven MySQL** (obligatoire) |
+| `MYSQL_SSL_CA` | Certificat CA Aiven (`database/ca.pem`) |
+| `REDIS_URL` | Cache Redis (optionnel sur Render) |
+| `JWT_SECRET` / `AUTH_JWT_SECRET` | Secret auth |
+| `DISCORD_WEBHOOK_URL` | Webhook Discord pour alertes seuils |
 
-Les variables `API_BRESIL_URL`, `API_EQUATEUR_URL` et `API_COLOMBIE_URL` ne sont **pas** nécessaires sur Render : l'API siège lit directement la base MySQL centrale. Elles restent requises en local (docker-compose) pour l'agrégateur multi-pays.
+Les variables `API_BRESIL_URL`, `API_EQUATEUR_URL` et `API_COLOMBIE_URL` **ne sont pas utilisées** : l'API siège interroge directement Aiven (`data_service.py`).
 
 ### Où ajouter `DISCORD_WEBHOOK_URL` sur Render
 
-1. Ouvrir [dashboard.render.com](https://dashboard.render.com) et se connecter
-2. Cliquer sur le service **Web Service** de l'API (ex. `mspr2-master`, pas le frontend)
-3. Menu gauche : **Environment** (parfois sous **Settings** selon l'interface)
-4. Section **Environment Variables** → **Add Environment Variable**
-5. Renseigner :
-   - **Key** : `DISCORD_WEBHOOK_URL`
-   - **Value** : l'URL complète du webhook Discord
-6. **Save Changes** — Render redéploie automatiquement l'API
+1. [dashboard.render.com](https://dashboard.render.com) → service **Web Service** API (`mspr2-master`)
+2. **Environment** → **Add Environment Variable**
+3. Key : `DISCORD_WEBHOOK_URL`, Value : URL webhook Discord
+4. **Save Changes** (redéploiement automatique)
 
-> Si vous ne voyez pas **Environment** : vous êtes peut‑être sur le mauvais service (frontend static site) ou sur la page **Events/Logs**. Revenez à la liste des services et sélectionnez l'API Python (Docker).
+Vérification : bouton **Tester Discord** sur `/config/capteurs`.
 
-Vérification : bouton **Tester Discord** sur `/config/capteurs` → message vert « Webhook configuré ».
-
-**Ne pas** committer l'URL dans Git — uniquement dans Render + fichiers `.env` locaux (gitignored).
+**Ne pas** committer l'URL dans Git — uniquement Render + `.env` locaux (gitignored).
 
 ## Déploiement
 
-Déclenché par GitHub Actions sur push `master` / `main` → Deploy Hooks Render (`RENDER_BACKEND_DEPLOY_HOOK`, `RENDER_FRONTEND_DEPLOY_HOOK`).
+Déclenché par GitHub Actions sur push `master` / `main` → Deploy Hooks Render.
 
 ### Configuration Render (Docker)
 
-Les Dockerfiles supposent un **contexte de build à la racine du dépôt** :
-
 | Service | Root Directory | Dockerfile Path |
 |---------|----------------|-----------------|
-| Backend | *(vide — racine repo)* | `siege/api/Dockerfile` |
-| Frontend | *(vide — racine repo)* | `siege/frontend/Dockerfile` |
+| Backend | *(racine repo)* | `siege/api/Dockerfile` |
+| Frontend | *(racine repo)* | `siege/frontend/Dockerfile` |
 
 Variable frontend : `VITE_API_BASE_URL=https://mspr2-master.onrender.com`
 
-## Local vs Render
+## Environnements
 
-| | Local | Render |
-|---|-------|--------|
-| MQTT / ESP32 | Oui (`mosquitto-bresil`) | Non |
-| Simulateurs EC/CO | Oui | Non |
-| Frontend | `localhost` (nginx) ou dev Vite | Static site Render |
-| Source données | BDD pays (MQTT) | BDD siège Aiven |
+| | Développement local | Render (production) |
+|---|---------------------|---------------------|
+| Base de données | **Aiven MySQL** | **Aiven MySQL** (même instance ou clone) |
+| API / Frontend | Docker siège (`npm start`) | Services Render |
+| Simulateurs IoT | Machine dev → Aiven | Non (hors Render) |
+| MQTT / ESP32 | Optionnel local | Non |
 
 ## Health check
 
