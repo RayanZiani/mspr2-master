@@ -25,11 +25,15 @@ test('dashboard filtre chaque pays', async ({ page }) => {
 
 test('page alertes sans erreur API', async ({ page }) => {
   await page.goto('/alertes')
+  if (await page.locator('.loading').isVisible()) {
+    await expect(page.locator('.loading')).toBeHidden({ timeout: 90_000 })
+  }
   await expect(page.locator('.page-title')).toContainText('Alertes actives', { timeout: 30_000 })
   await expect(page.locator('.error-state')).toHaveCount(0)
-  await expect(page.locator('.data-table-wrap, .empty-state, .card').first()).toBeVisible({
-    timeout: 20_000,
-  })
+  await expect(page.locator('.sync-info')).toContainText('Derniere synchro', { timeout: 20_000 })
+  await expect(
+    page.locator('.page-sub, .card.empty-state, .alert-list, .section-header').first(),
+  ).toBeVisible({ timeout: 20_000 })
 })
 
 test('page mesures affiche le selecteur de lot', async ({ page }) => {
