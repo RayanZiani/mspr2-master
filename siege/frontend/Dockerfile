@@ -19,7 +19,8 @@ WORKDIR /app
 
 RUN npm install -g serve
 
-COPY --from=builder --chown=node:node /app/dist ./dist
+COPY --from=builder /app/dist ./dist
+RUN chmod -R a-w dist
 
 USER node
 

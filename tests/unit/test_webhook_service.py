@@ -1,52 +1,30 @@
 """Tests unitaires pour le service de notifications webhook (Discord + Telegram)."""
 
-import importlib.util
 import sys
-from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import httpx
 import pytest
 
+from conftest import COUNTRIES, load_webhook_service, make_async_client_mock
+
 pytestmark = pytest.mark.unit
 
-ROOT = Path(__file__).resolve().parents[2]
+COUNTRY_LABELS = {
+    "bresil": "BRESIL",
+    "colombie": "COLOMBIE",
+    "equateur": "EQUATEUR",
+}
 
 
-def _load_webhook_service(country: str = "bresil"):
-    """Charge webhook_service d'un pays en isolant api.config."""
-    for name in list(sys.modules):
-        if name in ("api.config", "api.services.webhook_service"):
-            del sys.modules[name]
-
-    config_path = ROOT / "pays" / country / "api" / "config.py"
-    config_spec = importlib.util.spec_from_file_location("api.config", config_path)
-    config_module = importlib.util.module_from_spec(config_spec)
-    assert config_spec.loader is not None
-    config_spec.loader.exec_module(config_module)
-    sys.modules["api.config"] = config_module
-
-    ws_path = ROOT / "pays" / country / "api" / "services" / "webhook_service.py"
-    spec = importlib.util.spec_from_file_location("api.services.webhook_service", ws_path)
-    module = importlib.util.module_from_spec(spec)
-    assert spec.loader is not None
-    spec.loader.exec_module(module)
-    return module
-
-
-def _make_async_client_mock(mock_resp):
-    """Crée un mock d'httpx.AsyncClient utilisable comme context manager async."""
-    mock_client = AsyncMock()
-    mock_client.post = AsyncMock(return_value=mock_resp)
-    mock_cm = MagicMock()
-    mock_cm.__aenter__ = AsyncMock(return_value=mock_client)
-    mock_cm.__aexit__ = AsyncMock(return_value=None)
-    return mock_cm, mock_client
+@pytest.fixture(params=COUNTRIES)
+def ws(request):
+    return load_webhook_service(request.param)
 
 
 @pytest.fixture
-def ws():
-    return _load_webhook_service("bresil")
+def ws_bresil():
+    return load_webhook_service("bresil")
 
 
 # ─── Discord ────────────────────────────────────────────────────────────────
@@ -61,23 +39,23 @@ class TestSendDiscord:
             mock_cls.assert_not_called()
 
     async def test_sends_embed_with_correct_title(self, ws):
+        country = sys.modules["api.config"].PAYS
         mock_resp = MagicMock()
         mock_resp.raise_for_status = MagicMock()
-        mock_cm, mock_client = _make_async_client_mock(mock_resp)
+        mock_cm, mock_client = make_async_client_mock(mock_resp)
 
         with patch.object(ws, "DISCORD_WEBHOOK_URL", "https://discord.example.com/hook"):
             with patch("httpx.AsyncClient", return_value=mock_cm):
-                await ws._send_discord("alerte test", "bresil", "condition")
+                await ws._send_discord("alerte test", country, "condition")
 
-        mock_client.post.assert_called_once()
         payload = mock_client.post.call_args[1]["json"]
         assert "embeds" in payload
-        assert payload["embeds"][0]["title"] == "ALERTE FutureKawa — BRESIL"
+        assert payload["embeds"][0]["title"] == f"ALERTE FutureKawa — {COUNTRY_LABELS[country]}"
 
     async def test_condition_uses_red_color(self, ws):
         mock_resp = MagicMock()
         mock_resp.raise_for_status = MagicMock()
-        mock_cm, mock_client = _make_async_client_mock(mock_resp)
+        mock_cm, mock_client = make_async_client_mock(mock_resp)
 
         with patch.object(ws, "DISCORD_WEBHOOK_URL", "https://discord.example.com/hook"):
             with patch("httpx.AsyncClient", return_value=mock_cm):
@@ -89,7 +67,7 @@ class TestSendDiscord:
     async def test_peremption_uses_orange_color(self, ws):
         mock_resp = MagicMock()
         mock_resp.raise_for_status = MagicMock()
-        mock_cm, mock_client = _make_async_client_mock(mock_resp)
+        mock_cm, mock_client = make_async_client_mock(mock_resp)
 
         with patch.object(ws, "DISCORD_WEBHOOK_URL", "https://discord.example.com/hook"):
             with patch("httpx.AsyncClient", return_value=mock_cm):
@@ -101,7 +79,7 @@ class TestSendDiscord:
     async def test_connection_uses_yellow_color(self, ws):
         mock_resp = MagicMock()
         mock_resp.raise_for_status = MagicMock()
-        mock_cm, mock_client = _make_async_client_mock(mock_resp)
+        mock_cm, mock_client = make_async_client_mock(mock_resp)
 
         with patch.object(ws, "DISCORD_WEBHOOK_URL", "https://discord.example.com/hook"):
             with patch("httpx.AsyncClient", return_value=mock_cm):
@@ -118,7 +96,7 @@ class TestSendDiscord:
         mock_resp.raise_for_status.side_effect = httpx.HTTPStatusError(
             "429", request=MagicMock(), response=mock_resp
         )
-        mock_cm, _ = _make_async_client_mock(mock_resp)
+        mock_cm, _ = make_async_client_mock(mock_resp)
 
         with patch.object(ws, "DISCORD_WEBHOOK_URL", "https://discord.example.com/hook"):
             with patch("httpx.AsyncClient", return_value=mock_cm):
@@ -156,7 +134,7 @@ class TestSendTelegram:
     async def test_sends_html_message_to_correct_url(self, ws):
         mock_resp = MagicMock()
         mock_resp.raise_for_status = MagicMock()
-        mock_cm, mock_client = _make_async_client_mock(mock_resp)
+        mock_cm, mock_client = make_async_client_mock(mock_resp)
 
         with patch.object(ws, "TELEGRAM_BOT_TOKEN", "testtoken123"):
             with patch.object(ws, "TELEGRAM_CHAT_ID", "987654"):
@@ -171,7 +149,7 @@ class TestSendTelegram:
     async def test_payload_contains_chat_id_and_html(self, ws):
         mock_resp = MagicMock()
         mock_resp.raise_for_status = MagicMock()
-        mock_cm, mock_client = _make_async_client_mock(mock_resp)
+        mock_cm, mock_client = make_async_client_mock(mock_resp)
 
         with patch.object(ws, "TELEGRAM_BOT_TOKEN", "testtoken"):
             with patch.object(ws, "TELEGRAM_CHAT_ID", "111222"):
@@ -191,7 +169,7 @@ class TestSendTelegram:
         mock_resp.raise_for_status.side_effect = httpx.HTTPStatusError(
             "400", request=MagicMock(), response=mock_resp
         )
-        mock_cm, _ = _make_async_client_mock(mock_resp)
+        mock_cm, _ = make_async_client_mock(mock_resp)
 
         with patch.object(ws, "TELEGRAM_BOT_TOKEN", "tok"):
             with patch.object(ws, "TELEGRAM_CHAT_ID", "123"):

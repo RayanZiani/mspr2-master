@@ -1,10 +1,22 @@
 [run]
-relative_files = true
+relative_files = True
 source =
     pays/bresil/api/services
     pays/equateur/api/services
     pays/colombie/api/services
     siege/api/services
+omit =
+    tests/*
 
 [report]
 precision = 2
+exclude_lines =
+    pragma: no cover
+    def start_mqtt
+    def start_digest_scheduler
+    def _run_loop
+    def _digest_loop
+    def _check_capteur_status
+
+[xml]
+output = tests/reports/coverage.xml

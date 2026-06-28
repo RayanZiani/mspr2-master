@@ -14,12 +14,10 @@ install_python_deps() {
 run_unit_tests() {
   echo "=== Tests unitaires (pytest directement dans Jenkins) ==="
   python3 -m pytest tests/unit/ -v -m unit \
+    --cov-config=.coveragerc \
+    --cov=. \
     --junitxml=tests/reports/unit-results.xml \
     --alluredir=tests/reports/allure-results \
-    --cov=pays/bresil/api/services \
-    --cov=pays/equateur/api/services \
-    --cov=pays/colombie/api/services \
-    --cov=siege/api/services \
     --cov-report=xml:tests/reports/coverage.xml \
     --cov-report=html:tests/reports/htmlcov \
     --cov-report=term-missing
@@ -31,12 +29,10 @@ run_unit_tests_local() {
   python3 -m pip install -r pays/bresil/api/requirements.txt -q --break-system-packages
   python3 -m pip install -r siege/api/requirements.txt -q --break-system-packages
   python3 -m pytest tests/unit/ -v -m unit \
+    --cov-config=.coveragerc \
+    --cov=. \
     --junitxml=tests/reports/unit-results.xml \
     --alluredir=tests/reports/allure-results \
-    --cov=pays/bresil/api/services \
-    --cov=pays/equateur/api/services \
-    --cov=pays/colombie/api/services \
-    --cov=siege/api/services \
     --cov-report=xml:tests/reports/coverage.xml \
     --cov-report=html:tests/reports/htmlcov \
     --cov-report=term-missing
