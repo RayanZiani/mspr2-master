@@ -19,6 +19,35 @@ logger = logging.getLogger(__name__)
 DIGEST_INTERVAL_SECONDS: int = int(os.getenv("DIGEST_INTERVAL", "300"))
 
 
+def _append_lot_section(lines: list[str], lots: list[Lot], header: str) -> None:
+    if not lots:
+        return
+    lines.append(f"\n{header}")
+    for lot in lots[:5]:
+        lines.append(f"  - Lot {lot.id[:8]}... entrepot {lot.entrepot}")
+    if len(lots) > 5:
+        lines.append(f"  ... et {len(lots) - 5} autre(s)")
+
+
+def _append_disconnected_section(
+    lines: list[str], deconnectes: list[str], capteurs: dict
+) -> None:
+    if not deconnectes:
+        return
+    lines.append(f"\n{len(deconnectes)} capteur(s) HORS LIGNE :")
+    for entrepot in deconnectes:
+        age_min = capteurs[entrepot]["age_seconds"] // 60
+        lines.append(f"  - {entrepot} : dernier signal il y a {age_min} min")
+
+
+def _resolve_alert_type(alertes: list[Lot], perimes: list[Lot]) -> str:
+    if perimes:
+        return "peremption"
+    if alertes:
+        return "condition"
+    return "connection"
+
+
 async def _build_and_send_digest() -> None:
     """Interroge la BDD et envoie un résumé si des anomalies sont actives."""
     async with SessionLocal() as session:
@@ -40,30 +69,16 @@ async def _build_and_send_digest() -> None:
         return
 
     lines = [f"Résumé FutureKawa — {PAYS.upper()}"]
-
-    if alertes:
-        lines.append(f"\n{len(alertes)} lot(s) EN ALERTE (conditions hors seuil) :")
-        for lot in alertes[:5]:
-            lines.append(f"  - Lot {lot.id[:8]}... entrepot {lot.entrepot}")
-        if len(alertes) > 5:
-            lines.append(f"  ... et {len(alertes) - 5} autre(s)")
-
-    if perimes:
-        lines.append(f"\n{len(perimes)} lot(s) PERIMÉS (> {PEREMPTION_JOURS}j) :")
-        for lot in perimes[:5]:
-            lines.append(f"  - Lot {lot.id[:8]}... entrepot {lot.entrepot}")
-        if len(perimes) > 5:
-            lines.append(f"  ... et {len(perimes) - 5} autre(s)")
-
-    if deconnectes:
-        lines.append(f"\n{len(deconnectes)} capteur(s) HORS LIGNE :")
-        for entrepot in deconnectes:
-            age_min = capteurs[entrepot]["age_seconds"] // 60
-            lines.append(f"  - {entrepot} : dernier signal il y a {age_min} min")
+    _append_lot_section(
+        lines, alertes, f"{len(alertes)} lot(s) EN ALERTE (conditions hors seuil) :"
+    )
+    _append_lot_section(
+        lines, perimes, f"{len(perimes)} lot(s) PERIMÉS (> {PEREMPTION_JOURS}j) :"
+    )
+    _append_disconnected_section(lines, deconnectes, capteurs)
 
     text = "\n".join(lines)
-    alert_type = "peremption" if perimes else ("condition" if alertes else "connection")
-    await notify(text, PAYS, alert_type=alert_type)
+    await notify(text, PAYS, alert_type=_resolve_alert_type(alertes, perimes))
     logger.info(
         "Digest envoyé : %d en alerte, %d périmés, %d capteurs HS",
         len(alertes), len(perimes), len(deconnectes),

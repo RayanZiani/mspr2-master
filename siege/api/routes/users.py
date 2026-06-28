@@ -13,6 +13,11 @@ ASSIGNABLE_BY_SUPER_ADMIN = frozenset({"SUPER_ADMIN", "ADMIN", "USER"})
 VALID_PAYS = frozenset({"SIEGE", "BRESIL", "EQUATEUR", "COLOMBIE"})
 
 _USER_BAD_REQUEST = {"description": "Données utilisateur invalides"}
+_FORBIDDEN_MANAGE_USERS = {"description": "Acces reserve aux SUPER_ADMIN"}
+_FORBIDDEN_SUPER_ADMIN_ROLE = {"description": "Seul un SUPER_ADMIN peut attribuer ce role"}
+_SUPER_ADMIN_ONLY_MSG = "Acces reserve aux SUPER_ADMIN"
+_SUPER_ADMIN_ROLE_MSG = "Seul un SUPER_ADMIN peut attribuer ce role"
+_DEMOTE_SUPER_ADMIN_MSG = "Impossible de retrograder un autre SUPER_ADMIN"
 
 
 class CreateUserRequest(BaseModel):
@@ -73,7 +78,7 @@ def _validate_role(role: str, *, actor: UserPermissions) -> str:
     if normalized not in VALID_ROLES:
         raise HTTPException(status_code=400, detail="role invalide")
     if normalized == "SUPER_ADMIN" and not actor.is_super_admin():
-        raise HTTPException(status_code=403, detail="Seul un SUPER_ADMIN peut attribuer ce role")
+        raise HTTPException(status_code=403, detail=_SUPER_ADMIN_ROLE_MSG)
     if normalized not in ASSIGNABLE_BY_SUPER_ADMIN:
         raise HTTPException(status_code=400, detail="role invalide")
     return normalized
@@ -122,11 +127,11 @@ async def _get_target_role(session, username: str) -> str | None:
     return str(row["role"]).upper() if row else None
 
 
-@router.get("/")
+@router.get("/", responses={403: _FORBIDDEN_MANAGE_USERS})
 async def list_users(user: dict = Depends(require_user)):
     perms = UserPermissions.from_jwt_user(user)
     if not perms.can_manage_users():
-        raise HTTPException(status_code=403, detail="Acces reserve aux SUPER_ADMIN")
+        raise HTTPException(status_code=403, detail=_SUPER_ADMIN_ONLY_MSG)
     async with SessionLocal() as session:
         res = await session.execute(LIST_SQL)
         return [dict(r) for r in res.mappings().all()]
@@ -136,13 +141,14 @@ async def list_users(user: dict = Depends(require_user)):
     "/",
     responses={
         400: _USER_BAD_REQUEST,
+        403: _FORBIDDEN_MANAGE_USERS,
         409: {"description": "Nom d'utilisateur déjà existant"},
     },
 )
 async def create_user(body: CreateUserRequest, user: dict = Depends(require_user)):
     actor = UserPermissions.from_jwt_user(user)
     if not actor.can_manage_users():
-        raise HTTPException(status_code=403, detail="Acces reserve aux SUPER_ADMIN")
+        raise HTTPException(status_code=403, detail=_SUPER_ADMIN_ONLY_MSG)
     role = _validate_role(body.role, actor=actor)
     _validate_username(body.username)
     pays_code = _normalize_pays_code(body.pays_code)
@@ -172,13 +178,14 @@ async def create_user(body: CreateUserRequest, user: dict = Depends(require_user
     "/{username}",
     responses={
         400: _USER_BAD_REQUEST,
+        403: _FORBIDDEN_MANAGE_USERS,
         404: {"description": "Utilisateur introuvable"},
     },
 )
 async def update_user(username: str, body: UpdateUserRequest, user: dict = Depends(require_user)):
     actor = UserPermissions.from_jwt_user(user)
     if not actor.can_manage_users():
-        raise HTTPException(status_code=403, detail="Acces reserve aux SUPER_ADMIN")
+        raise HTTPException(status_code=403, detail=_SUPER_ADMIN_ONLY_MSG)
 
     async with SessionLocal() as session:
         target_role = await _get_target_role(session, username)
@@ -188,7 +195,7 @@ async def update_user(username: str, body: UpdateUserRequest, user: dict = Depen
             if body.role and body.role.upper() != "SUPER_ADMIN":
                 raise HTTPException(
                     status_code=403,
-                    detail="Impossible de retrograder un autre SUPER_ADMIN",
+                    detail=_DEMOTE_SUPER_ADMIN_MSG,
                 )
 
         role = _validate_role(body.role, actor=actor) if body.role else None

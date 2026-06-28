@@ -19,6 +19,12 @@ from api.services.webhook_service import DISCORD_WEBHOOK_URL, send_test_webhook
 
 router = APIRouter()
 
+_FORBIDDEN_SEUILS = {"description": "Modification des seuils non autorisee pour ce pays"}
+_FORBIDDEN_SUPER_ADMIN = {"description": "Acces reserve au super administrateur"}
+_NOT_FOUND_PAYS = {"description": "Pays inconnu"}
+_UNPROCESSABLE_SEUILS = {"description": "Seuils invalides"}
+_SERVICE_UNAVAILABLE = {"description": "DISCORD_WEBHOOK_URL non configure"}
+
 
 class SeuilsUpdate(BaseModel):
     temperature_min: float = Field(..., description="Seuil minimum temperature (C)")
@@ -39,7 +45,14 @@ async def get_seuils(_user: dict = Depends(require_user)):
     return [seuils_to_dict(row) for row in rows]
 
 
-@router.patch("/seuils/{code}")
+@router.patch(
+    "/seuils/{code}",
+    responses={
+        403: _FORBIDDEN_SEUILS,
+        422: _UNPROCESSABLE_SEUILS,
+        404: _NOT_FOUND_PAYS,
+    },
+)
 async def patch_seuils(
     code: str,
     body: SeuilsUpdate,
@@ -72,7 +85,7 @@ async def patch_seuils(
     return seuils_to_dict(updated)
 
 
-@router.get("/webhooks/status", response_model=WebhookStatus)
+@router.get("/webhooks/status", response_model=WebhookStatus, responses={403: _FORBIDDEN_SUPER_ADMIN})
 async def webhook_status(user: dict = Depends(require_user)):
     perms = UserPermissions.from_jwt_user(user)
     if not perms.can_manage_global_webhook():
@@ -80,7 +93,10 @@ async def webhook_status(user: dict = Depends(require_user)):
     return WebhookStatus(discord_configured=bool(DISCORD_WEBHOOK_URL))
 
 
-@router.post("/webhooks/test")
+@router.post(
+    "/webhooks/test",
+    responses={403: _FORBIDDEN_SUPER_ADMIN, 503: _SERVICE_UNAVAILABLE},
+)
 async def webhook_test(user: dict = Depends(require_user)):
     perms = UserPermissions.from_jwt_user(user)
     if not perms.can_manage_global_webhook():

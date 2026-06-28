@@ -30,7 +30,7 @@ async def _post_embed(payload: dict[str, Any], context: str) -> None:
             resp.raise_for_status()
             logger.info("Webhook Discord envoye (%s)", context)
         except httpx.HTTPStatusError as exc:
-            logger.error(
+            logger.exception(
                 "Webhook Discord HTTP %s : %s",
                 exc.response.status_code,
                 exc.response.text[:200],

@@ -41,7 +41,7 @@ async def _send_discord(text: str, pays: str, alert_type: str) -> None:
             resp.raise_for_status()
             logger.info("Webhook Discord envoyé (%s / %s)", pays, alert_type)
         except httpx.HTTPStatusError as exc:
-            logger.error(
+            logger.exception(
                 "Webhook Discord — réponse HTTP %s : %s",
                 exc.response.status_code,
                 exc.response.text[:200],
@@ -67,7 +67,7 @@ async def _send_telegram(text: str, pays: str) -> None:
             resp.raise_for_status()
             logger.info("Notification Telegram envoyée (%s)", pays)
         except httpx.HTTPStatusError as exc:
-            logger.error(
+            logger.exception(
                 "Telegram — réponse HTTP %s : %s",
                 exc.response.status_code,
                 exc.response.text[:200],
