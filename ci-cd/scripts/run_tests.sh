@@ -11,8 +11,13 @@ install_python_deps() {
   python3 -m pip install -r tests/requirements.txt -q --break-system-packages
 }
 
+install_api_deps() {
+  python3 -m pip install -r tests/requirements-api-runtime.txt -q --break-system-packages
+}
+
 run_unit_tests() {
   echo "=== Tests unitaires (pytest directement dans Jenkins) ==="
+  install_api_deps
   python3 -m pytest tests/unit/ -v -m unit \
     --cov-config=.coveragerc \
     --cov=. \
@@ -26,8 +31,7 @@ run_unit_tests() {
 run_unit_tests_local() {
   echo "=== Tests unitaires (pytest local) ==="
   install_python_deps
-  python3 -m pip install -r pays/bresil/api/requirements.txt -q --break-system-packages
-  python3 -m pip install -r siege/api/requirements.txt -q --break-system-packages
+  install_api_deps
   python3 -m pytest tests/unit/ -v -m unit \
     --cov-config=.coveragerc \
     --cov=. \

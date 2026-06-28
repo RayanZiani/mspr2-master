@@ -42,6 +42,7 @@ pipeline {
                     
                     # Installer les dépendances des API (ignorer les erreurs de compilation pydantic-core)
                     python3 -m pip install fastapi uvicorn python-dotenv redis httpx paho-mqtt --break-system-packages || true
+                    python3 -m pip install "sqlalchemy>=2.0.36,<3" aiomysql==0.2.0 --break-system-packages || true
                     python3 -m pip install bcrypt passlib python-jose --break-system-packages || true
                     
                     # Installer les dépendances Node.js et Playwright
