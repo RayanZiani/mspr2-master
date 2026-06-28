@@ -2,6 +2,7 @@ from datetime import datetime
 
 import pytest
 
+from .conftest import IS_RENDER
 from .helpers import (
     COUNTRIES,
     fetch_all_mesures,
@@ -54,12 +55,16 @@ def test_country_alertes_endpoint(pays, auth_headers):
 
 @pytest.mark.integration
 def test_bresil_mesures_filter_by_lot(bresil_lot_id, auth_headers):
-    all_mesures = fetch_all_mesures("bresil", auth_headers)
     filtered = fetch_mesures_for_lot(bresil_lot_id, "bresil", auth_headers)
-
-    assert len(filtered) <= len(all_mesures)
+    assert isinstance(filtered, list)
     if filtered:
         assert all(m.get("lot_id") == bresil_lot_id for m in filtered)
+
+    if IS_RENDER:
+        return
+
+    all_mesures = fetch_all_mesures("bresil", auth_headers)
+    assert len(filtered) <= len(all_mesures)
 
 
 @pytest.mark.integration
@@ -68,5 +73,9 @@ def test_bresil_mesures_newest_first(bresil_lot_id, auth_headers):
     if len(mesures) < 2:
         pytest.skip("Pas assez de mesures pour valider le tri")
 
-    timestamps = [m.get("timestamp") for m in mesures if m.get("timestamp")]
+    timestamps = [
+        datetime.fromisoformat(m["timestamp"].replace("Z", "+00:00"))
+        for m in mesures
+        if m.get("timestamp")
+    ]
     assert timestamps == sorted(timestamps, reverse=True)

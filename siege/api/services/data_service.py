@@ -40,7 +40,7 @@ def _mesures_sql() -> text:
         INNER JOIN releve_capteur r ON r.capteur_id = c.id
         WHERE l.id = :lot_id
           AND r.mesure_le >= (UTC_TIMESTAMP(3) - INTERVAL {days} DAY)
-        ORDER BY r.mesure_le ASC
+        ORDER BY r.mesure_le DESC
         LIMIT {limit}
     """)
 
