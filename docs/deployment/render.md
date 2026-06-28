@@ -25,6 +25,8 @@ Le frontend Render lit la **base MySQL centrale (Aiven)** via l'API siège :
 | `JWT_SECRET` | Secret auth |
 | `DISCORD_WEBHOOK_URL` | Webhook Discord pour alertes seuils (obligatoire pour notifications) |
 
+Les variables `API_BRESIL_URL`, `API_EQUATEUR_URL` et `API_COLOMBIE_URL` ne sont **pas** nécessaires sur Render : l'API siège lit directement la base MySQL centrale. Elles restent requises en local (docker-compose) pour l'agrégateur multi-pays.
+
 ### Où ajouter `DISCORD_WEBHOOK_URL` sur Render
 
 1. Ouvrir [dashboard.render.com](https://dashboard.render.com) et se connecter

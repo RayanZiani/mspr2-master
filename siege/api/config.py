@@ -43,20 +43,29 @@ MESURES_DAYS = int(os.getenv("MESURES_DAYS", 30))
 MESURES_LIMIT = int(os.getenv("MESURES_LIMIT", 5000))
 
 
-def _require_api_url(env_var: str) -> str:
-    """URL d'API pays — définie via .env / docker-compose (pas de défaut HTTP en dur)."""
-    url = os.getenv(env_var)
-    if not url:
-        raise RuntimeError(
-            f"{env_var} requis — voir siege/.env.example ou ci-cd/Jenkinsfile (Préparation environnement)"
-        )
-    return url
+def _api_url(env_var: str) -> str | None:
+    """URL d'API pays — définie via .env / docker-compose.
+
+    Sur Render, les APIs pays ne sont pas déployées : les données passent par MySQL (data_service).
+    """
+    url = (os.getenv(env_var) or "").strip()
+    if url:
+        return url
+    if os.getenv("RENDER") or os.getenv("RENDER_EXTERNAL_URL"):
+        return None
+    raise RuntimeError(
+        f"{env_var} requis — voir siege/.env.example ou ci-cd/Jenkinsfile (Préparation environnement)"
+    )
 
 
 API_URLS = {
-    "bresil": _require_api_url("API_BRESIL_URL"),
-    "equateur": _require_api_url("API_EQUATEUR_URL"),
-    "colombie": _require_api_url("API_COLOMBIE_URL"),
+    slug: url
+    for slug, url in {
+        "bresil": _api_url("API_BRESIL_URL"),
+        "equateur": _api_url("API_EQUATEUR_URL"),
+        "colombie": _api_url("API_COLOMBIE_URL"),
+    }.items()
+    if url
 }
 
 MYSQL_SSL_CA = _setup_ssl_certificate()
