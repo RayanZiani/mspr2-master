@@ -33,6 +33,7 @@ async def list_lots(session: Annotated[AsyncSession, Depends(get_session)]):
 
 @router.get("/{lot_id}")
 async def get_lot(lot_id: str, session: Annotated[AsyncSession, Depends(get_session)]):
+    """Retourne un lot par identifiant."""
     result = await session.execute(select(Lot).where(Lot.id == lot_id))
     lot = result.scalar_one_or_none()
     return _lot_to_dict(lot) if lot else None
@@ -40,6 +41,7 @@ async def get_lot(lot_id: str, session: Annotated[AsyncSession, Depends(get_sess
 
 @router.post("/")
 async def create_lot(lot: dict, session: Annotated[AsyncSession, Depends(get_session)]):
+    """Crée un nouveau lot."""
     new_lot = Lot(**lot)
     session.add(new_lot)
     await session.commit()

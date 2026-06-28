@@ -1,3 +1,5 @@
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy import text
@@ -128,7 +130,7 @@ async def _get_target_role(session, username: str) -> str | None:
 
 
 @router.get("/", responses={403: _FORBIDDEN_MANAGE_USERS})
-async def list_users(user: dict = Depends(require_user)):
+async def list_users(user: Annotated[dict, Depends(require_user)]):
     perms = UserPermissions.from_jwt_user(user)
     if not perms.can_manage_users():
         raise HTTPException(status_code=403, detail=_SUPER_ADMIN_ONLY_MSG)
@@ -145,7 +147,7 @@ async def list_users(user: dict = Depends(require_user)):
         409: {"description": "Nom d'utilisateur déjà existant"},
     },
 )
-async def create_user(body: CreateUserRequest, user: dict = Depends(require_user)):
+async def create_user(body: CreateUserRequest, user: Annotated[dict, Depends(require_user)]):
     actor = UserPermissions.from_jwt_user(user)
     if not actor.can_manage_users():
         raise HTTPException(status_code=403, detail=_SUPER_ADMIN_ONLY_MSG)
@@ -182,7 +184,11 @@ async def create_user(body: CreateUserRequest, user: dict = Depends(require_user
         404: {"description": "Utilisateur introuvable"},
     },
 )
-async def update_user(username: str, body: UpdateUserRequest, user: dict = Depends(require_user)):
+async def update_user(
+    username: str,
+    body: UpdateUserRequest,
+    user: Annotated[dict, Depends(require_user)],
+):
     actor = UserPermissions.from_jwt_user(user)
     if not actor.can_manage_users():
         raise HTTPException(status_code=403, detail=_SUPER_ADMIN_ONLY_MSG)

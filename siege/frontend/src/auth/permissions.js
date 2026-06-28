@@ -2,7 +2,7 @@ import { getPaysCode, getRole, getSession } from './session'
 
 function _b64UrlDecode(str) {
   try {
-    const s = String(str || '').replace(/-/g, '+').replace(/_/g, '/')
+    const s = String(str || '').replaceAll('-', '+').replaceAll('_', '/')
     const pad = s.length % 4 === 0 ? '' : '='.repeat(4 - (s.length % 4))
     const json = atob(s + pad)
     return json

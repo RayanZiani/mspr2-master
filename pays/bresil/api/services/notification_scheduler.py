@@ -7,6 +7,7 @@ import threading
 import time
 
 from sqlalchemy import select
+from sqlalchemy.exc import SQLAlchemyError
 
 from api.config import PAYS, PEREMPTION_JOURS
 from api.db.database import SessionLocal
@@ -92,7 +93,7 @@ def _digest_loop() -> None:
         time.sleep(DIGEST_INTERVAL_SECONDS)
         try:
             asyncio.run(_build_and_send_digest())
-        except Exception:
+        except (OSError, RuntimeError, SQLAlchemyError):
             logger.exception("Erreur lors de l'envoi du digest périodique")
 
 

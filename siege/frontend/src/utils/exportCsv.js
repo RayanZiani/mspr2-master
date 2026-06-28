@@ -1,7 +1,7 @@
 function escapeCsv(value) {
   const str = value == null ? '' : String(value)
   if (str.includes('"') || str.includes(',') || str.includes('\n')) {
-    return `"${str.replace(/"/g, '""')}"`
+    return `"${str.replaceAll('"', '""')}"`
   }
   return str
 }
@@ -48,6 +48,6 @@ export function exportLotsCsv(lots, prefix = 'stocks') {
   })
 
   const csv = toCsv(rows)
-  const stamp = new Date().toISOString().replace(/[:.]/g, '-')
+  const stamp = new Date().toISOString().replaceAll(':', '-').replaceAll('.', '-')
   downloadCsv(`${prefix}-${stamp}.csv`, csv)
 }

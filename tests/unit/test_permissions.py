@@ -97,7 +97,7 @@ def test_allowed_pays_slugs_unknown_country_empty():
 ])
 def test_alert_recipient_by_pays(pays_code, email):
     perms = UserPermissions(role="USER", pays_code=pays_code)
-    assert perms.getAlertRecipientByPays(pays_code) == email
+    assert perms.get_alert_recipient_by_pays(pays_code) == email
 
 
 def test_only_super_admin_can_manage_users():

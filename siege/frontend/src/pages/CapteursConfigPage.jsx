@@ -24,13 +24,15 @@ function emptyForm(row) {
 function formFor(row, forms) {
   const base = emptyForm(row)
   const saved = forms[row.code]
-  if (!saved) return base
-  return {
-    temperature_min: saved.temperature_min !== '' ? saved.temperature_min : base.temperature_min,
-    temperature_max: saved.temperature_max !== '' ? saved.temperature_max : base.temperature_max,
-    humidity_min: saved.humidity_min !== '' ? saved.humidity_min : base.humidity_min,
-    humidity_max: saved.humidity_max !== '' ? saved.humidity_max : base.humidity_max,
+  if (saved) {
+    return {
+      temperature_min: saved.temperature_min === '' ? base.temperature_min : saved.temperature_min,
+      temperature_max: saved.temperature_max === '' ? base.temperature_max : saved.temperature_max,
+      humidity_min: saved.humidity_min === '' ? base.humidity_min : saved.humidity_min,
+      humidity_max: saved.humidity_max === '' ? base.humidity_max : saved.humidity_max,
+    }
   }
+  return base
 }
 
 export default function CapteursConfigPage() {

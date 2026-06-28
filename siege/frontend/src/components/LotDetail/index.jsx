@@ -74,7 +74,7 @@ export default function LotDetail({ lot, seuilsBySlug, latestMesure }) {
         <div className="lot-detail-field">
           <span className="lot-field-label"><Clock size={10} /> Durée en stock</span>
           <span className={`lot-field-value ${daysClass}`}>
-            {days != null ? `${days} jours` : '-'}
+            {days == null ? '-' : `${days} jours`}
             {days > 365 && ' (périmé)'}
             {days > 300 && days <= 365 && ' (proche péremption)'}
           </span>

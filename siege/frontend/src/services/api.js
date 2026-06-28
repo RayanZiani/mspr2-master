@@ -12,32 +12,37 @@ function getToken() {
 
 async function request(path, { method = 'GET', params, body } = {}) {
   const fullUrl = `${BASE}${path}`
-  const url = new URL(fullUrl, window.location.origin)
+  const url = new URL(fullUrl, globalThis.location.origin)
   Object.entries(params || {}).forEach(([k, v]) => {
-    if (v != null && v !== '') url.searchParams.set(k, v)
+    if (v == null || v === '') return
+    url.searchParams.set(k, v)
   })
 
   const headers = {}
   const token = getToken()
   if (token) headers.Authorization = `Bearer ${token}`
-  if (body != null) headers['Content-Type'] = 'application/json'
+  if (body == null) {
+    delete headers['Content-Type']
+  } else {
+    headers['Content-Type'] = 'application/json'
+  }
 
   const res = await fetch(url.toString(), {
     method,
     headers,
-    body: body != null ? JSON.stringify(body) : undefined,
+    body: body == null ? undefined : JSON.stringify(body),
   })
 
   if (res.status === 401) {
-    // Token expiré / invalide (ou ancien token sans role) -> reset session et retour login.
     clearSession()
-    if (window.location.pathname !== '/login') window.location.href = '/login'
+    if (globalThis.location.pathname !== '/login') globalThis.location.href = '/login'
     throw new Error('Session expirée, veuillez vous reconnecter.')
   }
 
-  // On ne divulgue pas l'URL interne dans le message d'erreur (sécurité).
-  if (!res.ok) throw new Error(`Erreur serveur (HTTP ${res.status}).`)
-  return res.json()
+  if (res.ok) {
+    return res.json()
+  }
+  throw new Error(`Erreur serveur (HTTP ${res.status}).`)
 }
 
 async function get(path, params = {}) {

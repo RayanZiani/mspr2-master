@@ -114,5 +114,5 @@ class UserPermissions:
         slug = _COUNTRY_SLUG_BY_PAYS_CODE.get(self.pays_code)
         return {slug} if slug else set()
 
-    def getAlertRecipientByPays(self, pays_code: str) -> str | None:
+    def get_alert_recipient_by_pays(self, pays_code: str) -> str | None:
         return _ALERT_RECIPIENT_BY_PAYS_CODE.get((pays_code or "").upper())

@@ -49,7 +49,10 @@ export default function MesuresPage() {
       setSelectedLotId('')
       return
     }
-    if (!selectedLotId || !locationFilteredLots.find((lot) => lot.id === selectedLotId)) {
+    if (
+      !selectedLotId
+      || !locationFilteredLots.some((lot) => lot.id === selectedLotId)
+    ) {
       setSelectedLotId(locationFilteredLots[0].id)
     }
   }, [locationFilteredLots, selectedLotId])
@@ -146,67 +149,69 @@ export default function MesuresPage() {
         </select>
       </div>
 
-      {!selectedLotId ? (
+      {selectedLotId ? (
+        mesuresLoading ? (
+          <div className="loading">
+            <div className="spinner" />
+            <span>Chargement des mesures…</span>
+          </div>
+        ) : mesuresError ? (
+          <div className="card empty-state error-state">
+            <p style={{ fontWeight: 700 }}>Erreur de chargement des mesures</p>
+            <p style={{ fontSize: '0.8rem' }}>{mesuresErr?.message || 'API indisponible'}</p>
+            <button className="btn" onClick={() => refetchMesures()}>
+              Reessayer
+            </button>
+          </div>
+        ) : (
+          <>
+            <div className="card mb-2">
+              <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
+                Lot courant: <strong>{currentLot?.id || '-'}</strong>
+              </p>
+            </div>
+
+            <Charts data={mesuresData} pays={currentLot?.pays} />
+
+            <div className="card">
+              <div className="section-header">
+                Derniers releves
+              </div>
+              {rows.length ? (
+                <div className="simple-table-wrap">
+                  <table className="simple-table">
+                    <thead>
+                      <tr>
+                        <th>Horodatage</th>
+                        <th>Temperature</th>
+                        <th>Humidite</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {rows.map((m) => (
+                        <tr key={`${m.timestamp}-${m.temperature}-${m.humidity}`}>
+                          <td>{new Date(m.timestamp).toLocaleString('fr-FR')}</td>
+                          <td>{Number(m.temperature).toFixed(1)} °C</td>
+                          <td>{Number(m.humidity).toFixed(1)} %</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>
+                  Aucune mesure disponible pour ce lot.
+                </p>
+              )}
+            </div>
+          </>
+        )
+      ) : (
         <div className="card empty-state">
           <Activity size={36} className="empty-icon" />
           <p style={{ fontWeight: 500 }}>Aucun lot a afficher</p>
           <p style={{ fontSize: '0.8rem' }}>Chargez des stocks pour consulter les mesures.</p>
         </div>
-      ) : mesuresLoading ? (
-        <div className="loading">
-          <div className="spinner" />
-          <span>Chargement des mesures…</span>
-        </div>
-      ) : mesuresError ? (
-        <div className="card empty-state error-state">
-          <p style={{ fontWeight: 700 }}>Erreur de chargement des mesures</p>
-          <p style={{ fontSize: '0.8rem' }}>{mesuresErr?.message || 'API indisponible'}</p>
-          <button className="btn" onClick={() => refetchMesures()}>
-            Reessayer
-          </button>
-        </div>
-      ) : (
-        <>
-          <div className="card mb-2">
-            <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
-              Lot courant: <strong>{currentLot?.id || '-'}</strong>
-            </p>
-          </div>
-
-          <Charts data={mesuresData} pays={currentLot?.pays} />
-
-          <div className="card">
-            <div className="section-header">
-              Derniers releves
-            </div>
-            {!rows.length ? (
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>
-                Aucune mesure disponible pour ce lot.
-              </p>
-            ) : (
-              <div className="simple-table-wrap">
-                <table className="simple-table">
-                  <thead>
-                    <tr>
-                      <th>Horodatage</th>
-                      <th>Temperature</th>
-                      <th>Humidite</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {rows.map((m) => (
-                      <tr key={`${m.timestamp}-${m.temperature}-${m.humidity}`}>
-                        <td>{new Date(m.timestamp).toLocaleString('fr-FR')}</td>
-                        <td>{Number(m.temperature).toFixed(1)} °C</td>
-                        <td>{Number(m.humidity).toFixed(1)} %</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-        </>
       )}
     </div>
   )

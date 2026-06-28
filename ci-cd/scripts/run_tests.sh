@@ -44,9 +44,15 @@ run_unit_tests_local() {
 
 run_integration_tests() {
   echo "=== Tests d'intégration (pytest + httpx) ==="
+  if [ -n "${RENDER:-}" ]; then
+    echo "Mode Render : agrégation via API Siège (${API_SIEGE_URL:-https://mspr2-master.onrender.com})"
+  else
+    echo "Mode Docker : APIs pays directes + API Siège"
+  fi
   python3 -m pytest tests/integration/ -v -m integration \
     --junitxml=tests/reports/integration-results.xml \
-    --alluredir=tests/reports/allure-results
+    --alluredir=tests/reports/allure-results \
+    -ra
 }
 
 run_api_tests() {
@@ -79,6 +85,9 @@ run_e2e_tests() {
   echo "=== Tests E2E (Playwright) ==="
   export E2E_BASE_URL="${E2E_BASE_URL:-${FRONTEND_URL:-http://localhost:80}}"
   echo "E2E base URL: ${E2E_BASE_URL}"
+  if echo "${E2E_BASE_URL}" | grep -qi onrender; then
+    echo "Mode Render : retries activés pour cold start"
+  fi
   bash ci-cd/scripts/install_playwright_deps.sh
   npx playwright install chromium
   cd tests/e2e

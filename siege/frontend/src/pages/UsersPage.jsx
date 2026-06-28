@@ -70,7 +70,8 @@ export default function UsersPage() {
       setEmail('')
       await qc.invalidateQueries({ queryKey: ['users'] })
     } catch (err) {
-      toast("Impossible de créer l'utilisateur", 'error')
+      const detail = err instanceof Error ? err.message : "Impossible de créer l'utilisateur"
+      toast(detail, 'error')
     } finally {
       setSaving(false)
     }
@@ -199,26 +200,20 @@ export default function UsersPage() {
       {createOpen && (
         <div
           className="users-modal-backdrop"
-          role="button"
-          tabIndex={0}
-          onClick={() => !saving && setCreateOpen(false)}
-          onKeyDown={(e) => {
-            if ((e.key === 'Enter' || e.key === ' ') && !saving) {
-              e.preventDefault()
-              setCreateOpen(false)
-            }
+          onMouseDown={() => {
+            if (!saving) setCreateOpen(false)
           }}
         >
           <div className="users-modal" role="dialog" aria-modal="true" onMouseDown={e => e.stopPropagation()}>
             <div className="users-modal-title">Créer un utilisateur</div>
             <form onSubmit={onCreate} className="users-form">
               <label className="users-label">
-                Username
+                <span>Username</span>
                 <input className="users-input" value={username} onChange={e => setUsername(e.target.value)} required />
               </label>
 
               <label className="users-label">
-                Mot de passe
+                <span>Mot de passe</span>
                 <input
                   type="password"
                   className="users-input"
@@ -229,7 +224,7 @@ export default function UsersPage() {
               </label>
 
               <label className="users-label">
-                Email (optionnel)
+                <span>Email (optionnel)</span>
                 <input
                   className="users-input"
                   value={email}
@@ -239,7 +234,7 @@ export default function UsersPage() {
               </label>
 
               <label className="users-label">
-                Rôle
+                <span>Rôle</span>
                 <Select2Like
                   className="users-select2 modal"
                   isSearchable={false}

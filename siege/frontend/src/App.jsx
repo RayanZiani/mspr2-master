@@ -75,7 +75,7 @@ function AccountMenu({ statusCls, statusTitle }) {
 
   function logout() {
     clearSession()
-    window.location.href = '/login'
+    globalThis.location.href = '/login'
   }
 
   return (

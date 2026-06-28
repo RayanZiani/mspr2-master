@@ -24,7 +24,8 @@ export default function Login() {
       setProfile({ pays_code: res.pays_code, email: res.email })
       nav('/', { replace: true })
     } catch (err) {
-      setError('Identifiants invalides ou service indisponible.')
+      const message = err instanceof Error ? err.message : 'Erreur inconnue'
+      setError(message || 'Identifiants invalides ou service indisponible.')
     } finally {
       setLoading(false)
     }

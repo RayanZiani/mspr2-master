@@ -1,3 +1,5 @@
+"""Routes REST pour les mesures capteurs — Équateur."""
+
 from typing import Annotated
 
 from fastapi import APIRouter, Depends
@@ -14,6 +16,7 @@ async def list_mesures(
     session: Annotated[AsyncSession, Depends(get_session)],
     lot_id: str | None = None,
 ):
+    """Liste les mesures, optionnellement filtrées par lot."""
     query = select(Mesure).order_by(Mesure.timestamp.desc())
     if lot_id:
         query = query.where(Mesure.lot_id == lot_id)

@@ -188,6 +188,7 @@ export default function Dashboard() {
             checked={statusFilters.includes('conforme')}
             onChange={() => toggleStatus('conforme')}
           />
+          {' '}
           Conforme
         </label>
         <label className="filter-item">
@@ -196,6 +197,7 @@ export default function Dashboard() {
             checked={statusFilters.includes('alerte')}
             onChange={() => toggleStatus('alerte')}
           />
+          {' '}
           Alerte
         </label>
         <label className="filter-item">
@@ -204,6 +206,7 @@ export default function Dashboard() {
             checked={statusFilters.includes('perime')}
             onChange={() => toggleStatus('perime')}
           />
+          {' '}
           Perime
         </label>
       </div>

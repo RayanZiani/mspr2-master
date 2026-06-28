@@ -1,10 +1,15 @@
+"""Modèle SQLAlchemy pour les mesures capteurs — Équateur."""
+
 import uuid
 from datetime import datetime
-from sqlalchemy import Column, String, DateTime, Float, ForeignKey
+
+from sqlalchemy import Column, DateTime, Float, ForeignKey, String
+
 from api.db.database import Base
 
 
 class Mesure(Base):
+    """Mesure de température et humidité pour un lot."""
     __tablename__ = "mesures"
 
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))

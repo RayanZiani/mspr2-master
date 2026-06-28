@@ -1,3 +1,5 @@
+"""Routes REST pour les alertes de lots — Colombie."""
+
 from typing import Annotated
 
 from fastapi import APIRouter, Depends
@@ -11,6 +13,7 @@ router = APIRouter()
 
 @router.get("/")
 async def list_alertes(session: Annotated[AsyncSession, Depends(get_session)]):
+    """Liste les lots en statut alerte ou périmé."""
     result = await session.execute(
         select(Lot)
         .where(Lot.statut != "conforme")

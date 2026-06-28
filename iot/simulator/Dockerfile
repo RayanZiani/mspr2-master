@@ -5,9 +5,8 @@ RUN groupadd --system app && useradd --system --gid app app
 WORKDIR /app
 
 COPY simulate_sensor.py .
-RUN pip install --no-cache-dir paho-mqtt
-
-RUN chown -R app:app /app
+RUN pip install --no-cache-dir paho-mqtt \
+    && chown -R app:app /app
 
 USER app
 

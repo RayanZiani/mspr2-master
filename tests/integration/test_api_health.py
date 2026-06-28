@@ -1,25 +1,14 @@
 import httpx
 import pytest
 
-from .conftest import API_BRESIL, API_EQUATEUR, API_COLOMBIE, API_SIEGE, skip_on_render
+from .conftest import API_SIEGE
+from .helpers import COUNTRIES, assert_country_health, fetch_country_lots
 
 
 @pytest.mark.integration
-@skip_on_render  # APIs pays non déployées sur Render
-@pytest.mark.parametrize(
-    "url,pays",
-    [
-        (f"{API_BRESIL}/health", "bresil"),
-        (f"{API_EQUATEUR}/health", "equateur"),
-        (f"{API_COLOMBIE}/health", "colombie"),
-    ],
-)
-def test_country_health(url, pays):
-    response = httpx.get(url, timeout=10.0)
-    assert response.status_code == 200
-    payload = response.json()
-    assert payload.get("status") == "ok"
-    assert payload.get("pays") == pays
+@pytest.mark.parametrize("pays", COUNTRIES)
+def test_country_health(pays, auth_headers):
+    assert_country_health(pays, auth_headers)
 
 
 @pytest.mark.integration
@@ -32,12 +21,9 @@ def test_siege_health():
 
 
 @pytest.mark.integration
-@skip_on_render  # APIs pays non déployées sur Render
-@pytest.mark.parametrize("base_url", [API_BRESIL, API_EQUATEUR, API_COLOMBIE])
-def test_country_lots_endpoint_returns_list(base_url):
-    response = httpx.get(f"{base_url}/lots/", timeout=10.0)
-    assert response.status_code == 200
-    lots = response.json()
+@pytest.mark.parametrize("pays", COUNTRIES)
+def test_country_lots_endpoint_returns_list(pays, auth_headers):
+    lots = fetch_country_lots(pays, auth_headers)
     assert isinstance(lots, list)
     if lots:
         lot = lots[0]

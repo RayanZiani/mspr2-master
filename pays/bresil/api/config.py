@@ -25,9 +25,9 @@ if DATABASE_URL:
     query_params = parse_qs(parts.query, keep_blank_values=True)
     if "ssl-mode" in query_params:
         query_params.pop("ssl-mode", None)
-        rebuilt_query = urlencode(query_params, doseq=True)
+        encoded_query = urlencode(query_params, doseq=True)
         DATABASE_URL = urlunsplit(
-            (parts.scheme, parts.netloc, parts.path, rebuilt_query, parts.fragment)
+            (parts.scheme, parts.netloc, parts.path, encoded_query, parts.fragment)
         )
 else:
     DATABASE_URL = (
