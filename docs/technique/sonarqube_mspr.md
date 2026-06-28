@@ -63,13 +63,7 @@ bash ci-cd/scripts/setup_sonar_quality_gate.sh
 
 ## Périmètre de couverture
 
-La couverture SonarQube est mesurée sur la **logique métier testée unitairement** :
-
-- `alert_service.py` (seuils température/humidité, péremption 365 j)
-- `webhook_service.py` (notifications Discord/Telegram)
-- `aggregator.py` (consolidation multi-pays siège)
-
-Les modules IoT (`mqtt_subscriber`, `notification_scheduler`) et infra (`redis_cache`) sont analysés par SonarQube mais exclus du calcul de couverture — ils sont couverts par les tests d'intégration et E2E.
+La couverture SonarQube est mesurée sur la **logique métier testée unitairement** (`pays/*/api/services`, `siege/api/services`). Les routes, le frontend et l'IoT sont exclus du calcul (`sonar.coverage.exclusions`) — ils sont couverts par les tests d'intégration et E2E.
 
 ---
 
