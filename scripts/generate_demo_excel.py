@@ -135,7 +135,7 @@ def main() -> int:
                     "id": capteur_id,
                     "entrepot_id": entrepot_id,
                     "numero_serie": f"{p.code}-SENSOR-{e_idx:02d}",
-                    "modele": "DHT22",
+                    "modele": "DHT11",
                     "installe_le": start.isoformat(),
                     "active": 1,
                 }

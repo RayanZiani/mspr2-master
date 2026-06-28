@@ -1,8 +1,10 @@
-# IoT — ESP32 + DHT22
+# IoT — ESP32 + DHT11 (connexion USB)
+
+Prototype campus : l'ESP32 est branché au PC par **câble USB** (port série). Pas de WiFi sur le microcontrôleur.
 
 ## Schéma de câblage
 
-| DHT22 | ESP32 |
+| DHT11 | ESP32 |
 |---|---|
 | VCC | 3.3V |
 | GND | GND |
@@ -10,24 +12,58 @@
 
 Le schéma visuel est dans `wiring/schema_cablage.png`.
 
-## Flash du firmware (MicroPython)
+> Le cahier des charges prévoit un DHT22 en déploiement terrain. Sur campus, le matériel disponible est un **DHT11** (même câblage, précision moindre).
+
+## Flash du firmware (Arduino)
+
+1. Ouvrir `esp32.ino` dans l'Arduino IDE.
+2. Installer la librairie **DHT sensor library** (Adafruit).
+3. Sélectionner la carte ESP32 et le bon port COM.
+4. Téléverser le sketch.
+
+L'ESP32 envoie des trames texte sur le port série (115200 baud) :
+
+```
+Temperature : 29.80 C
+Humidite    : 32.00 %
+---
+```
+
+## Chaîne complète (capteur réel Brésil)
+
+```
+ESP32 + DHT11 (esp32.ino, ~20 s)
+    │  USB / port série (ex. COM3)
+    ▼
+iot/bridge/serial_to_mqtt.py   (sur le PC)
+    │  MQTT futurekawa/bresil/entrepot_A/sensors
+    ▼
+mosquitto local (npm run iot:up, port 1883)
+    │
+scripts/mqtt_bridge_bresil.py (npm run iot:bridge)
+    │  map entrepot_A → Entrepôt BR-1 / BR-SENSOR-01
+    ▼
+releve_capteur (Aiven) → dashboard siège
+```
+
+### Terminaux
 
 ```bash
-# Installer esptool
-pip install esptool
+# T1 — broker MQTT
+npm run iot:up
 
-# Effacer la flash
-esptool.py --port /dev/ttyUSB0 erase_flash
+# T2 — pont MQTT → Aiven
+npm run iot:bridge
 
-# Flasher MicroPython
-esptool.py --port /dev/ttyUSB0 write_flash -z 0x1000 micropython.bin
+# T3 — pont série → MQTT (adapter le port COM)
+npm run iot:serial
+# ou : python iot/bridge/serial_to_mqtt.py --port COM3
 
-# Uploader les fichiers firmware
-mpremote cp firmware/config.py :config.py
-mpremote cp firmware/sensor_dht.py :sensor_dht.py
-mpremote cp firmware/mqtt_client.py :mqtt_client.py
-mpremote cp firmware/main.py :main.py
+# T4 (optionnel) — simulateurs Équateur + Colombie (pas le BR)
+npm run sim:start:ec-co
 ```
+
+Dépendances du pont série : `pip install pyserial paho-mqtt`
 
 ## Simulateur (fallback démo)
 
@@ -37,16 +73,10 @@ Les pays **Équateur** et **Colombie** sont simulés via :
 npm run sim:start:ec-co
 ```
 
-## Capteur réel Brésil (ESP32)
+Sans ESP32 branché : `npm run sim:start` simule les 6 capteurs (dont Brésil).
 
-- **Fréquence** : 1 relevé **toutes les 30 s** (`READ_INTERVAL` dans `firmware/config.py`)
-- **Topic MQTT** : `futurekawa/bresil/entrepot_A/sensors` → mappe vers **Entrepôt BR-1** dans Aiven
+## Dossier `firmware/` (non utilisé)
 
-```bash
-npm run iot:up       # broker MQTT (port 1883)
-npm run iot:bridge   # pont MQTT -> Aiven
-```
+Le répertoire `iot/firmware/` contient une **référence MicroPython + WiFi** (architecture cible en déploiement terrain). Il n'est **pas utilisé** dans le prototype campus filaire.
 
-Configurer `firmware/config.py` : WiFi + IP du PC (`MQTT_BROKER`).
-
-Voir `docs/technique/mqtt_topics.md` pour le mapping complet.
+Voir `docs/technique/mqtt_topics.md` pour le mapping complet des topics.

@@ -88,15 +88,20 @@ docker stop api-bresil api-equateur api-colombie simulator-bresil simulator-equa
 
 ---
 
-## ESP32 Brésil (capteur reel)
+## ESP32 Brésil (capteur réel, connexion USB)
 
-Frequence IoT documentee : **toutes les 30 secondes**  
-(`iot/firmware/config.py` → `READ_INTERVAL = 30`, aligne avec `docs/technique/mqtt_topics.md`).
+Fréquence du sketch Arduino : **toutes les 20 secondes**  
+(`iot/esp32.ino` → `delay(20000)`).
 
-### Chaine complete
+Pas de WiFi sur l'ESP32 : le PC fait le relais série → MQTT via `iot/bridge/serial_to_mqtt.py`.
+
+### Chaîne complète
 
 ```
-ESP32 DHT22 (30 s)
+ESP32 + DHT11 (esp32.ino, ~20 s)
+    |  USB / port série (ex. COM3)
+    v
+iot/bridge/serial_to_mqtt.py (sur le PC)
     |  MQTT futurekawa/bresil/entrepot_A/sensors
     v
 mosquitto local (npm run iot:up, port 1883)
@@ -107,24 +112,25 @@ scripts/mqtt_bridge_bresil.py (npm run iot:bridge)
 releve_capteur (Aiven) -> dashboard siege
 ```
 
-### Configuration ESP32
+### Mise en route
 
-1. Flasher le firmware (`iot/README.md`)
-2. Dans `iot/firmware/config.py` :
-   - `WIFI_SSID` / `WIFI_PSK` : ton reseau WiFi
-   - `MQTT_BROKER` : IP du PC (ex. `192.168.1.100`)
-   - `ENTREPOT = "entrepot_A"` : capteur sur **Entrepot BR-1**
+1. Flasher `esp32.ino` (Arduino IDE, voir `iot/README.md`)
+2. Brancher l'ESP32 en USB au PC
+3. Lancer les terminaux ci-dessous (adapter le port COM dans `npm run iot:serial`)
 
-### Terminaux (capteur reel + sim EC/CO)
+### Terminaux (capteur réel + sim EC/CO)
 
 ```bash
 # T1 — broker MQTT
 npm run iot:up
 
-# T2 — pont Brésil -> Aiven (ecoute l'ESP32)
+# T2 — pont Brésil -> Aiven
 npm run iot:bridge
 
-# T3 — simulateurs Equateur + Colombie uniquement (pas le BR)
+# T3 — pont série -> MQTT (ESP32 USB)
+npm run iot:serial
+
+# T4 — simulateurs Equateur + Colombie uniquement (pas le BR)
 npm run sim:start:ec-co
 ```
 

@@ -22,7 +22,7 @@ Les entrepôts de stockage de café vert souffrent de :
 ### Solution cible
 
 Une plateforme IoT multi-pays permettant de :
-- **Surveiller automatiquement** les conditions de stockage (température, humidité) via ESP32 + DHT22
+- **Surveiller automatiquement** les conditions de stockage (température, humidité) via ESP32 + DHT11 (prototype campus USB)
 - **Centraliser** les données au siège via une architecture distribuée pays ↔ siège
 - **Alerter** automatiquement par email en cas de dérive ou lot trop ancien
 - **Visualiser** les stocks et courbes historiques via une interface web
@@ -35,9 +35,9 @@ Une plateforme IoT multi-pays permettant de :
 ┌─────────────────────────────────────────────────────────────┐
 │                     PAYS (x3 identiques)                     │
 │                                                              │
-│  ┌──────────┐   MQTT    ┌───────────┐                       │
-│  │ ESP32    │──────────▶│ Mosquitto │                       │
-│  │ + DHT22  │           │  Broker   │                       │
+│  ┌──────────┐  USB/série  ┌──────────────┐   MQTT   ┌───────────┐                       │
+│  │ ESP32    │────────────▶│ PC (pont     │─────────▶│ Mosquitto │                       │
+│  │ + DHT11  │             │ serial→MQTT) │          │  Broker   │                       │
 │  └──────────┘           └─────┬─────┘                       │
 │                               │ subscribe                    │
 │                         ┌─────▼─────┐   ┌──────────────┐   │
@@ -172,8 +172,11 @@ futurekawa/
 │       └── nginx.conf                 # /api → siege-api  |  / → frontend
 │
 ├── iot/
-│   ├── README.md                      # schéma câblage + instructions de flash
-│   ├── firmware/
+│   ├── README.md                      # schéma câblage + chaîne USB/série
+│   ├── esp32.ino                      # firmware Arduino — DHT11, sortie série USB
+│   ├── bridge/
+│   │   └── serial_to_mqtt.py          # pont série → MQTT (prototype campus)
+│   ├── firmware/                      # référence MicroPython + WiFi (non utilisé campus)
 │   │   ├── main.py                    # MicroPython — entry point ESP32
 │   │   ├── config.py                  # WiFi SSID/PWD, IP broker, topic MQTT
 │   │   ├── mqtt_client.py             # umqtt.simple
@@ -301,10 +304,12 @@ Commandes :
 ### IoT
 | Composant | Technologie | Notes |
 |---|---|---|
-| Microcontrôleur | **ESP32** | MicroPython |
-| Capteur | **DHT22** | Température + humidité |
+| Microcontrôleur | **ESP32** | Arduino (sketch `esp32.ino`) |
+| Capteur | **DHT11** | Température + humidité (matériel campus) |
+| Connexion | **USB / port série** | Pas de WiFi sur l'ESP32 |
+| Pont PC | **`serial_to_mqtt.py`** | Relais série → MQTT sur le PC |
 | Protocole | **MQTT (Mosquitto)** | Topics : `futurekawa/{pays}/{entrepot}/sensors` |
-| Firmware | **MicroPython** | `umqtt.simple` pour la connexion broker |
+| Firmware | **Arduino (`esp32.ino`)** | Référence MicroPython + WiFi dans `iot/firmware/` (non utilisé) |
 
 ### Tests
 | Type | Outil | Responsable |
@@ -450,7 +455,7 @@ python iot/simulator/simulate_sensor.py --pays bresil --entrepot entrepot_A
 |---|---|---|---|
 | 1 | Backend pays exemple conteneurisé (Brésil) | Elyes + Rayan | — |
 | 2 | Backend central siège + Frontend Web | Julien + Rayan | — |
-| 3 | Prototype IoT fonctionnel (ESP32 + DHT22) | Elyes | — |
+| 3 | Prototype IoT fonctionnel (ESP32 + DHT11, USB) | Elyes | — |
 | 4 | Documentation technique (archi + IoT + tests) | Mohammed | — |
 | 5 | Pipelines CI/CD Jenkins | Julien | — |
 | 6 | Tests lançables manuellement | Julien | — |

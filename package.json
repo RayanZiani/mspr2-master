@@ -15,6 +15,7 @@
     "iot:up": "docker compose -f docker-compose.iot.yml up -d",
     "iot:down": "docker compose -f docker-compose.iot.yml down",
     "iot:bridge": "powershell -ExecutionPolicy Bypass -File scripts/start_mqtt_bridge_bresil.ps1",
+    "iot:serial": "python iot/bridge/serial_to_mqtt.py --port COM3",
     "sim:start:ec-co": "powershell -ExecutionPolicy Bypass -File scripts/start_simulateurs.ps1 -ExcludePays BR",
     "sim:watch": "powershell -ExecutionPolicy Bypass -File scripts/start_threshold_watch.ps1",
     "sim:watch:stop": "powershell -ExecutionPolicy Bypass -File scripts/stop_threshold_watch.ps1",
