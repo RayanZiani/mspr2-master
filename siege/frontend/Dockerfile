@@ -15,8 +15,15 @@ RUN npm run build
 
 FROM nginx:alpine
 
+COPY siege/frontend/nginx.main.conf /etc/nginx/nginx.conf
 COPY siege/frontend/nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=builder /app/dist /usr/share/nginx/html
+
+# Nginx en non-root (SonarQube docker:S6471) — port 5173 ne nécessite pas de privilèges.
+RUN chown -R nginx:nginx /usr/share/nginx/html /var/cache/nginx /var/log/nginx /etc/nginx/conf.d /etc/nginx/nginx.conf \
+    && chmod -R a+rX /usr/share/nginx/html
+
+USER nginx
 
 EXPOSE 5173
 
