@@ -121,6 +121,7 @@ def load_siege_service(service: str, *, mock_redis: bool = False, mock_db: bool 
         _mock_siege_db()
     if mock_redis or service in ("aggregator", "data_service"):
         redis_cache = ModuleType("api.services.redis_cache")
+        redis_cache.STOCKS_CACHE_PREFIX = "siege:stocks"
         redis_cache.get_cache = AsyncMock(return_value=None)
         redis_cache.set_cache = AsyncMock()
         redis_cache.delete_cache_prefix = AsyncMock()
