@@ -1,8 +1,11 @@
+"""Gestion des comptes utilisateurs (SUPER_ADMIN)."""
+
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy import text
+from sqlalchemy.exc import SQLAlchemyError
 
 from api.auth import hash_password, require_user, verify_password
 from api.db.database import SessionLocal
@@ -23,6 +26,8 @@ _DEMOTE_SUPER_ADMIN_MSG = "Impossible de retrograder un autre SUPER_ADMIN"
 
 
 class CreateUserRequest(BaseModel):
+    """Corps de création d'un compte utilisateur."""
+
     username: str
     password: str | None = None
     password_hash: str | None = None
@@ -32,6 +37,8 @@ class CreateUserRequest(BaseModel):
 
 
 class UpdateUserRequest(BaseModel):
+    """Corps de mise à jour partielle d'un compte."""
+
     role: str | None = None
     active: bool | None = None
     password: str | None = None
@@ -111,16 +118,16 @@ def _resolve_password_hash(password: str | None, password_hash: str | None) -> s
 
     try:
         verify_password("test", password_hash)
-    except Exception:
-        raise HTTPException(status_code=400, detail="password_hash invalide")
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail="password_hash invalide") from exc
     return password_hash
 
 
 def _validate_optional_password_hash(password_hash: str) -> None:
     try:
         verify_password("test", password_hash)
-    except Exception:
-        raise HTTPException(status_code=400, detail="password_hash invalide")
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail="password_hash invalide") from exc
 
 
 async def _get_target_role(session, username: str) -> str | None:
@@ -131,6 +138,7 @@ async def _get_target_role(session, username: str) -> str | None:
 
 @router.get("/", responses={403: _FORBIDDEN_MANAGE_USERS})
 async def list_users(user: Annotated[dict, Depends(require_user)]):
+    """Liste tous les comptes utilisateurs."""
     perms = UserPermissions.from_jwt_user(user)
     if not perms.can_manage_users():
         raise HTTPException(status_code=403, detail=_SUPER_ADMIN_ONLY_MSG)
@@ -148,6 +156,7 @@ async def list_users(user: Annotated[dict, Depends(require_user)]):
     },
 )
 async def create_user(body: CreateUserRequest, user: Annotated[dict, Depends(require_user)]):
+    """Crée un nouveau compte utilisateur."""
     actor = UserPermissions.from_jwt_user(user)
     if not actor.can_manage_users():
         raise HTTPException(status_code=403, detail=_SUPER_ADMIN_ONLY_MSG)
@@ -169,9 +178,11 @@ async def create_user(body: CreateUserRequest, user: Annotated[dict, Depends(req
                 },
             )
             await session.commit()
-        except Exception:
+        except SQLAlchemyError as exc:
             await session.rollback()
-            raise HTTPException(status_code=409, detail="username déjà existant")
+            raise HTTPException(
+                status_code=409, detail="username déjà existant"
+            ) from exc
 
     return {"ok": True}
 
@@ -189,6 +200,7 @@ async def update_user(
     body: UpdateUserRequest,
     user: Annotated[dict, Depends(require_user)],
 ):
+    """Met à jour un compte utilisateur existant."""
     actor = UserPermissions.from_jwt_user(user)
     if not actor.can_manage_users():
         raise HTTPException(status_code=403, detail=_SUPER_ADMIN_ONLY_MSG)

@@ -1,8 +1,11 @@
+"""Point d'entrée FastAPI de l'API siège FutureKawa."""
+
 from contextlib import asynccontextmanager
 
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
+from sqlalchemy.exc import SQLAlchemyError
 
 from api.auth import require_role, require_user
 from api.db.database import engine
@@ -10,7 +13,8 @@ from api.routes import alertes, auth, config, gestion, mesures, stocks, users
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(_app: FastAPI):
+    """Libère le pool SQLAlchemy à l'arrêt du service."""
     yield
     await engine.dispose()
 
@@ -21,8 +25,6 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# Configuration CORS permissive pour le développement et la production
-# Autorise toutes les origines onrender.com et localhost
 app.add_middleware(
     CORSMiddleware,
     allow_origin_regex=r"https://.*\.onrender\.com|http://localhost:\d+",
@@ -71,18 +73,19 @@ app.include_router(
 
 
 @app.get("/health")
-@app.head("/health")  # Support pour HEAD (monitoring)
+@app.head("/health")
 async def health():
+    """Sonde de disponibilité du service."""
     return {"status": "ok", "service": "siege", "source": "mysql"}
 
 
 @app.get("/health/db")
-@app.head("/health/db")  # Support pour HEAD (monitoring)
+@app.head("/health/db")
 async def health_db():
+    """Sonde de connectivité MySQL."""
     try:
         async with engine.connect() as conn:
             await conn.execute(text("SELECT 1"))
         return {"ok": True}
-    except Exception as e:
-        # On évite de renvoyer toute la stacktrace; l'UI a juste besoin d'un booléen.
-        return {"ok": False, "error": str(e)}
+    except (SQLAlchemyError, OSError) as exc:
+        return {"ok": False, "error": str(exc)}

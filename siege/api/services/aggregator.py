@@ -1,5 +1,9 @@
+"""Agrégation HTTP des APIs pays (mode local docker-compose)."""
+
 import asyncio
+
 import httpx
+
 from api.config import API_URLS
 from api.services.redis_cache import get_cache, set_cache
 
@@ -10,6 +14,7 @@ async def fetch_pays(
     endpoint: str,
     params: dict | None = None,
 ) -> dict:
+    """Appelle un endpoint d'une API pays."""
     url = f"{API_URLS[pays]}/{endpoint}"
     response = await client.get(url, params=params, timeout=10.0)
     response.raise_for_status()
@@ -17,6 +22,7 @@ async def fetch_pays(
 
 
 async def fetch_all_pays(endpoint: str, params: dict | None = None) -> list[dict]:
+    """Interroge toutes les APIs pays en parallèle avec cache Redis."""
     cache_key = f"aggregator:{endpoint}"
     if not params:
         cached = await get_cache(cache_key)

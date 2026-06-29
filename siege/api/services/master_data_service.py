@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.config import PAYS_SLUG, STATUT_FRONT
 from api.db.database import SessionLocal
-from api.services.redis_cache import delete_cache_prefix
+from api.services.redis_cache import STOCKS_CACHE_PREFIX, delete_cache_prefix
 
 SLUG_TO_CODE = {slug: code for code, slug in PAYS_SLUG.items()}
 
@@ -101,7 +101,7 @@ async def create_exploitation(pays_slug: str, nom: str) -> dict:
             {"pays_id": pays_id, "nom": nom},
         )
         row = dict(res.mappings().first())
-    await delete_cache_prefix("siege:stocks")
+    await delete_cache_prefix(STOCKS_CACHE_PREFIX)
     return {
         "id": int(row["id"]),
         "pays": PAYS_SLUG.get(row["pays_code"], pays_slug),
@@ -122,7 +122,7 @@ async def update_exploitation(exploitation_id: int, nom: str) -> None:
         await session.commit()
         if res.rowcount == 0:
             raise ValueError("Exploitation introuvable")
-    await delete_cache_prefix("siege:stocks")
+    await delete_cache_prefix(STOCKS_CACHE_PREFIX)
 
 
 async def delete_exploitation(exploitation_id: int) -> None:
@@ -138,7 +138,7 @@ async def delete_exploitation(exploitation_id: int) -> None:
             raise ValueError("Impossible de supprimer : exploitation utilisée") from exc
         if res.rowcount == 0:
             raise ValueError("Exploitation introuvable")
-    await delete_cache_prefix("siege:stocks")
+    await delete_cache_prefix(STOCKS_CACHE_PREFIX)
 
 
 async def list_entrepots(allowed_slugs: set[str] | None) -> list[dict]:
@@ -205,7 +205,7 @@ async def create_entrepot(
             {"pays_id": pays_id, "nom": nom},
         )
         row = dict(res.mappings().first())
-    await delete_cache_prefix("siege:stocks")
+    await delete_cache_prefix(STOCKS_CACHE_PREFIX)
     return {
         "id": int(row["id"]),
         "pays": PAYS_SLUG.get(row["pays_code"], pays_slug),
@@ -247,7 +247,7 @@ async def update_entrepot(
         await session.commit()
         if res.rowcount == 0:
             raise ValueError("Entrepôt introuvable")
-    await delete_cache_prefix("siege:stocks")
+    await delete_cache_prefix(STOCKS_CACHE_PREFIX)
 
 
 async def delete_entrepot(entrepot_id: int) -> None:
@@ -263,7 +263,7 @@ async def delete_entrepot(entrepot_id: int) -> None:
             raise ValueError("Impossible de supprimer : entrepôt utilisé") from exc
         if res.rowcount == 0:
             raise ValueError("Entrepôt introuvable")
-    await delete_cache_prefix("siege:stocks")
+    await delete_cache_prefix(STOCKS_CACHE_PREFIX)
 
 
 async def list_lots_manage(allowed_slugs: set[str] | None) -> list[dict]:
@@ -342,7 +342,7 @@ async def create_lot(
             },
         )
         await session.commit()
-    await delete_cache_prefix("siege:stocks")
+    await delete_cache_prefix(STOCKS_CACHE_PREFIX)
     lots = await list_lots_manage(None)
     return next((lot for lot in lots if lot["id"] == lot_id), {"id": lot_id})
 
@@ -368,7 +368,7 @@ async def update_lot(lot_id: str, statut: str | None, expedier: bool) -> None:
         else:
             return
         await session.commit()
-    await delete_cache_prefix("siege:stocks")
+    await delete_cache_prefix(STOCKS_CACHE_PREFIX)
 
 
 async def get_lot_pays_slug_by_id(lot_id: str) -> str | None:

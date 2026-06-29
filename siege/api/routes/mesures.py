@@ -1,3 +1,5 @@
+"""Routes de consultation des relevés capteurs par lot."""
+
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -20,6 +22,7 @@ async def get_all_mesures(
     user: Annotated[dict, Depends(require_user)],
     lot_id: str | None = None,
 ):
+    """Retourne les relevés d'un lot, avec contrôle d'accès par pays."""
     if not lot_id:
         raise HTTPException(
             status_code=400,

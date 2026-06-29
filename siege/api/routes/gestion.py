@@ -13,15 +13,21 @@ router = APIRouter()
 
 
 class ExploitationCreate(BaseModel):
+    """Création d'une exploitation."""
+
     pays_slug: str = Field(..., min_length=2)
     nom: str = Field(..., min_length=1, max_length=255)
 
 
 class ExploitationUpdate(BaseModel):
+    """Mise à jour du nom d'une exploitation."""
+
     nom: str = Field(..., min_length=1, max_length=255)
 
 
 class EntrepotCreate(BaseModel):
+    """Création d'un entrepôt."""
+
     pays_slug: str = Field(..., min_length=2)
     nom: str = Field(..., min_length=1, max_length=255)
     adresse: str | None = None
@@ -29,17 +35,23 @@ class EntrepotCreate(BaseModel):
 
 
 class EntrepotUpdate(BaseModel):
+    """Mise à jour partielle d'un entrepôt."""
+
     nom: str | None = Field(None, min_length=1, max_length=255)
     adresse: str | None = None
     exploitation_id: int | None = None
 
 
 class LotCreate(BaseModel):
+    """Création d'un lot en stock."""
+
     exploitation_id: int
     entrepot_id: int
 
 
 class LotUpdate(BaseModel):
+    """Mise à jour du statut ou expédition d'un lot."""
+
     statut: str | None = None
     expedier: bool = False
 
@@ -62,6 +74,7 @@ def _not_found(msg: str) -> HTTPException:
 
 @router.get("/exploitations")
 async def list_exploitations(user: Annotated[dict, Depends(require_user)]):
+    """Liste les exploitations accessibles."""
     perms = _perms(user)
     if not (
         perms.can_write_lots()
@@ -74,6 +87,7 @@ async def list_exploitations(user: Annotated[dict, Depends(require_user)]):
 
 @router.get("/entrepots")
 async def list_entrepots(user: Annotated[dict, Depends(require_user)]):
+    """Liste les entrepôts accessibles."""
     perms = _perms(user)
     if not (perms.can_write_lots() or perms.can_manage_entrepots()):
         raise _forbidden()
@@ -85,6 +99,7 @@ async def create_exploitation(
     body: ExploitationCreate,
     user: Annotated[dict, Depends(require_user)],
 ):
+    """Crée une exploitation (SUPER_ADMIN)."""
     perms = _perms(user)
     if not perms.can_manage_exploitations():
         raise _forbidden()
@@ -104,6 +119,7 @@ async def patch_exploitation(
     body: ExploitationUpdate,
     user: Annotated[dict, Depends(require_user)],
 ):
+    """Renomme une exploitation."""
     perms = _perms(user)
     if not perms.can_manage_exploitations():
         raise _forbidden()
@@ -119,6 +135,7 @@ async def remove_exploitation(
     exploitation_id: int,
     user: Annotated[dict, Depends(require_user)],
 ):
+    """Supprime une exploitation vide."""
     perms = _perms(user)
     if not perms.can_manage_exploitations():
         raise _forbidden()
@@ -134,6 +151,7 @@ async def create_entrepot(
     body: EntrepotCreate,
     user: Annotated[dict, Depends(require_user)],
 ):
+    """Crée un entrepôt."""
     perms = _perms(user)
     if not perms.can_manage_entrepots():
         raise _forbidden()
@@ -153,6 +171,7 @@ async def patch_entrepot(
     body: EntrepotUpdate,
     user: Annotated[dict, Depends(require_user)],
 ):
+    """Met à jour un entrepôt."""
     perms = _perms(user)
     if not perms.can_manage_entrepots():
         raise _forbidden()
@@ -168,6 +187,7 @@ async def remove_entrepot(
     entrepot_id: int,
     user: Annotated[dict, Depends(require_user)],
 ):
+    """Supprime un entrepôt sans lots actifs."""
     perms = _perms(user)
     if not perms.can_manage_entrepots():
         raise _forbidden()
@@ -180,6 +200,7 @@ async def remove_entrepot(
 
 @router.get("/lots")
 async def list_lots_manage(user: Annotated[dict, Depends(require_user)]):
+    """Liste les lots pour la gestion opérationnelle."""
     perms = _perms(user)
     if not perms.can_write_lots():
         raise _forbidden()
@@ -191,6 +212,7 @@ async def create_lot(
     body: LotCreate,
     user: Annotated[dict, Depends(require_user)],
 ):
+    """Crée un lot en stock."""
     perms = _perms(user)
     if not perms.can_write_lots():
         raise _forbidden()
@@ -210,6 +232,7 @@ async def patch_lot(
     body: LotUpdate,
     user: Annotated[dict, Depends(require_user)],
 ):
+    """Met à jour le statut ou expédie un lot."""
     perms = _perms(user)
     if not perms.can_write_lots():
         raise _forbidden()

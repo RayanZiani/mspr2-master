@@ -14,6 +14,7 @@ logger = logging.getLogger(__name__)
 
 
 def check_reading(seuils: PaysSeuils, temperature: float, humidity: float) -> list[str]:
+    """Retourne les messages d'alerte si température ou humidité hors seuils."""
     messages: list[str] = []
     t = seuils.temperature
     h = seuils.humidity
@@ -34,6 +35,7 @@ async def process_releve_for_capteur(
     temperature: float,
     humidity: float,
 ) -> None:
+    """Évalue un relevé, met à jour le lot et déclenche les alertes."""
     ctx_sql = text("""
         SELECT
             p.id AS pays_id,
