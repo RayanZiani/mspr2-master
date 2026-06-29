@@ -8,7 +8,9 @@
 | GND | GND |
 | DATA | GPIO 4 |
 
-Le schéma visuel est dans `wiring/schema_cablage.png`.
+Le schéma visuel est disponible ci-dessous et dans `wiring/schema_cablage.png`.
+
+![Schéma de câblage ESP32 + DHT22](wiring/schema_cablage.png)
 
 ## Flash du firmware (MicroPython)
 
