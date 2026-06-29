@@ -118,6 +118,16 @@ export function UserPermissions() {
     return role === 'USER' && Boolean(COUNTRY_SLUG_BY_PAYS_CODE[paysCode])
   }
 
+  function canManageEntrepots() {
+    if (isSuperAdmin) return true
+    if (role !== 'ADMIN' || !paysCode) return false
+    return paysCode === 'SIEGE' || Boolean(COUNTRY_SLUG_BY_PAYS_CODE[paysCode])
+  }
+
+  function canManageExploitations() {
+    return isSuperAdmin
+  }
+
   function allowedPaysSlugs() {
     if (canViewMultiPays()) return null
     const slug = COUNTRY_SLUG_BY_PAYS_CODE[paysCode]
@@ -153,6 +163,8 @@ export function UserPermissions() {
     canManageGlobalWebhook,
     canViewMultiPays,
     canWriteLots,
+    canManageEntrepots,
+    canManageExploitations,
     allowedPaysSlugs,
     getAlertRecipientByPays,
   }

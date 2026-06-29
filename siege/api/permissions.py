@@ -99,6 +99,17 @@ class UserPermissions:
             return False
         return self.role == "USER" and self.pays_code in _COUNTRY_SLUG_BY_PAYS_CODE
 
+    def can_manage_entrepots(self) -> bool:
+        if self.is_super_admin():
+            return True
+        if self.role != "ADMIN" or not self.pays_code:
+            return False
+        pays = self.pays_code.upper()
+        return pays == "SIEGE" or pays in _PAYS_CODE_TO_COUNTRY_CODE
+
+    def can_manage_exploitations(self) -> bool:
+        return self.is_super_admin()
+
     def can_view_multi_pays(self) -> bool:
         if self.is_super_admin():
             return True

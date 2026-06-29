@@ -1352,6 +1352,43 @@ select.input option {
 .users-select2 .rs__dropdown-indicator, .users-select2 .rs__clear-indicator { padding: 6px; color: var(--text-muted); }
 .users-select2.modal .rs__control { border-radius: 10px; min-height: 42px; }
 
+.gestion-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+.gestion-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.85rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-muted);
+  font-weight: 700;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+.gestion-tab:hover { background: var(--surface-2); color: var(--text); }
+.gestion-tab.active {
+  background: var(--accent-dim);
+  border-color: var(--accent-border);
+  color: var(--accent);
+}
+
+.gestion-lots-table .users-row {
+  grid-template-columns: 1fr 0.65fr 1fr 1fr 1.1fr 0.9fr 0.75fr;
+}
+.gestion-entrepots-table .users-row {
+  grid-template-columns: 0.65fr 1fr 1fr 1.2fr 0.75fr;
+}
+.gestion-exploitations-table .users-row {
+  grid-template-columns: 0.65fr 1.2fr 1.1fr 0.75fr;
+}
+
 .rs__menu {
   border-radius: 11px !important;
   border: 1px solid var(--border-strong) !important;

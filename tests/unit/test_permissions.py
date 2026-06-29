@@ -154,3 +154,24 @@ def test_allowed_config_country_codes(role, pays, expected):
 def test_can_config_iot_thresholds_for(role, pays, country, allowed):
     perms = UserPermissions(role=role, pays_code=pays)
     assert perms.can_config_iot_thresholds_for(country) is allowed
+
+
+@pytest.mark.parametrize("role,pays,expected", [
+    ("SUPER_ADMIN", "SIEGE", True),
+    ("ADMIN", "SIEGE", True),
+    ("ADMIN", "BRESIL", True),
+    ("USER", "BRESIL", False),
+])
+def test_can_manage_entrepots(role, pays, expected):
+    perms = UserPermissions(role=role, pays_code=pays)
+    assert perms.can_manage_entrepots() is expected
+
+
+@pytest.mark.parametrize("role,pays,expected", [
+    ("SUPER_ADMIN", "SIEGE", True),
+    ("ADMIN", "SIEGE", False),
+    ("USER", "BRESIL", False),
+])
+def test_can_manage_exploitations(role, pays, expected):
+    perms = UserPermissions(role=role, pays_code=pays)
+    assert perms.can_manage_exploitations() is expected

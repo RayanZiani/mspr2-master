@@ -42,7 +42,16 @@ async function request(path, { method = 'GET', params, body } = {}) {
   if (res.ok) {
     return res.json()
   }
-  throw new Error(`Erreur serveur (HTTP ${res.status}).`)
+  let msg = `Erreur serveur (HTTP ${res.status}).`
+  try {
+    const err = await res.json()
+    const d = err?.detail
+    if (typeof d === 'string') msg = d
+    else if (Array.isArray(d) && d[0]?.msg) msg = d[0].msg
+  } catch {
+    /* ignore */
+  }
+  throw new Error(msg)
 }
 
 async function get(path, params = {}) {
@@ -62,6 +71,17 @@ export const api = {
   listUsers: () => get('/users/'),
   createUser: (payload) => request('/users/', { method: 'POST', body: payload }),
   updateUser: (username, payload) => request(`/users/${encodeURIComponent(username)}`, { method: 'PATCH', body: payload }),
+  listGestionExploitations: () => get('/gestion/exploitations'),
+  createGestionExploitation: (payload) => request('/gestion/exploitations', { method: 'POST', body: payload }),
+  updateGestionExploitation: (id, payload) => request(`/gestion/exploitations/${id}`, { method: 'PATCH', body: payload }),
+  deleteGestionExploitation: (id) => request(`/gestion/exploitations/${id}`, { method: 'DELETE' }),
+  listGestionEntrepots: () => get('/gestion/entrepots'),
+  createGestionEntrepot: (payload) => request('/gestion/entrepots', { method: 'POST', body: payload }),
+  updateGestionEntrepot: (id, payload) => request(`/gestion/entrepots/${id}`, { method: 'PATCH', body: payload }),
+  deleteGestionEntrepot: (id) => request(`/gestion/entrepots/${id}`, { method: 'DELETE' }),
+  listGestionLots: () => get('/gestion/lots'),
+  createGestionLot: (payload) => request('/gestion/lots', { method: 'POST', body: payload }),
+  updateGestionLot: (id, payload) => request(`/gestion/lots/${encodeURIComponent(id)}`, { method: 'PATCH', body: payload }),
   getDbHealth: async () => {
     // Compat: certains environnements n'ont que /health.
     try {
