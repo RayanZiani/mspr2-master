@@ -13,6 +13,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 from discord_embed import build_condition_embed, webhook_payload
+from email_alert import send_condition_email
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 load_dotenv(REPO_ROOT / ".env")
@@ -345,6 +346,18 @@ def process_releve(
             )
             cnx.commit()
             discord_sent = _send_discord_alert(ctx, lot_id, temperature, humidity)
+            send_condition_email(
+                pays_slug=ctx.slug,
+                pays_label=PAYS_LABEL.get(ctx.code, ctx.code),
+                entrepot=ctx.entrepot_nom,
+                lot_id=lot_id,
+                temperature=temperature,
+                humidity=humidity,
+                temp_min=ctx.temp_min,
+                temp_max=ctx.temp_max,
+                hum_min=ctx.hum_min,
+                hum_max=ctx.hum_max,
+            )
             return _build_result(
                 ctx,
                 lot_id,
