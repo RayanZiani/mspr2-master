@@ -53,6 +53,7 @@ def test_map_mesure():
     assert mapped["lot_id"] == "lot-001"
     assert mapped["temperature"] == 28.5
     assert mapped["humidity"] == 54.0
+    assert mapped["timestamp"] == "2025-06-01T12:00:00Z"
 
 
 def test_dt_iso_handles_none():

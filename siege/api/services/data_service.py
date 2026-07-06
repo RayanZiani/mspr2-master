@@ -1,6 +1,6 @@
 """Lecture agrégée des stocks, mesures et alertes depuis MySQL."""
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 
 from sqlalchemy import text
@@ -55,6 +55,23 @@ def _dt_iso(value: Any) -> str | None:
     return str(value)
 
 
+def _dt_iso_utc(value: Any) -> str | None:
+    """Serialise un datetime UTC naif (mesure_le) avec suffixe Z pour le front."""
+    if value is None:
+        return None
+    if isinstance(value, datetime):
+        if value.tzinfo is not None:
+            utc = value.astimezone(timezone.utc)
+            return utc.strftime("%Y-%m-%dT%H:%M:%S") + "Z"
+        return value.strftime("%Y-%m-%dT%H:%M:%S") + "Z"
+    text = str(value).strip()
+    if not text:
+        return None
+    if text.endswith("Z") or "+" in text[-6:]:
+        return text
+    return text.replace(" ", "T") + ("Z" if "T" in text else "T00:00:00Z")
+
+
 def _map_lot(row: dict) -> dict:
     pays_code = (row.get("pays_code") or "").upper()
     statut_db = (row.get("statut") or "CONFORME").upper()
@@ -72,7 +89,7 @@ def _map_mesure(row: dict) -> dict:
     return {
         "id": int(row["id"]),
         "lot_id": str(row["lot_id"]),
-        "timestamp": _dt_iso(row.get("timestamp")),
+        "timestamp": _dt_iso_utc(row.get("timestamp")),
         "temperature": float(row["temperature"]),
         "humidity": float(row["humidity"]),
     }
