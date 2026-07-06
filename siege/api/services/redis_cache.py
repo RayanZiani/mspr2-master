@@ -1,9 +1,13 @@
+"""Cache Redis optionnel pour l'API siège."""
+
 import json
 
 import redis.asyncio as aioredis
 from redis.exceptions import RedisError
 
 from api.config import REDIS_URL, REDIS_CACHE_TTL
+
+STOCKS_CACHE_PREFIX = "siege:stocks"
 
 # Connexion Redis optionnelle
 try:
@@ -38,7 +42,7 @@ async def set_cache(key: str, data, ttl: int | None = None) -> None:
 
 
 async def delete_cache_prefix(prefix: str) -> None:
-    """Supprime les cles Redis commencant par prefix (ex: siege:stocks)."""
+    """Supprime les cles Redis commencant par prefix (ex: STOCKS_CACHE_PREFIX)."""
     if not redis_available or redis_client is None:
         return
     try:

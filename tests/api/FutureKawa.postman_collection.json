@@ -30,7 +30,7 @@
                 "pm.test('status 200', () => pm.response.to.have.status(200));",
                 "const body = pm.response.json();",
                 "pm.test('token bearer', () => pm.expect(body.token_type).to.eql('bearer'));",
-                "pm.test('role admin', () => pm.expect(body.role).to.eql('ADMIN'));",
+                "pm.test('role super_admin', () => pm.expect(body.role).to.eql('SUPER_ADMIN'));",
                 "pm.collectionVariables.set('ACCESS_TOKEN', body.access_token);"
               ]
             }
@@ -66,7 +66,7 @@
           "request": { "method": "GET", "url": "{{API_SIEGE_URL}}/auth/me" },
           "event": [{ "listen": "test", "script": { "exec": [
             "pm.test('status 200', () => pm.response.to.have.status(200));",
-            "pm.test('role admin', () => pm.expect(pm.response.json().role).to.eql('ADMIN'));",
+            "pm.test('role super_admin', () => pm.expect(pm.response.json().role).to.eql('SUPER_ADMIN'));",
             "pm.test('username', () => pm.expect(pm.response.json().username).to.eql('admin_siege'));"
           ] } }]
         },
@@ -121,7 +121,7 @@
           ] } }]
         },
         {
-          "name": "Liste utilisateurs (admin)",
+          "name": "Liste utilisateurs (super_admin)",
           "request": { "method": "GET", "url": "{{API_SIEGE_URL}}/users/" },
           "event": [{ "listen": "test", "script": { "exec": [
             "pm.test('status 200', () => pm.response.to.have.status(200));",

@@ -160,7 +160,6 @@ def on_message(_client, _userdata, msg):
     """Traite un message MQTT : mesure capteur ou statut de connexion."""
     try:
         parts = msg.topic.split("/")
-        # parts = ["futurekawa", pays, entrepot, type]
         if len(parts) < 4:
             return
         entrepot = parts[2]
@@ -174,7 +173,10 @@ def on_message(_client, _userdata, msg):
             was_connected = _capteur_connected.get(entrepot)
             if was_connected is False:
                 _capteur_connected[entrepot] = True
-                reconnect_msg = f"Capteur {entrepot} ({PAYS.upper()}) de nouveau en ligne (données reçues)."
+                reconnect_msg = (
+                    f"Capteur {entrepot} ({PAYS.upper()}) de nouveau en ligne "
+                    "(données reçues)."
+                )
                 logger.info(reconnect_msg)
                 asyncio.run(notify(reconnect_msg, PAYS, alert_type="connection"))
             elif entrepot not in _capteur_connected:
@@ -184,9 +186,9 @@ def on_message(_client, _userdata, msg):
         elif msg_type == "status":
             _handle_status_message(entrepot, payload)
 
-    except (json.JSONDecodeError, UnicodeDecodeError, TypeError, ValueError, IndexError):
+    except (json.JSONDecodeError, UnicodeDecodeError, TypeError, IndexError):
         logger.exception("Invalid MQTT payload on topic %s", msg.topic)
-    except Exception:
+    except (AttributeError, KeyError, OSError, RuntimeError):
         logger.exception("Failed to process MQTT message")
 
 
@@ -195,7 +197,7 @@ def _check_capteur_status() -> None:
     while True:
         time.sleep(60)
         now = datetime.now(timezone.utc)
-        for entrepot, last in list(_last_seen.items()):
+        for entrepot, last in _last_seen.items():
             age = (now - last).total_seconds()
             is_connected = age <= CAPTEUR_TIMEOUT_SECONDS
             was_connected = _capteur_connected.get(entrepot, True)

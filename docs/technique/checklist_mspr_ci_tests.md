@@ -16,7 +16,7 @@
 |---|---|---|
 | Outil CI installé/paramétré | `docker-compose.ci.yml` + Jenkins Dockerfile | OK |
 | Pipeline automatisé | `ci-cd/Jenkinsfile` (12 stages) | OK |
-| Build + tests + qualité + packaging | Lint, Bandit, SonarQube, Quality Gate, Docker push | OK |
+| Build + tests + qualité + packaging | Lint, Bandit, SonarQube, Quality Gate (6 conditions) | OK |
 | Documentation + preuve d'exécution | `docs/technique/ci_cd.md` + artefacts JUnit | OK |
 
 ## Pipeline Jenkins — 12 stages

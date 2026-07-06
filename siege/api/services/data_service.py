@@ -1,3 +1,5 @@
+"""Lecture agrégée des stocks, mesures et alertes depuis MySQL."""
+
 from datetime import datetime
 from typing import Any
 
@@ -6,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.config import MESURES_DAYS, MESURES_LIMIT, PAYS_SLUG, STATUT_FRONT
 from api.db.database import SessionLocal
-from api.services.redis_cache import get_cache, set_cache
+from api.services.redis_cache import STOCKS_CACHE_PREFIX, get_cache, set_cache
 
 LOTS_SQL = text("""
     SELECT
@@ -40,7 +42,7 @@ def _mesures_sql() -> text:
         INNER JOIN releve_capteur r ON r.capteur_id = c.id
         WHERE l.id = :lot_id
           AND r.mesure_le >= (UTC_TIMESTAMP(3) - INTERVAL {days} DAY)
-        ORDER BY r.mesure_le ASC
+        ORDER BY r.mesure_le DESC
         LIMIT {limit}
     """)
 
@@ -89,7 +91,7 @@ async def _fetch_lots(session: AsyncSession) -> list[dict]:
 
 
 async def get_stocks_grouped() -> list[dict]:
-    cache_key = "siege:stocks"
+    cache_key = STOCKS_CACHE_PREFIX
     cached = await get_cache(cache_key)
     if cached is not None:
         return cached

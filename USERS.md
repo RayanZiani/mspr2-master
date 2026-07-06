@@ -25,10 +25,11 @@
 | **ADMIN** | Administration operationnelle — seuils IoT (siège = tous pays, pays local = son pays), lots, vue multi-pays réservée au siège |
 | **USER** | Acces metier selon le pays associe |
 
-Migration BDD existante (Aiven) :
+Migration BDD existante (Aiven) — appliquer le SQL via un client compatible TLS ou étendre `push_mysql_schema.py` :
 
 ```bash
-mysql ... < database/migrations/001_add_super_admin_role.sql
+python scripts/push_mysql_schema.py
+# Puis exécuter manuellement database/migrations/001_add_super_admin_role.sql sur Aiven si nécessaire
 ```
 
 ## 3) Matrice des droits

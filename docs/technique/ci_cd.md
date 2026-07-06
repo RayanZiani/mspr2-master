@@ -109,6 +109,8 @@ npm run test
 
 ## Preuve d'exécution pour la soutenance
 
+Voir aussi : [`docs/technique/sonarqube_mspr.md`](../technique/sonarqube_mspr.md) — mapping grille MSPR niveau 3/3.
+
 À préparer :
 1. Capture d'écran Jenkins **Stage View** (tous les stages verts)
 2. Rapports JUnit archivés dans le build Jenkins

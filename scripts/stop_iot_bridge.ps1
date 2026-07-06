@@ -1,6 +1,6 @@
 $patterns = @(
     "mqtt_bridge_bresil\.py",
-    "serial_mqtt_bridge_bresil\.py"
+    "serial_to_mqtt\.py"
 )
 
 $procs = Get-CimInstance Win32_Process -Filter "Name = 'python.exe'" -ErrorAction SilentlyContinue |

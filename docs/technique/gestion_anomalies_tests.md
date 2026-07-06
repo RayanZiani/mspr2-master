@@ -25,8 +25,8 @@ flowchart TD
 | **Bug applicatif** | Seuil alerte incorrect Colombie | Dev backend | Corriger `alert_service.py` |
 | **Régression API** | `/stocks/` retourne 401 | Dev siège | Vérifier auth JWT |
 | **Test obsolète** | Sélecteur CSS modifié | Dev tests | Mettre à jour spec Playwright |
-| **Environnement** | MySQL pas prêt | DevOps | Augmenter timeout `wait_for_stack` |
-| **Données** | Aucun lot en base E2E | Dev données | Exécuter `push_mysql_seed.py` |
+| **Environnement** | Aiven indisponible / cold start Render | DevOps | Retry `conftest.py`, augmenter timeout |
+| **Données** | Aucun lot en base E2E | Dev données | `import_demo_excel_to_mysql.py` ou `push_mysql_seed.py` |
 
 ## Grille de suivi (template)
 

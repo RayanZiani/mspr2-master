@@ -1,29 +1,27 @@
-"""FastAPI app for FutureKawa — Équateur
-
-Refactor: add logging and tolerate MQTT startup errors so the API
-remains available even if the broker is temporarily unreachable.
-"""
+"""Application FastAPI FutureKawa — Équateur."""
 
 import logging
-from fastapi import FastAPI
 from contextlib import asynccontextmanager
+
+from fastapi import FastAPI
+
 from api.db.database import init_db
-from api.routes import lots, mesures, alertes, capteurs, webhooks
+from api.routes import alertes, capteurs, lots, mesures, webhooks
 from api.services.mqtt_subscriber import start_mqtt
 from api.services.notification_scheduler import start_digest_scheduler
-
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(_application: FastAPI):
+    """Initialise la base et le subscriber MQTT au démarrage."""
     await init_db()
     try:
         start_mqtt()
         start_digest_scheduler()
-    except Exception:
+    except OSError:
         logger.exception("Failed to start MQTT subscriber; continuing without it")
     yield
 
@@ -43,4 +41,5 @@ app.include_router(webhooks.router, prefix="/webhooks", tags=["Webhooks"])
 
 @app.get("/health")
 async def health():
+    """Health check public."""
     return {"status": "ok", "pays": "equateur"}

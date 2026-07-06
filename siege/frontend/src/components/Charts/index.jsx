@@ -76,8 +76,8 @@ function CustomTooltip({ active, payload, label }) {
 
 function MetricChart({ cfg, rows, band, stats, animate }) {
   const gid = `grad-${cfg.key}`
-  const lo = band?.min != null ? Math.min(stats?.min ?? band.min, band.min) : stats?.min
-  const hi = band?.max != null ? Math.max(stats?.max ?? band.max, band.max) : stats?.max
+  const lo = band?.min == null ? stats?.min : Math.min(stats?.min ?? band.min, band.min)
+  const hi = band?.max == null ? stats?.max : Math.max(stats?.max ?? band.max, band.max)
   const pad = Math.max(1, ((hi ?? 0) - (lo ?? 0)) * 0.15)
 
   return (
@@ -180,8 +180,8 @@ export default function Charts({ data, pays, seuilsBySlug }) {
       : (Array.isArray(data) ? data : [])
     return flat
       .map((m) => ({
-        temperature: m.temperature != null ? Number(m.temperature) : null,
-        humidity: m.humidity != null ? Number(m.humidity) : null,
+        temperature: m.temperature == null ? null : Number(m.temperature),
+        humidity: m.humidity == null ? null : Number(m.humidity),
         _t: new Date(m.timestamp).getTime(),
       }))
       .filter((m) => !Number.isNaN(m._t))

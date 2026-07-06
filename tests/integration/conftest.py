@@ -25,12 +25,6 @@ RETRYABLE_STATUS = {502, 503, 504}
 RENDER_MAX_ATTEMPTS = int(os.getenv("RENDER_RETRY_ATTEMPTS", "6"))
 RENDER_RETRY_DELAY = float(os.getenv("RENDER_RETRY_DELAY", "3"))
 
-# Marker pour skip les tests qui ne fonctionnent pas sur Render
-skip_on_render = pytest.mark.skipif(
-    IS_RENDER,
-    reason="APIs pays non déployées séparément sur Render - utiliser l'API Siège"
-)
-
 USERS = {
     "admin": ("admin_siege", "Admin@2025!"),
     "siege_user": ("direction_siege", "Direction@2025!"),
@@ -134,12 +128,10 @@ def first_lot_id(auth_headers):
 
 
 @pytest.fixture(scope="session")
-def bresil_lot_id():
-    if IS_RENDER:
-        pytest.skip("API Brésil non déployée sur Render - utiliser l'API Siège")
-    response = httpx.get(f"{API_BRESIL}/lots/", timeout=10.0)
-    assert response.status_code == 200
-    lots = response.json()
+def bresil_lot_id(auth_headers):
+    from .helpers import fetch_country_lots
+
+    lots = fetch_country_lots("bresil", auth_headers)
     if not lots:
         pytest.skip("Aucun lot Brésil en base")
     return lots[0]["id"]

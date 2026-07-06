@@ -1,0 +1,4 @@
+# Dépendances minimales pour importer les modules API en tests unitaires CI.
+# SQLAlchemy >=2.0.36 requis pour Python 3.13 (Jenkins Debian Trixie).
+sqlalchemy>=2.0.36,<3
+aiomysql==0.2.0

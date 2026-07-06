@@ -1,4 +1,5 @@
 import { useParams, useLocation, Link } from 'react-router-dom'
+import { useMemo } from 'react'
 import { ArrowLeft } from 'lucide-react'
 import { useStocks } from '../hooks/useStocks'
 import { useMesures } from '../hooks/useMesures'
@@ -24,6 +25,11 @@ export default function LotView() {
   } = useMesures(lotId)
   const { bySlug: seuilsBySlug } = useSeuils()
 
+  const latestMesure = useMemo(() => {
+    if (!Array.isArray(mesuresData) || !mesuresData.length) return null
+    return [...mesuresData].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))[0]
+  }, [mesuresData])
+
   return (
     <div>
       <Link to="/" className="back-link">
@@ -36,7 +42,7 @@ export default function LotView() {
         <p className="page-sub">Historique des relevés IoT depuis la mise en stockage</p>
       </div>
 
-      <LotDetail lot={lot} seuilsBySlug={seuilsBySlug} />
+      <LotDetail lot={lot} seuilsBySlug={seuilsBySlug} latestMesure={latestMesure} />
 
       {mesuresLoading ? (
         <div className="loading">

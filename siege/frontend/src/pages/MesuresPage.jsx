@@ -1,9 +1,12 @@
 import { useMemo, useState, useEffect } from 'react'
 import { Activity } from 'lucide-react'
-import CountrySelector from '../components/CountrySelector'
+import LocationFilters from '../components/LocationFilters'
 import Charts from '../components/Charts'
 import { useStocks } from '../hooks/useStocks'
 import { useMesures } from '../hooks/useMesures'
+import { useLotLocationFilters } from '../hooks/useLotLocationFilters'
+import { UserPermissions } from '../auth/permissions'
+import { groupLotsByOrigin } from '../utils/groupLotsByOrigin'
 
 export default function MesuresPage() {
   const {
@@ -14,7 +17,6 @@ export default function MesuresPage() {
     refetch: refetchStocks,
   } = useStocks()
 
-  const [selectedPays, setSelectedPays] = useState('')
   const [selectedLotId, setSelectedLotId] = useState('')
 
   const allLots = useMemo(() => {
@@ -24,23 +26,40 @@ export default function MesuresPage() {
     )
   }, [stocksData])
 
-  const countryLots = useMemo(() => {
-    return selectedPays ? allLots.filter((l) => l.pays === selectedPays) : allLots
-  }, [allLots, selectedPays])
+  const {
+    selectedPays,
+    setSelectedPays,
+    selectedExploitation,
+    setSelectedExploitation,
+    selectedEntrepot,
+    setSelectedEntrepot,
+    exploitationOptions,
+    entrepotOptions,
+    locationFilteredLots,
+  } = useLotLocationFilters(allLots)
+
+  const perms = UserPermissions()
+  const lotGroups = useMemo(() => {
+    if (!perms.isSuperAdmin || !locationFilteredLots.length) return null
+    return groupLotsByOrigin(locationFilteredLots, { includePays: !selectedPays })
+  }, [locationFilteredLots, perms.isSuperAdmin, selectedPays])
 
   useEffect(() => {
-    if (!countryLots.length) {
+    if (!locationFilteredLots.length) {
       setSelectedLotId('')
       return
     }
-    if (!selectedLotId || !countryLots.find((lot) => lot.id === selectedLotId)) {
-      setSelectedLotId(countryLots[0].id)
+    if (
+      !selectedLotId
+      || !locationFilteredLots.some((lot) => lot.id === selectedLotId)
+    ) {
+      setSelectedLotId(locationFilteredLots[0].id)
     }
-  }, [countryLots, selectedLotId])
+  }, [locationFilteredLots, selectedLotId])
 
   const currentLot = useMemo(
-    () => countryLots.find((l) => l.id === selectedLotId),
-    [countryLots, selectedLotId]
+    () => locationFilteredLots.find((l) => l.id === selectedLotId),
+    [locationFilteredLots, selectedLotId]
   )
 
   const {
@@ -92,7 +111,16 @@ export default function MesuresPage() {
         <p className="page-sub">Visualiser les releves temperature/humidite par lot</p>
       </div>
 
-      <CountrySelector value={selectedPays} onChange={setSelectedPays} />
+      <LocationFilters
+        selectedPays={selectedPays}
+        onPaysChange={setSelectedPays}
+        selectedExploitation={selectedExploitation}
+        onExploitationChange={setSelectedExploitation}
+        selectedEntrepot={selectedEntrepot}
+        onEntrepotChange={setSelectedEntrepot}
+        exploitationOptions={exploitationOptions}
+        entrepotOptions={entrepotOptions}
+      />
 
       <div className="toolbar mb-2">
         <label className="filter-item" htmlFor="lot-select">Lot</label>
@@ -102,76 +130,88 @@ export default function MesuresPage() {
           value={selectedLotId}
           onChange={(e) => setSelectedLotId(e.target.value)}
         >
-          {!countryLots.length && <option value="">Aucun lot disponible</option>}
-          {countryLots.map((lot) => (
-            <option key={lot.id} value={lot.id}>
-              {lot.id} - {lot.exploitation || '-'} / {lot.entrepot || '-'}
-            </option>
-          ))}
+          {!locationFilteredLots.length && <option value="">Aucun lot disponible</option>}
+          {lotGroups
+            ? lotGroups.map((group) => (
+              <optgroup key={group.key} label={group.label}>
+                {group.lots.map((lot) => (
+                  <option key={lot.id} value={lot.id}>
+                    {lot.id}
+                  </option>
+                ))}
+              </optgroup>
+            ))
+            : locationFilteredLots.map((lot) => (
+              <option key={lot.id} value={lot.id}>
+                {lot.id} - {lot.exploitation || '-'} / {lot.entrepot || '-'}
+              </option>
+            ))}
         </select>
       </div>
 
-      {!selectedLotId ? (
+      {selectedLotId ? (
+        mesuresLoading ? (
+          <div className="loading">
+            <div className="spinner" />
+            <span>Chargement des mesures…</span>
+          </div>
+        ) : mesuresError ? (
+          <div className="card empty-state error-state">
+            <p style={{ fontWeight: 700 }}>Erreur de chargement des mesures</p>
+            <p style={{ fontSize: '0.8rem' }}>{mesuresErr?.message || 'API indisponible'}</p>
+            <button className="btn" onClick={() => refetchMesures()}>
+              Reessayer
+            </button>
+          </div>
+        ) : (
+          <>
+            <div className="card mb-2">
+              <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
+                Lot courant: <strong>{currentLot?.id || '-'}</strong>
+              </p>
+            </div>
+
+            <Charts data={mesuresData} pays={currentLot?.pays} />
+
+            <div className="card">
+              <div className="section-header">
+                Derniers releves
+              </div>
+              {rows.length ? (
+                <div className="simple-table-wrap">
+                  <table className="simple-table">
+                    <thead>
+                      <tr>
+                        <th>Horodatage</th>
+                        <th>Temperature</th>
+                        <th>Humidite</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {rows.map((m) => (
+                        <tr key={`${m.timestamp}-${m.temperature}-${m.humidity}`}>
+                          <td>{new Date(m.timestamp).toLocaleString('fr-FR')}</td>
+                          <td>{Number(m.temperature).toFixed(1)} °C</td>
+                          <td>{Number(m.humidity).toFixed(1)} %</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>
+                  Aucune mesure disponible pour ce lot.
+                </p>
+              )}
+            </div>
+          </>
+        )
+      ) : (
         <div className="card empty-state">
           <Activity size={36} className="empty-icon" />
           <p style={{ fontWeight: 500 }}>Aucun lot a afficher</p>
           <p style={{ fontSize: '0.8rem' }}>Chargez des stocks pour consulter les mesures.</p>
         </div>
-      ) : mesuresLoading ? (
-        <div className="loading">
-          <div className="spinner" />
-          <span>Chargement des mesures…</span>
-        </div>
-      ) : mesuresError ? (
-        <div className="card empty-state error-state">
-          <p style={{ fontWeight: 700 }}>Erreur de chargement des mesures</p>
-          <p style={{ fontSize: '0.8rem' }}>{mesuresErr?.message || 'API indisponible'}</p>
-          <button className="btn" onClick={() => refetchMesures()}>
-            Reessayer
-          </button>
-        </div>
-      ) : (
-        <>
-          <div className="card mb-2">
-            <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
-              Lot courant: <strong>{currentLot?.id || '-'}</strong>
-            </p>
-          </div>
-
-          <Charts data={mesuresData} pays={currentLot?.pays} />
-
-          <div className="card">
-            <div className="section-header">
-              Derniers releves
-            </div>
-            {!rows.length ? (
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>
-                Aucune mesure disponible pour ce lot.
-              </p>
-            ) : (
-              <div className="simple-table-wrap">
-                <table className="simple-table">
-                  <thead>
-                    <tr>
-                      <th>Horodatage</th>
-                      <th>Temperature</th>
-                      <th>Humidite</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {rows.map((m) => (
-                      <tr key={`${m.timestamp}-${m.temperature}-${m.humidity}`}>
-                        <td>{new Date(m.timestamp).toLocaleString('fr-FR')}</td>
-                        <td>{Number(m.temperature).toFixed(1)} °C</td>
-                        <td>{Number(m.humidity).toFixed(1)} %</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-        </>
       )}
     </div>
   )

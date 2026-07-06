@@ -1,4 +1,5 @@
-import { AlertTriangle, XCircle } from 'lucide-react'
+import { AlertTriangle, XCircle, Clock } from 'lucide-react'
+import SeuilsSummary from '../SeuilsSummary'
 
 const PAYS_LABEL = {
   bresil:   'Brésil',
@@ -11,7 +12,7 @@ const DESC = {
   alerte: 'Conditions hors plage : température ou humidité déviante.',
 }
 
-export default function AlertBadge({ lot, onClick }) {
+export default function AlertBadge({ lot, onClick, seuilsBySlug }) {
   if (!lot?.statut || lot.statut === 'conforme') return null
 
   const statut   = lot.statut
@@ -29,6 +30,14 @@ export default function AlertBadge({ lot, onClick }) {
           {PAYS_LABEL[lot.pays] || lot.pays} · {lot.exploitation} / {lot.entrepot}
         </div>
         <div className="alert-lot-desc">{DESC[statut]}</div>
+        {isPerime ? (
+          <div className="alert-lot-seuils">
+            <Clock size={11} aria-hidden="true" />
+            <span>Seuil de péremption : 365 jours en stock</span>
+          </div>
+        ) : (
+          <SeuilsSummary lot={lot} seuilsBySlug={seuilsBySlug} variant="compact" />
+        )}
       </div>
       <span className={`badge badge-${statut}`}>
         <Icon size={10} />

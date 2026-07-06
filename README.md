@@ -1,144 +1,125 @@
 # FutureKawa
 
-Plateforme IoT de surveillance des stocks de cafe vert (Bresil, Equateur, Colombie + siege).
+Plateforme IoT de surveillance des stocks de café vert (Brésil, Équateur, Colombie + siège).
 
-## Demarrage rapide
+## Démarrage rapide
 
-Prerequis:
-- Docker Desktop demarre
+Prérequis :
+- Docker Desktop démarré
 - Node.js 18+
+- Compte **Aiven MySQL** configuré (`MYSQL_URL` dans `.env` à la racine)
 
-Installation:
+Installation :
 
 ```powershell
 npm install
 ```
 
-Lancement complet (3 pays + siege):
+Copier la configuration :
+
+```powershell
+copy .env.example .env
+# Renseigner MYSQL_URL (Aiven) et DISCORD_WEBHOOK_URL si besoin
+```
+
+Lancement de la stack siège (UI + API + Redis) :
 
 ```powershell
 npm start
 ```
 
-Equivalent PowerShell:
+Accès :
+- Interface web : http://localhost
+- API siège (Swagger) : http://localhost/api/docs
+
+Simulateurs capteurs (écriture dans **Aiven** `releve_capteur`) :
 
 ```powershell
-.\start.ps1
+npm run sim:clear    # vider les relevés démo (optionnel)
+npm run sim:start    # injecter des mesures toutes les 30 s
 ```
 
-Acces:
-- Interface web: http://localhost
-- API siege (Swagger): http://localhost/api/docs
-
-Arret:
+Arrêt :
 
 ```powershell
 npm run stop
+npm run sim:stop
 ```
 
-Logs:
+Documentation IoT détaillée : [`docs/technique/architecture_iot_local.md`](docs/technique/architecture_iot_local.md)
 
-```powershell
-npm run logs
-```
+## Base de données — Aiven uniquement
 
-Mode detache:
+**Il n'y a pas de MySQL local dans Docker.** Toute l'application (siège, scripts, simulateurs, Render) lit et écrit la **même base Aiven** :
 
-```powershell
-npm run start:detached
-```
+| Composant | Connexion |
+|-----------|-----------|
+| API siège (local + Render) | `MYSQL_URL` dans `siege/.env` |
+| Scripts Python (`scripts/`) | `MYSQL_URL` dans `.env` racine |
+| Simulateurs / pont MQTT | `MYSQL_URL` dans `.env` racine |
 
-## Variables d'environnement
-
-Le script `scripts/ensure-env.mjs` est execute avant le demarrage. Il cree automatiquement les fichiers `.env` depuis les `.env.example` quand ils sont absents.
-
-Fichiers concernes:
-- `siege/.env` depuis `siege/.env.example`
-- `pays/bresil/.env` depuis `pays/bresil/.env.example`
-- `pays/equateur/.env` depuis `pays/equateur/.env.example`
-- `pays/colombie/.env` depuis `pays/colombie/.env.example`
-
-Notes:
-- L'API siege utilise `MYSQL_URL` (ou `DATABASE_URL` en fallback).
-- Les scripts Python dans `scripts/` utilisent `MYSQL_URL` (chargement via `.env` racine).
-- Si `MYSQL_URL` est absent dans `siege/.env`, `ensure-env.mjs` tente de le copier depuis `DATABASE_URL` dans `pays/bresil/.env`.
+Le script `scripts/ensure-env.mjs` crée les `.env` manquants depuis les `.env.example`.
 
 ## Architecture de lancement
 
-Le `docker-compose.yml` racine inclut:
-- `pays/bresil/docker-compose.yml`
-- `pays/equateur/docker-compose.yml`
-- `pays/colombie/docker-compose.yml`
-- `siege/docker-compose.yml`
+Le `docker-compose.yml` racine inclut uniquement **`siege/docker-compose.yml`** (API siège, Redis, Nginx, frontend).
 
-Chaque pays est autonome (broker MQTT + MySQL + API + Node-RED). Le siege agrege les donnees via son API et expose le front via Nginx.
+Les relevés IoT arrivent dans Aiven via :
+- `scripts/simulate_releves_aiven.py` (simulateurs EC/CO/BR)
+- `scripts/mqtt_bridge_bresil.py` (pont MQTT → Aiven, capteur réel)
 
 ## Ports principaux
 
-- `80`: Nginx siege (entree principale)
-- `8001`: API Bresil
-- `8002`: API Equateur
-- `8003`: API Colombie
-- `1883`: MQTT Bresil
-- `1884`: MQTT Equateur
-- `1885`: MQTT Colombie
-- `1880`: Node-RED Bresil
-- `1881`: Node-RED Equateur
-- `1882`: Node-RED Colombie
+- `80` : Nginx siège (entrée principale)
+- `6379` : Redis (cache siège, réseau Docker interne)
+- `1883` : MQTT Brésil (optionnel, `docker-compose.iot.yml`)
 
 ## Endpoints utiles
 
-- Siege:
-	- `GET /api/stocks`
-	- `GET /api/mesures`
-	- `GET /api/alertes`
-	- Swagger: http://localhost/api/docs
-- Pays (debug):
-	- Bresil: http://localhost:8001/docs
-	- Equateur: http://localhost:8002/docs
-	- Colombie: http://localhost:8003/docs
+- Siège :
+  - `GET /api/stocks`
+  - `GET /api/mesures?lot_id=...`
+  - `GET /api/alertes`
+  - Swagger : http://localhost/api/docs
 
-## Scripts utiles
+## Scripts utiles (Aiven)
 
 ```powershell
-# Schema MySQL distant
+# Schéma sur Aiven
 python scripts/push_mysql_schema.py
 
-# Seed MySQL distant
+# Seed minimal sur Aiven
 python scripts/push_mysql_seed.py
 
-# Import jeu de donnees Excel vers MySQL
+# Import jeu de données Excel vers Aiven
 python scripts/import_demo_excel_to_mysql.py
 
-# Generer un fichier Excel de demo
+# Générer un fichier Excel de démo
 python scripts/generate_demo_excel.py
 ```
 
-Les scripts ci-dessus necessitent `MYSQL_URL` (voir `.env.example` racine).
+Ces scripts nécessitent `MYSQL_URL` (voir `.env.example` racine).
 
 ## Tests et CI/CD
 
 ```powershell
-# Tests unitaires (sans Docker)
 pip install -r tests/requirements.txt
 npm run test:unit
 
-# Stack complete + tous les tests
+# Stack siège + tests complets
 npm start
-bash ci-cd/scripts/wait_for_stack.sh
+npm run wait:stack
 npm run test
 ```
 
-Documentation detaillee :
-- `docs/technique/plan_tests.md`
-- `docs/technique/ci_cd.md`
+Documentation détaillée :
+- [`docs/technique/plan_tests.md`](docs/technique/plan_tests.md)
+- [`docs/technique/ci_cd.md`](docs/technique/ci_cd.md)
+- [`docs/deployment/render.md`](docs/deployment/render.md)
 
 ## Troubleshooting rapide
 
-- Port 80 deja utilise:
-	- arreter le service qui ecoute sur `:80` ou changer le mapping dans `siege/docker-compose.yml`
-- Erreur de variable manquante `MYSQL_URL`:
-	- verifier `siege/.env` pour l'API siege
-	- verifier `.env` racine pour les scripts Python
-- Docker indisponible:
-	- verifier que Docker Desktop est bien lance
+- Port 80 déjà utilisé : arrêter le service sur `:80` ou modifier le mapping dans `siege/docker-compose.yml`
+- Erreur `MYSQL_URL` manquant : vérifier `.env` racine et `siege/.env`
+- Dashboard vide : exécuter `import_demo_excel_to_mysql.py` puis `npm run sim:start`
+- Docker indisponible : vérifier que Docker Desktop est lancé

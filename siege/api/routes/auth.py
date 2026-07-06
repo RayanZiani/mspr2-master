@@ -1,8 +1,11 @@
+"""Authentification et profil utilisateur."""
+
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 from sqlalchemy import text
+from sqlalchemy.exc import SQLAlchemyError
 
 from api.auth import create_access_token, require_user, verify_password
 from api.db.database import SessionLocal
@@ -18,12 +21,15 @@ _LOGIN_RESPONSES = {
 
 
 class LoginRequest(BaseModel):
+    """Identifiants de connexion."""
+
     username: str
     password: str
 
 
 @router.post("/login", responses=_LOGIN_RESPONSES)
 async def login(body: LoginRequest, request: Request):
+    """Authentifie l'utilisateur et retourne un JWT."""
     user = await get_user_account(body.username)
     if not user or not user.get("active"):
         raise HTTPException(status_code=401, detail=_INVALID_CREDENTIALS)
@@ -46,8 +52,7 @@ async def login(body: LoginRequest, request: Request):
                 {"username": body.username, "ip": ip},
             )
             await session.commit()
-    except Exception:
-        # Ne bloque pas la connexion si la mise à jour d'audit échoue
+    except SQLAlchemyError:
         pass
     return {
         "access_token": create_access_token(body.username, role, user.get("pays_code")),
@@ -61,6 +66,7 @@ async def login(body: LoginRequest, request: Request):
 
 @router.get("/me")
 async def me(user: Annotated[dict, Depends(require_user)]):
+    """Retourne le profil de l'utilisateur connecté."""
     account = await get_user_account(user["sub"])
     return {
         "username": user["sub"],

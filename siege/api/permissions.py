@@ -1,3 +1,5 @@
+"""Matrice de permissions dérivée du JWT (rôle + pays)."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -41,27 +43,34 @@ class UserPermissions:
 
     @staticmethod
     def from_jwt_user(user: dict) -> "UserPermissions":
+        """Construit les permissions à partir du payload JWT décodé."""
         return UserPermissions(
             role=str(user.get("role") or "USER").upper(),
             pays_code=(str(user.get("pays_code")).upper() if user.get("pays_code") else None),
         )
 
     def is_super_admin(self) -> bool:
+        """True si l'utilisateur est SUPER_ADMIN."""
         return self.role == "SUPER_ADMIN"
 
     def is_admin(self) -> bool:
+        """True si l'utilisateur est ADMIN ou SUPER_ADMIN."""
         return self.role in _ADMIN_ROLES
 
     def is_siege_user(self) -> bool:
+        """True si USER rattaché au siège (lecture multi-pays)."""
         return self.role == "USER" and (self.pays_code or "").upper() == "SIEGE"
 
     def can_manage_users(self) -> bool:
+        """Gestion des comptes utilisateurs (SUPER_ADMIN uniquement)."""
         return self.is_super_admin()
 
     def can_manage_global_webhook(self) -> bool:
+        """Configuration du webhook Discord global."""
         return self.is_super_admin()
 
     def can_config_iot_thresholds(self) -> bool:
+        """Droit de modifier les seuils IoT (admin siège ou pays)."""
         if self.is_super_admin():
             return True
         if self.role != "ADMIN" or not self.pays_code:
@@ -82,6 +91,7 @@ class UserPermissions:
         return {code} if code else set()
 
     def can_config_iot_thresholds_for(self, country_code: str) -> bool:
+        """Vérifie le droit de configurer les seuils pour un pays donné."""
         allowed = self.allowed_config_country_codes()
         if not self.can_config_iot_thresholds():
             return False
@@ -90,6 +100,7 @@ class UserPermissions:
         return country_code.upper() in allowed
 
     def can_write_lots(self) -> bool:
+        """Création et modification des lots."""
         if self.is_super_admin():
             return True
         if self.role == "ADMIN":
@@ -99,7 +110,16 @@ class UserPermissions:
             return False
         return self.role == "USER" and self.pays_code in _COUNTRY_SLUG_BY_PAYS_CODE
 
+    def can_manage_entrepots(self) -> bool:
+        """Gestion des entrepôts (mêmes règles que les seuils IoT admin)."""
+        return self.can_config_iot_thresholds()
+
+    def can_manage_exploitations(self) -> bool:
+        """Gestion des exploitations (SUPER_ADMIN uniquement)."""
+        return self.is_super_admin()
+
     def can_view_multi_pays(self) -> bool:
+        """Lecture des données multi-pays."""
         if self.is_super_admin():
             return True
         if self.role == "ADMIN" and (self.pays_code or "").upper() == "SIEGE":
@@ -107,6 +127,7 @@ class UserPermissions:
         return self.is_siege_user()
 
     def allowed_pays_slugs(self) -> set[str] | None:
+        """Slugs pays autorisés, ou None si accès global."""
         if self.can_view_multi_pays():
             return None
         if not self.pays_code:
@@ -114,5 +135,6 @@ class UserPermissions:
         slug = _COUNTRY_SLUG_BY_PAYS_CODE.get(self.pays_code)
         return {slug} if slug else set()
 
-    def getAlertRecipientByPays(self, pays_code: str) -> str | None:
+    def get_alert_recipient_by_pays(self, pays_code: str) -> str | None:
+        """Email destinataire des alertes pour un pays donné."""
         return _ALERT_RECIPIENT_BY_PAYS_CODE.get((pays_code or "").upper())

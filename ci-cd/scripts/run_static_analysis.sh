@@ -9,9 +9,11 @@ mkdir -p tests/reports
 echo "=== Pylint ==="
 : > tests/reports/pylint-report.txt
 for api_path in pays/bresil/api pays/equateur/api pays/colombie/api siege/api; do
+  api_parent="$(dirname "$api_path")"
   echo "=== ${api_path} ===" >> tests/reports/pylint-report.txt
   pylint "$api_path" \
-    --init-hook="import sys; sys.path.insert(0, '${api_path}')" \
+    --rcfile=.pylintrc \
+    --init-hook="import sys; sys.path.insert(0, '${ROOT_DIR}/${api_parent}')" \
     --output-format=parseable \
     --exit-zero \
     >> tests/reports/pylint-report.txt || true

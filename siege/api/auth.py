@@ -1,3 +1,5 @@
+"""Authentification JWT et hachage des mots de passe."""
+
 import os
 from datetime import datetime, timedelta, timezone
 
@@ -19,8 +21,6 @@ def _require_env(name: str) -> str:
 
 
 def _secret() -> str:
-    # Démo / dev: si non défini, on utilise une valeur par défaut explicite.
-    # En prod, fournir une vraie valeur via env.
     return os.getenv("AUTH_JWT_SECRET", "dev-secret-change-me")
 
 
@@ -29,10 +29,11 @@ def _algo() -> str:
 
 
 def _access_ttl_minutes() -> int:
-    return int(os.getenv("AUTH_ACCESS_TTL_MINUTES", "480"))  # 8h
+    return int(os.getenv("AUTH_ACCESS_TTL_MINUTES", "480"))
 
 
 def verify_password(password: str, password_hash: str) -> bool:
+    """Vérifie un mot de passe en clair contre son hash stocké."""
     if password_hash.startswith("$2"):
         try:
             return bcrypt.checkpw(
@@ -45,6 +46,7 @@ def verify_password(password: str, password_hash: str) -> bool:
 
 
 def hash_password(password: str) -> str:
+    """Hache un mot de passe avec bcrypt."""
     return bcrypt.hashpw(
         password.encode("utf-8"),
         bcrypt.gensalt(rounds=12),
@@ -52,6 +54,7 @@ def hash_password(password: str) -> str:
 
 
 def create_access_token(sub: str, role: str, pays_code: str | None) -> str:
+    """Crée un JWT d'accès pour l'utilisateur authentifié."""
     now = datetime.now(timezone.utc)
     exp = now + timedelta(minutes=_access_ttl_minutes())
     payload = {
@@ -65,6 +68,7 @@ def create_access_token(sub: str, role: str, pays_code: str | None) -> str:
 
 
 def require_user(token: str = Depends(_oauth2_scheme)) -> dict:
+    """Dépendance FastAPI : extrait et valide l'utilisateur depuis le JWT."""
     try:
         payload = jwt.decode(token, _secret(), algorithms=[_algo()])
         sub = payload.get("sub")
@@ -75,15 +79,17 @@ def require_user(token: str = Depends(_oauth2_scheme)) -> dict:
         if not role:
             raise HTTPException(status_code=401, detail="Token invalide")
         return {"sub": sub, "role": role, "pays_code": pays_code}
-    except JWTError:
-        raise HTTPException(status_code=401, detail="Token invalide ou expiré")
+    except JWTError as exc:
+        raise HTTPException(
+            status_code=401, detail="Token invalide ou expiré"
+        ) from exc
 
 
 def require_role(*roles: str):
+    """Dépendance FastAPI : restreint l'accès aux rôles autorisés."""
     def _dep(user: dict = Depends(require_user)) -> dict:
         if user.get("role") not in roles:
             raise HTTPException(status_code=403, detail="Accès refusé")
         return user
 
     return _dep
-

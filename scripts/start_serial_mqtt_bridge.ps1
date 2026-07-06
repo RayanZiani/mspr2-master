@@ -9,7 +9,7 @@ Set-Location $Root
 $port = if ($env:SERIAL_PORT) { $env:SERIAL_PORT } else { "COM5" }
 
 $running = Get-CimInstance Win32_Process -Filter "Name = 'python.exe'" -ErrorAction SilentlyContinue |
-    Where-Object { $_.CommandLine -match 'serial_mqtt_bridge_bresil\.py' }
+    Where-Object { $_.CommandLine -match 'serial_to_mqtt\.py' }
 
 if ($running) {
     Write-Host "Pont serie deja actif - arret de l'instance precedente..." -ForegroundColor Yellow
@@ -31,4 +31,4 @@ Write-Host "Pont serie $port -> MQTT (topic entrepot_A)" -ForegroundColor Cyan
 Write-Host "Chaine : capteur -> MQTT -> iot:bridge -> Aiven | Arret : Ctrl+C" -ForegroundColor DarkGray
 
 $env:PYTHONIOENCODING = 'utf-8'
-python -u scripts/serial_mqtt_bridge_bresil.py --port $port
+python -u iot/bridge/serial_to_mqtt.py --port $port

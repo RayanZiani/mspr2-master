@@ -11,15 +11,18 @@ install_python_deps() {
   python3 -m pip install -r tests/requirements.txt -q --break-system-packages
 }
 
+install_api_deps() {
+  python3 -m pip install -r tests/requirements-api-runtime.txt -q --break-system-packages
+}
+
 run_unit_tests() {
   echo "=== Tests unitaires (pytest directement dans Jenkins) ==="
+  install_api_deps
   python3 -m pytest tests/unit/ -v -m unit \
+    --cov-config=.coveragerc \
+    --cov=. \
     --junitxml=tests/reports/unit-results.xml \
     --alluredir=tests/reports/allure-results \
-    --cov=pays/bresil/api/services \
-    --cov=pays/equateur/api/services \
-    --cov=pays/colombie/api/services \
-    --cov=siege/api/services \
     --cov-report=xml:tests/reports/coverage.xml \
     --cov-report=html:tests/reports/htmlcov \
     --cov-report=term-missing
@@ -28,15 +31,12 @@ run_unit_tests() {
 run_unit_tests_local() {
   echo "=== Tests unitaires (pytest local) ==="
   install_python_deps
-  python3 -m pip install -r pays/bresil/api/requirements.txt -q --break-system-packages
-  python3 -m pip install -r siege/api/requirements.txt -q --break-system-packages
+  install_api_deps
   python3 -m pytest tests/unit/ -v -m unit \
+    --cov-config=.coveragerc \
+    --cov=. \
     --junitxml=tests/reports/unit-results.xml \
     --alluredir=tests/reports/allure-results \
-    --cov=pays/bresil/api/services \
-    --cov=pays/equateur/api/services \
-    --cov=pays/colombie/api/services \
-    --cov=siege/api/services \
     --cov-report=xml:tests/reports/coverage.xml \
     --cov-report=html:tests/reports/htmlcov \
     --cov-report=term-missing
@@ -44,9 +44,15 @@ run_unit_tests_local() {
 
 run_integration_tests() {
   echo "=== Tests d'intégration (pytest + httpx) ==="
+  if [ -n "${RENDER:-}" ]; then
+    echo "Mode Render : agrégation via API Siège (${API_SIEGE_URL:-https://mspr2-master.onrender.com})"
+  else
+    echo "Mode Docker : APIs pays directes + API Siège"
+  fi
   python3 -m pytest tests/integration/ -v -m integration \
     --junitxml=tests/reports/integration-results.xml \
-    --alluredir=tests/reports/allure-results
+    --alluredir=tests/reports/allure-results \
+    -ra
 }
 
 run_api_tests() {
@@ -79,6 +85,9 @@ run_e2e_tests() {
   echo "=== Tests E2E (Playwright) ==="
   export E2E_BASE_URL="${E2E_BASE_URL:-${FRONTEND_URL:-http://localhost:80}}"
   echo "E2E base URL: ${E2E_BASE_URL}"
+  if echo "${E2E_BASE_URL}" | grep -qi onrender; then
+    echo "Mode Render : retries activés pour cold start"
+  fi
   bash ci-cd/scripts/install_playwright_deps.sh
   npx playwright install chromium
   cd tests/e2e

@@ -37,7 +37,6 @@ logger = logging.getLogger(__name__)
 # Topic MQTT (firmware) -> entrepot Aiven (Excel demo)
 ENTREPOT_SLUG_TO_NOM: dict[str, str] = {
     "entrepot_A": "Entrep\u00f4t BR-1",
-    "entrepot_B": "Entrep\u00f4t BR-2",
 }
 
 PAYS_CODE = "BR"
@@ -79,7 +78,7 @@ def _load_capteur_ids() -> dict[str, str]:
 
     if not mapping:
         raise SystemExit(
-            "Aucun capteur BR mappe. Verifie l'import Excel (Entrepot BR-1 / BR-2)."
+            "Aucun capteur BR mappe. Verifie l'import Excel (Entrepot BR-1)."
         )
     return mapping
 

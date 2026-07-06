@@ -136,7 +136,7 @@ export default function LotList({ lots, onSelect }) {
                   <td>{lot.exploitation || '-'}</td>
                   <td>{lot.entrepot || '-'}</td>
                   <td className="cell-num">{formatDate(lot.date_stockage)}</td>
-                  <td className="ta-right cell-num">{days != null ? `${days} j` : '-'}</td>
+                  <td className="ta-right cell-num">{days == null ? '-' : `${days} j`}</td>
                   <td>
                     <span className={`badge ${s.cls}`}>
                       <s.Icon size={10} />

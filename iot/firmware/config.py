@@ -1,4 +1,5 @@
-# WiFi — a renseigner avant flash terrain
+# Reference MicroPython + WiFi — NON UTILISE en prototype campus (USB + esp32.ino).
+# WiFi — a renseigner avant un deploiement terrain futur
 WIFI_SSID = "NomDuReseau"
 WIFI_PSK = ""
 

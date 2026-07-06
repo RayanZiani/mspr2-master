@@ -867,6 +867,19 @@ body::before {
 
 select.input { cursor: pointer; }
 
+select.input optgroup {
+  font-weight: 600;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  background: var(--surface-2);
+}
+
+select.input option {
+  font-weight: 400;
+  color: var(--text);
+  background: var(--surface);
+}
+
 .filter-item {
   display: inline-flex;
   align-items: center;
@@ -883,6 +896,14 @@ select.input { cursor: pointer; }
   height: 15px;
   accent-color: var(--accent);
   cursor: pointer;
+}
+
+.location-filters-row {
+  margin-top: 0.75rem;
+}
+
+.location-filter-select {
+  min-width: 200px;
 }
 
 /* Status badges */
@@ -1095,6 +1116,70 @@ select.input { cursor: pointer; }
 }
 .alert-lot-desc { font-size: 0.76rem; color: var(--text-muted); margin-top: 3px; }
 
+.alert-lot-seuils,
+.seuils-summary.compact {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.45rem;
+  font-size: 0.74rem;
+  color: var(--text-secondary);
+}
+
+.seuils-summary.detailed {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.seuils-summary-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--warning);
+  margin-bottom: 0.65rem;
+}
+
+.seuils-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.75rem;
+}
+
+.seuils-metric {
+  padding: 0.65rem 0.75rem;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+}
+
+.seuils-metric.out-of-range {
+  border-color: color-mix(in srgb, var(--warning) 45%, var(--border));
+  background: color-mix(in srgb, var(--warning) 8%, var(--surface-2));
+}
+
+.seuils-metric-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.seuils-metric-range,
+.seuils-metric-value {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: 0.78rem;
+}
+
+.seuils-metric-value.danger {
+  color: var(--danger);
+  font-weight: 600;
+}
+
 /* Section header */
 .section-header {
   display: flex;
@@ -1266,6 +1351,43 @@ select.input { cursor: pointer; }
 .users-select2 .rs__indicator-separator { display: none; }
 .users-select2 .rs__dropdown-indicator, .users-select2 .rs__clear-indicator { padding: 6px; color: var(--text-muted); }
 .users-select2.modal .rs__control { border-radius: 10px; min-height: 42px; }
+
+.gestion-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+.gestion-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.85rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-muted);
+  font-weight: 700;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+.gestion-tab:hover { background: var(--surface-2); color: var(--text); }
+.gestion-tab.active {
+  background: var(--accent-dim);
+  border-color: var(--accent-border);
+  color: var(--accent);
+}
+
+.gestion-lots-table .users-row {
+  grid-template-columns: 1fr 0.65fr 1fr 1fr 1.1fr 0.9fr 0.75fr;
+}
+.gestion-entrepots-table .users-row {
+  grid-template-columns: 0.65fr 1fr 1fr 1.2fr 0.75fr;
+}
+.gestion-exploitations-table .users-row {
+  grid-template-columns: 0.65fr 1.2fr 1.1fr 0.75fr;
+}
 
 .rs__menu {
   border-radius: 11px !important;

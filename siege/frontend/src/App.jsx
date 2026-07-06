@@ -12,6 +12,9 @@ import {
   Settings2,
   Menu,
   X,
+  Package,
+  Warehouse,
+  Database,
 } from 'lucide-react'
 import { ToastProvider } from './components/Toast'
 import { useDbHealth } from './hooks/useDbHealth'
@@ -28,6 +31,9 @@ const UsersPage = lazy(() => import('./pages/UsersPage'))
 const MesuresPage = lazy(() => import('./pages/MesuresPage'))
 const HealthPage = lazy(() => import('./pages/HealthPage'))
 const CapteursConfigPage = lazy(() => import('./pages/CapteursConfigPage'))
+const GestionLotsPage = lazy(() => import('./pages/GestionLotsPage'))
+const GestionEntrepotsPage = lazy(() => import('./pages/GestionEntrepotsPage'))
+const GestionReferentielsPage = lazy(() => import('./pages/GestionReferentielsPage'))
 
 function PageFallback() {
   return (
@@ -75,7 +81,7 @@ function AccountMenu({ statusCls, statusTitle }) {
 
   function logout() {
     clearSession()
-    window.location.href = '/login'
+    globalThis.location.href = '/login'
   }
 
   return (
@@ -103,6 +109,13 @@ function AccountMenu({ statusCls, statusTitle }) {
             <button type="button" className="account-item" onClick={() => go('/config/capteurs')} role="menuitem">
               <Settings2 size={15} />
               <span>Config capteurs</span>
+            </button>
+          )}
+
+          {perms.canManageExploitations() && (
+            <button type="button" className="account-item" onClick={() => go('/gestion/referentiels')} role="menuitem">
+              <Database size={15} />
+              <span>Référentiels</span>
             </button>
           )}
 
@@ -149,6 +162,8 @@ function Navbar() {
     { to: '/', end: true, Icon: LayoutDashboard, label: 'Dashboard', show: true },
     { to: '/mesures', Icon: Activity, label: 'Mesures', show: true },
     { to: '/alertes', Icon: Bell, label: 'Alertes', show: perms.isAdmin || perms.isSiegeUser },
+    { to: '/gestion/lots', Icon: Package, label: 'Lots', show: perms.canWriteLots() },
+    { to: '/gestion/entrepots', Icon: Warehouse, label: 'Entrepôts', show: perms.canManageEntrepots() },
   ].filter(i => i.show)
 
   return (
@@ -248,6 +263,18 @@ export default function App() {
             <Route
               path="/users"
               element={<RequirePerm can={p => p.canManageUsers()}><UsersPage /></RequirePerm>}
+            />
+            <Route
+              path="/gestion/lots"
+              element={<RequirePerm can={p => p.canWriteLots()}><GestionLotsPage /></RequirePerm>}
+            />
+            <Route
+              path="/gestion/entrepots"
+              element={<RequirePerm can={p => p.canManageEntrepots()}><GestionEntrepotsPage /></RequirePerm>}
+            />
+            <Route
+              path="/gestion/referentiels"
+              element={<RequirePerm can={p => p.canManageExploitations()}><GestionReferentielsPage /></RequirePerm>}
             />
           </Routes>
           </Suspense>

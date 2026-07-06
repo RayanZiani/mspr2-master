@@ -42,6 +42,7 @@ pipeline {
                     
                     # Installer les dépendances des API (ignorer les erreurs de compilation pydantic-core)
                     python3 -m pip install fastapi uvicorn python-dotenv redis httpx paho-mqtt --break-system-packages || true
+                    python3 -m pip install "sqlalchemy>=2.0.36,<3" aiomysql==0.2.0 --break-system-packages || true
                     python3 -m pip install bcrypt passlib python-jose --break-system-packages || true
                     
                     # Installer les dépendances Node.js et Playwright
@@ -73,6 +74,9 @@ MYSQL_DATABASE=futurekawa
 MYSQL_USER=kawa_user
 MYSQL_PASSWORD=kawapassword
 MYSQL_URL=mysql://kawa_user:kawapassword@localhost:3306/futurekawa
+API_BRESIL_URL=http://api-bresil:8000
+API_EQUATEUR_URL=http://api-equateur:8000
+API_COLOMBIE_URL=http://api-colombie:8000
 EOF
                         echo "Fichier .env créé dans $1"
                     }

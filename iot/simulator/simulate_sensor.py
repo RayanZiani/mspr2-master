@@ -24,7 +24,7 @@ SEUILS = {
 }
 
 ENTREPOTS = {
-    "bresil":   ["entrepot_A", "entrepot_B", "entrepot_C"],
+    "bresil":   ["entrepot_A"],
     "equateur": ["entrepot_B", "entrepot_C"],
     "colombie": ["entrepot_C", "entrepot_D"],
 }
@@ -87,6 +87,29 @@ def _publish_once(client: mqtt.Client, entrepot: str) -> None:
     logger.info("Publié sur %s : temp=%.1f°C hum=%.1f%%", topic, payload["temp"], payload["humidity"])
 
 
+def _publish_offline_for_all(client: mqtt.Client, entrepots: list[str]) -> None:
+    """Publie le statut offline pour chaque entrepôt."""
+    for entrepot in entrepots:
+        topic = STATUS_TOPIC_TPL.format(pays=PAYS, entrepot=entrepot)
+        payload = json.dumps({"status": "offline", "source": "simulator", "pays": PAYS})
+        client.publish(topic, payload, qos=1, retain=True)
+
+
+def _disconnect_client(client: mqtt.Client) -> None:
+    try:
+        client.loop_stop()
+        client.disconnect()
+    except Exception:
+        pass
+
+
+def _run_publish_loop(client: mqtt.Client, entrepots: list[str]) -> None:
+    while True:
+        for entrepot in entrepots:
+            _publish_once(client, entrepot)
+        time.sleep(INTERVAL)
+
+
 def run() -> None:
     """Boucle principale : connexion avec retry + publication continue."""
     entrepots = ENTREPOTS.get(PAYS, [])
@@ -101,34 +124,20 @@ def run() -> None:
         try:
             client.connect(BROKER_HOST, BROKER_PORT, keepalive=60)
             client.loop_start()
-
-            while True:
-                for entrepot in entrepots:
-                    _publish_once(client, entrepot)
-                time.sleep(INTERVAL)
-
+            _run_publish_loop(client, entrepots)
         except OSError as exc:
             logger.warning("Impossible de joindre le broker (%s) — nouvelle tentative dans 10s", exc)
             time.sleep(10)
         except KeyboardInterrupt:
             logger.info("Arrêt du simulateur")
-            # Publier "offline" proprement avant de quitter
-            for entrepot in entrepots:
-                topic = STATUS_TOPIC_TPL.format(pays=PAYS, entrepot=entrepot)
-                payload = json.dumps({"status": "offline", "source": "simulator", "pays": PAYS})
-                client.publish(topic, payload, qos=1, retain=True)
-            client.loop_stop()
-            client.disconnect()
+            _publish_offline_for_all(client, entrepots)
+            _disconnect_client(client)
             break
         except Exception:
             logger.exception("Erreur inattendue — nouvelle tentative dans 10s")
             time.sleep(10)
         finally:
-            try:
-                client.loop_stop()
-                client.disconnect()
-            except Exception:
-                pass
+            _disconnect_client(client)
 
 
 if __name__ == "__main__":

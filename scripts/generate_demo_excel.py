@@ -105,8 +105,9 @@ def main() -> int:
             }
         )
 
-        # 2 exploitations / pays
-        for e_idx in range(1, 3):
+        # Brésil : 1 exploitation ; autres pays : 2
+        exp_count = 1 if p.code == "BR" else 2
+        for e_idx in range(1, exp_count + 1):
             exploitation_rows.append(
                 {
                     "id": exploitation_id,
@@ -134,7 +135,7 @@ def main() -> int:
                     "id": capteur_id,
                     "entrepot_id": entrepot_id,
                     "numero_serie": f"{p.code}-SENSOR-{e_idx:02d}",
-                    "modele": "DHT22",
+                    "modele": "DHT11",
                     "installe_le": start.isoformat(),
                     "active": 1,
                 }

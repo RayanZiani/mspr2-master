@@ -15,11 +15,15 @@ router = APIRouter()
 
 
 class WebhookStatus(BaseModel):
+    """État de configuration des webhooks Discord et Telegram."""
+
     discord_configured: bool
     telegram_configured: bool
 
 
 class WebhookTestResult(BaseModel):
+    """Résultat d'un envoi de notification de test."""
+
     pays: str
     discord_configured: bool
     telegram_configured: bool
