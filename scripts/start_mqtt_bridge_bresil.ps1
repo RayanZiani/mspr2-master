@@ -9,7 +9,16 @@ if (-not (Test-Path ".env")) {
     Write-Error "Fichier .env manquant a la racine (MYSQL_URL requis)."
 }
 
-Write-Host "Pont MQTT Brésil -> Aiven (ESP32 toutes les 30 s)" -ForegroundColor Cyan
+$running = Get-CimInstance Win32_Process -Filter "Name = 'python.exe'" -ErrorAction SilentlyContinue |
+    Where-Object { $_.CommandLine -match 'mqtt_bridge_bresil\.py' }
+
+if ($running) {
+    Write-Host "Pont MQTT deja actif - arret de l'instance precedente..." -ForegroundColor Yellow
+    & "$PSScriptRoot\stop_iot_bridge.ps1"
+    Start-Sleep -Seconds 1
+}
+
+Write-Host "Pont MQTT Brésil -> Aiven" -ForegroundColor Cyan
 Write-Host "Broker : localhost:1883 (npm run iot:up) | Arret : Ctrl+C" -ForegroundColor DarkGray
 
 $env:PYTHONIOENCODING = 'utf-8'

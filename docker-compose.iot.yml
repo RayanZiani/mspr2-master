@@ -1,10 +1,6 @@
 # Broker MQTT central — pour ESP32 Brésil (optionnel, hors stack principale)
 # Usage : docker compose -f docker-compose.iot.yml up -d
+# Si conflit reseau : docker start mosquitto-bresil
 
 include:
   - pays/bresil/docker-compose.yml
-
-networks:
-  bresil-net:
-    name: futurekawa-broker-net
-    driver: bridge
